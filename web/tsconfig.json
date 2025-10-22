@@ -1,19 +1,33 @@
 {
   "compilerOptions": {
-    "outDir": "./dist/",
-    "sourceMap": true,
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
     "strictNullChecks": true,
-    "module": "commonjs",
-    "target": "es5",
-    "jsx": "react",
-    "lib": ["es2016", "es2017", "dom"],
-    "skipLibCheck": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /* Additional options */
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "downlevelIteration": true,
-    "resolveJsonModule": false
+    "sourceMap": true
   },
   "include": [
     "./src/**/*",

@@ -8,8 +8,7 @@ import IconButton from '@mui/material/IconButton'
 import MQTooltip from '../core/tooltip/MQTooltip'
 import MqText from '../core/text/MqText'
 import React, { FunctionComponent } from 'react'
-
-const i18next = require('i18next')
+import i18next from 'i18next'
 
 interface Props {
   pageSize: number

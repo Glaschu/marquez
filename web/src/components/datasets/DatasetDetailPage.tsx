@@ -51,7 +51,7 @@ import MqText from '../core/text/MqText'
 import React, { ChangeEvent, FunctionComponent, useEffect, useState } from 'react'
 import RuleIcon from '@mui/icons-material/Rule'
 import StorageIcon from '@mui/icons-material/Storage'
-
+import i18next from 'i18next'
 interface StateProps {
   lineageDataset: LineageDataset
   dataset: Dataset
@@ -95,7 +95,6 @@ const DatasetDetailPage: FunctionComponent<IProps> = (props) => {
     setTabIndex,
   } = props
   const navigate = useNavigate()
-  const i18next = require('i18next')
   const theme = createTheme(useTheme())
   const [_, setSearchParams] = useSearchParams()
   const [showTags, setShowTags] = useState(false)

@@ -1,16 +1,7 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-//  from webpack
-declare const __NODE_ENV__: string
-declare const __DEVELOPMENT__: boolean
-
-declare const __API_URL__: string
-declare const __API_BETA_URL__: string
-declare const __REACT_APP_ADVANCED_SEARCH__: boolean
-
-declare const __FEEDBACK_FORM_URL__: string
-declare const __API_DOCS_URL__: string
+// Global constants are now defined in vite.config.ts and declared in vite-env.d.ts
 
 export const API_URL = __API_URL__
 export const API_BETA_URL = __API_BETA_URL__

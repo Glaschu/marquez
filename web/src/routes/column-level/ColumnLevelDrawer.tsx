@@ -23,8 +23,7 @@ import IconButton from '@mui/material/IconButton'
 import MqJsonView from '../../components/core/json-view/MqJsonView'
 import MqText from '../../components/core/text/MqText'
 import React, { useEffect } from 'react'
-
-const i18next = require('i18next')
+import i18next from 'i18next'
 
 const WIDTH = 600
 

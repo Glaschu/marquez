@@ -6,15 +6,12 @@ import { theme } from '../../helpers/theme'
 import MqText from '../core/text/MqText'
 import React from 'react'
 import Typewriter from './Typewriter'
+import i18next from 'i18next'
 
-const importI18next = () => {
-  return require('i18next')
-}
 
 interface SearchPlaceholderProps {}
 
 const SearchPlaceholder: React.FC<SearchPlaceholderProps> = () => {
-  const i18next = importI18next()
   return (
     <Box
       sx={{

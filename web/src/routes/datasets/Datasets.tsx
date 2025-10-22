@@ -41,7 +41,7 @@ import MqStatus from '../../components/core/status/MqStatus'
 import MqText from '../../components/core/text/MqText'
 import NamespaceSelect from '../../components/namespace-select/NamespaceSelect'
 import React from 'react'
-
+import i18next from 'i18next'
 interface StateProps {
   datasets: Dataset[]
   isDatasetsLoading: boolean
@@ -102,7 +102,6 @@ const Datasets: React.FC<DatasetsProps> = ({
     setState({ ...state, page: directionPage })
   }
 
-  const i18next = require('i18next')
   return (
     <Container maxWidth={'lg'} disableGutters>
       <Box p={2} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>

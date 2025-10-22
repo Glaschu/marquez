@@ -22,11 +22,11 @@ import { useTheme } from '@emotion/react'
 import { Dashboard } from '@mui/icons-material'
 import iconSearchArrow from '../../img/iconSearchArrow.svg'
 import marquez_logo from './marquez-icon-white-solid.svg'
+import i18next from 'i18next'
 
 interface SidenavProps {}
 
 const Sidenav: React.FC<SidenavProps> = () => {
-  const i18next = require('i18next')
   const changeLanguage = (lng: string) => {
     i18next.changeLanguage(lng)
   }

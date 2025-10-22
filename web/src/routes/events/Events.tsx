@@ -41,7 +41,7 @@ import MqStatus from '../../components/core/status/MqStatus'
 import MqText from '../../components/core/text/MqText'
 import React, { useEffect, useRef } from 'react'
 import moment from 'moment'
-
+import i18next from 'i18next'
 interface StateProps {
   events: Event[]
   totalCount: number
@@ -171,7 +171,6 @@ const Events: React.FC<EventsProps> = ({
     fetchEvents(dateFrom, dateTo, PAGE_SIZE, state.page * PAGE_SIZE)
   }
 
-  const i18next = require('i18next')
   const theme = createTheme(useTheme())
 
   return (

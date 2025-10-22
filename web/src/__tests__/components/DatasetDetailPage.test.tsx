@@ -7,16 +7,22 @@ import { render, screen } from '@testing-library/react';
 import { formatUpdatedAt } from '../../helpers'
 import DatasetDetailPage from '../../components/datasets/DatasetDetailPage'
 
-const datasets = require('../../../docker/db/data/datasets.json')
+import * as redux from 'react-redux'
+import datasets from '../../../docker/db/data/datasets.json'
+import { vi } from 'vitest'
+
 const dataset = datasets[0]
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'), // use actual for all non-hook parts
-  useParams: jest.fn(),
-  useNavigate: () => ({
-    push: jest.fn()
-  })
-}))
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom')
+  return {
+    ...actual,
+    useParams: vi.fn(),
+    useNavigate: () => ({
+      push: vi.fn()
+    })
+  }
+})
 
 import { useParams } from 'react-router-dom'
 

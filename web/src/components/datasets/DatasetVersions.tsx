@@ -28,7 +28,7 @@ import MqCopy from '../core/copy/MqCopy'
 import MqPaging from '../paging/MqPaging'
 import MqText from '../core/text/MqText'
 import React, { FunctionComponent, SetStateAction } from 'react'
-
+import i18next from 'i18next'
 interface DatasetVersionsProps {
   versions: DatasetVersion[]
   dataset: Dataset
@@ -65,7 +65,6 @@ const DatasetVersions: FunctionComponent<DatasetVersionsProps & DispatchProps> =
     setState({ ...state, page: directionPage })
   }
 
-  const i18next = require('i18next')
   const theme = createTheme(useTheme())
 
   React.useEffect(() => {

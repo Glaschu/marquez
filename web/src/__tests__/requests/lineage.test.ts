@@ -4,13 +4,14 @@
 import { generateNodeId } from '../../helpers/nodes'
 import * as requestUtils from '../../store/requests'
 import { getLineage } from '../../store/requests/lineage'
+import { vi } from 'vitest'
 
 describe('getLineage function', () => {
-  let spy: jest.SpyInstance<Promise<any>, [string, requestUtils.IParams, string]>
+  let spy: any
   let testResult: Promise<any>
 
   beforeEach(() => {
-    spy = jest.spyOn(requestUtils, 'genericFetchWrapper').mockImplementation(() => {})
+    spy = vi.spyOn(requestUtils, 'genericFetchWrapper').mockImplementation(() => Promise.resolve({}))
     testResult = getLineage('JOB', 'foo', 'bar', 0)
   })
 

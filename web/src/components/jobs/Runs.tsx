@@ -33,7 +33,7 @@ import MqStatus from '../core/status/MqStatus'
 import MqText from '../core/text/MqText'
 import React, { FunctionComponent, SetStateAction } from 'react'
 import RunInfo from './RunInfo'
-
+import i18next from 'i18next'
 interface DispatchProps {
   fetchRuns: typeof fetchRuns
 }
@@ -55,7 +55,6 @@ const PAGE_SIZE = 10
 
 const Runs: FunctionComponent<RunsProps & DispatchProps> = (props) => {
   const { runs, facets, totalCount, runsLoading, fetchRuns, jobName, jobNamespace } = props
-  const i18next = require('i18next')
 
   const [state, setState] = React.useState<RunsState>({
     page: 0,

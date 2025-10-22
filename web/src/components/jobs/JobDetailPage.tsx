@@ -50,7 +50,7 @@ import MqStatus from '../core/status/MqStatus'
 import MqText from '../core/text/MqText'
 import RunInfo from './RunInfo'
 import Runs from './Runs'
-
+import i18next from 'i18next'
 interface DispatchProps {
   fetchLatestRuns: typeof fetchLatestRuns
   resetRuns: typeof resetRuns
@@ -96,7 +96,6 @@ const JobDetailPage: FunctionComponent<IProps> = (props) => {
     setTabIndex(newValue)
   }
 
-  const i18next = require('i18next')
 
   useEffect(() => {
     fetchJob(lineageJob.namespace, lineageJob.name)

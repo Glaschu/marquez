@@ -1,11 +1,11 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as requestUtils from '../../store/requests'
+import { vi } from 'vitest'
 import { parseResponse } from '../../store/requests'
 
 export const mockFetch = (requestBody: any = []) => {
-  return jest.fn().mockImplementation(() => Promise.resolve({
+  return vi.fn().mockImplementation(() => Promise.resolve({
     json: () => Promise.resolve(requestBody),
     text: () => Promise.resolve(JSON.stringify(requestBody)),
     ok: true
@@ -15,8 +15,8 @@ export const mockFetch = (requestBody: any = []) => {
 const generateMockResponse = (status = 200, ok: boolean, returnBody?: object) => ({
   ok,
   status,
-  json: () => returnBody || {},
-  text: () => returnBody ? JSON.stringify(returnBody) : ''
+  json: () => Promise.resolve(returnBody || {}),
+  text: () => Promise.resolve(returnBody ? JSON.stringify(returnBody) : '')
 })
 
 describe('parseResponse function', () => {
@@ -34,19 +34,21 @@ describe('parseResponse function', () => {
   })
 
   describe('for a unsuccessful response', () => {
+    let testResponse: any
 
-    let spy
-    let testResponse
     beforeEach(() => {
-      spy = jest.spyOn(requestUtils, 'genericErrorMessageConstructor').mockImplementation(() => { })
-      testResponse = generateMockResponse(500, false, {})
+      testResponse = generateMockResponse(500, false, { code: 500, message: 'Server Error', details: 'Test error' })
     })
+
     it('throws an error', async () => {
       await expect(parseResponse(testResponse, 'testFunctionName')).rejects.toThrow()
     })
 
-    it('calls genericErrorMessageConstructor', async () => {
-      expect(spy).toHaveBeenCalled()
+    it('produces the correct error message format', async () => {
+      // Test that the error message follows the expected format
+      // This tests the behavior without relying on internal implementation details
+      await expect(parseResponse(testResponse, 'testFunctionName'))
+        .rejects.toMatch(/testFunctionName responded with error code 500: Server Error/)
     })
   })
 })

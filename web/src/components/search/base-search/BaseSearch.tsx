@@ -15,7 +15,7 @@ import MqChipGroup from '../../core/chip/MqChipGroup'
 import MqText from '../../core/text/MqText'
 import React, { useEffect, useState } from 'react'
 import SearchListItem from '../SearchListItem'
-
+import i18next from 'i18next'
 interface BaseSearchProps {
   search: string
 }
@@ -80,8 +80,6 @@ const BaseSearch: React.FC<BaseSearchProps & StateProps & DispatchProps> = ({
 }) => {
   const [filter, setFilter] = useState('All')
   const [sort, setSort] = useState('UPDATE_AT')
-
-  const i18next = require('i18next')
 
   const onSelectFilter = (label: string) => {
     setFilter(label)

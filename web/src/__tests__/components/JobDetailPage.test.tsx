@@ -7,13 +7,16 @@ import { within } from '@testing-library/dom'
 
 import { formatUpdatedAt } from '../../helpers'
 import JobDetailPage from '../../components/jobs/JobDetailPage'
+import jobs from '../../../docker/db/data/jobs.json'
+import { vi } from 'vitest'
 
-const jobs = require('../../../docker/db/data/jobs.json')
-
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'), // use actual for all non-hook props
-  useParams: jest.fn()
-}))
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom')
+  return {
+    ...actual,
+    useParams: vi.fn()
+  }
+})
 
 import { useParams } from 'react-router-dom'
 import {lineageJob} from "../__mocks__/LineageJob";

@@ -12,7 +12,7 @@ import MqJsonView from '../core/json-view/MqJsonView'
 import MqText from '../core/text/MqText'
 import React, { FunctionComponent } from 'react'
 import SplitscreenIcon from '@mui/icons-material/Splitscreen'
-
+import i18next from 'i18next'
 export interface JobFacetsProps {
   isCurrentVersion?: boolean
   dataset: Dataset
@@ -26,7 +26,6 @@ type DatasetInfoProps = {
 
 const DatasetInfo: FunctionComponent<DatasetInfoProps> = (props) => {
   const { datasetFields, facets, dataset, showTags } = props
-  const i18next = require('i18next')
 
   return (
     <Box>

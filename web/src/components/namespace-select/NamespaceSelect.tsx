@@ -13,6 +13,7 @@ import { selectNamespace } from '../../store/actionCreators'
 import { theme } from '../../helpers/theme'
 import MqText from '../core/text/MqText'
 import React from 'react'
+import i18next from 'i18next'
 
 interface OwnProps {}
 
@@ -33,7 +34,6 @@ const NamespaceSelect: React.FC<NamespaceSelectProps> = ({
   selectNamespace,
 }) => {
   const [open, setOpen] = React.useState(false)
-  const i18next = require('i18next')
 
   if (selectedNamespace) {
     return (

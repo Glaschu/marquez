@@ -3,8 +3,7 @@
 
 import { initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
-
-const i18next = require('i18next')
+import i18next from 'i18next'
 export const defaultNS = 'translation'
 
 const DETECTION_OPTIONS = {

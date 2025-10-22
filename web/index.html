@@ -1,15 +1,17 @@
 <!--
 Copyright 2018-2023 contributors to the Marquez project
-SPDX-License-Identifier: Apache-2.0SPDX-License-Identifier: Apache-2.0
+SPDX-License-Identifier: Apache-2.0
 -->
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Marquez</title>
-    <link rel="icon" href="img/icon.svg" type="image/svg+xml">
-    <link rel="icon" href="img/favicon.png" type="image/png">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+    <link rel="icon" href="/img/favicon.png" type="image/png">
     <base href="/" />
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link
@@ -21,8 +23,7 @@ SPDX-License-Identifier: Apache-2.0SPDX-License-Identifier: Apache-2.0
 
   <body>
     <div id="root"></div>
-
-    <!-- Main -->
-    <script src="./bundle.js"></script>
+    <!-- Vite will inject the script tag for src/index.tsx here -->
+    <script type="module" src="/src/index.tsx"></script>
   </body>
 </html>
