@@ -14,6 +14,7 @@ import Box from '@mui/system/Box'
 import MqChipGroup from '../../core/chip/MqChipGroup'
 import MqText from '../../core/text/MqText'
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import SearchListItem from '../SearchListItem'
 
 interface BaseSearchProps {
@@ -81,7 +82,7 @@ const BaseSearch: React.FC<BaseSearchProps & StateProps & DispatchProps> = ({
   const [filter, setFilter] = useState('All')
   const [sort, setSort] = useState('UPDATE_AT')
 
-  const i18next = require('i18next')
+  const { t } = useTranslation()
 
   const onSelectFilter = (label: string) => {
     setFilter(label)
@@ -137,8 +138,8 @@ const BaseSearch: React.FC<BaseSearchProps & StateProps & DispatchProps> = ({
           <Box m={2} display={'flex'} alignItems={'center'} justifyContent={'center'}>
             <MqText>
               {isSearching || !isSearchingInit
-                ? i18next.t('search.status')
-                : i18next.t('search.none')}
+                ? t('search.status')
+                : t('search.none')}
             </MqText>
           </Box>
         )}

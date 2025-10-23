@@ -1,6 +1,6 @@
 import { ColumnLineageDatasetNodeData } from './nodes'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { PositionedNode } from '../../../libs/graph'
+import { PositionedNode } from '../../components/graph'
 import { faDatabase } from '@fortawesome/free-solid-svg-icons'
 import { theme } from '../../helpers/theme'
 import { truncateText } from '../../helpers/text'
@@ -46,7 +46,7 @@ export const ColumnLineageDatasetNode = ({ node }: ColumnLineageDatasetNodeProps
       <text
         x={16}
         y={24}
-        textAnchor='top'
+        textAnchor='start'
         fontSize={14}
         stroke={'white'}
         cursor={'pointer'}

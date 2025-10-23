@@ -3,18 +3,15 @@
 
 import { Box } from '@mui/material'
 import { theme } from '../../helpers/theme'
+import { useTranslation } from 'react-i18next'
 import MqText from '../core/text/MqText'
 import React from 'react'
 import Typewriter from './Typewriter'
 
-const importI18next = () => {
-  return require('i18next')
-}
-
 interface SearchPlaceholderProps {}
 
 const SearchPlaceholder: React.FC<SearchPlaceholderProps> = () => {
-  const i18next = importI18next()
+  const { t } = useTranslation()
   return (
     <Box
       sx={{
@@ -33,7 +30,7 @@ const SearchPlaceholder: React.FC<SearchPlaceholderProps> = () => {
           disabled
           inline
           font={'mono'}
-          aria-label={i18next.t('search.search_aria')}
+          aria-label={t('search.search_aria')}
           aria-required='true'
         >
           Search your

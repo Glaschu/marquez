@@ -16,6 +16,7 @@ import MqEmpty from '../core/empty/MqEmpty'
 import MqJsonView from '../../components/core/json-view/MqJsonView'
 import MqText from '../core/text/MqText'
 import React, { FunctionComponent, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface DatasetColumnLineageProps {
   lineageDataset: LineageDataset
@@ -33,7 +34,7 @@ interface DispatchProps {
 type IProps = DatasetColumnLineageProps & DispatchProps & StateProps
 
 const DatasetColumnLineage: FunctionComponent<IProps> = (props) => {
-  const i18next = require('i18next')
+  const { t } = useTranslation()
   const { dataset, lineageDataset, fetchDataset, resetDataset } = props
   const { name, namespace } = useParams()
 
@@ -84,8 +85,8 @@ const DatasetColumnLineage: FunctionComponent<IProps> = (props) => {
         </>
       ) : (
         <MqEmpty
-          title={i18next.t('datasets_column_lineage.empty_title')}
-          body={i18next.t('datasets_column_lineage.empty_body')}
+          title={t('datasets_column_lineage.empty_title')}
+          body={t('datasets_column_lineage.empty_body')}
         />
       )}
     </>

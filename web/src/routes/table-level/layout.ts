@@ -1,4 +1,4 @@
-import { Edge, Node as ElkNode } from '../../../libs/graph'
+import { Edge, Node as ElkNode } from '../../components/graph'
 import { LineageGraph } from '../../types/api'
 
 import { JobOrDataset, LineageDataset, LineageJob, LineageNode } from '../../types/lineage'

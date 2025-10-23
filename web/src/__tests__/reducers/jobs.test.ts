@@ -1,12 +1,12 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
+import { describe, it, expect } from 'vitest'
 import * as actionTypes from '../../store/actionCreators/actionTypes'
 import jobsReducer, {IJobsAction, initialState} from '../../store/reducers/jobs'
 import { stopWatchDuration } from "../../helpers/time";
 import { Job } from "../../types/api";
-
-const jobs = require('../../../docker/db/data/jobs.json')
+import jobs from '../../../docker/db/data/jobs.json'
 
 describe('jobs reducer', () => {
 

@@ -1,7 +1,7 @@
 import { ColumnLineageColumnNodeData } from './nodes'
 import { ColumnLineageGraph } from '../../types/api'
 import { IState } from '../../store/reducers'
-import { PositionedNode } from '../../../libs/graph'
+import { PositionedNode } from '../../components/graph'
 import { connect } from 'react-redux'
 import { grey } from '@mui/material/colors'
 import { truncateText } from '../../helpers/text'
@@ -84,7 +84,7 @@ const ColumnLineageColumnNode = ({ node }: ColumnLineageColumnNodeProps & StateP
         }}
         x={8}
         y={16}
-        textAnchor='top'
+        textAnchor='start'
         fontSize={12}
         cursor={'pointer'}
         stroke={grey[400]}

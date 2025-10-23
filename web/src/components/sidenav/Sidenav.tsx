@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import SVG from 'react-inlinesvg'
 
 import { Link, useLocation } from 'react-router-dom'
@@ -26,9 +27,9 @@ import marquez_logo from './marquez-icon-white-solid.svg'
 interface SidenavProps {}
 
 const Sidenav: React.FC<SidenavProps> = () => {
-  const i18next = require('i18next')
+  const { t, i18n } = useTranslation()
   const changeLanguage = (lng: string) => {
-    i18next.changeLanguage(lng)
+    i18n.changeLanguage(lng)
   }
   const theme = createTheme(useTheme())
 
@@ -80,7 +81,7 @@ const Sidenav: React.FC<SidenavProps> = () => {
           <MqIconButton
             to={'/'}
             id={'homeDrawerButton'}
-            title={i18next.t('sidenav.dataOps')}
+            title={t('sidenav.dataOps')}
             active={location.pathname === '/'}
           >
             <Dashboard />
@@ -88,7 +89,7 @@ const Sidenav: React.FC<SidenavProps> = () => {
           <MqIconButton
             to={'/jobs'}
             id={'jobsDrawerButton'}
-            title={i18next.t('sidenav.jobs')}
+            title={t('sidenav.jobs')}
             active={location.pathname === '/jobs'}
           >
             <FontAwesomeIcon icon={faCogs} fontSize={20} />
@@ -96,7 +97,7 @@ const Sidenav: React.FC<SidenavProps> = () => {
           <MqIconButton
             to={'/datasets'}
             id={'datasetsDrawerButton'}
-            title={i18next.t('sidenav.datasets')}
+            title={t('sidenav.datasets')}
             active={location.pathname === '/datasets'}
           >
             <FontAwesomeIcon icon={faDatabase} fontSize={20} />
@@ -104,7 +105,7 @@ const Sidenav: React.FC<SidenavProps> = () => {
           <MqIconButton
             id={'eventsButton'}
             to={'/events'}
-            title={i18next.t('sidenav.events')}
+            title={t('sidenav.events')}
             active={location.pathname === '/events'}
           >
             <SVG src={iconSearchArrow} width={'20px'} />
@@ -119,7 +120,7 @@ const Sidenav: React.FC<SidenavProps> = () => {
           <Box px={1}>
             <Select
               fullWidth
-              value={i18next.resolvedLanguage}
+              value={i18n.resolvedLanguage}
               onChange={(event) => {
                 changeLanguage(event.target.value as string)
                 window.location.reload()

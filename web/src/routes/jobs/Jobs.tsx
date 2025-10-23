@@ -25,6 +25,7 @@ import { fetchJobs, resetJobs } from '../../store/actionCreators'
 import { formatUpdatedAt } from '../../helpers'
 import { stopWatchDuration } from '../../helpers/time'
 import { truncateText } from '../../helpers/text'
+import { useTranslation } from 'react-i18next'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress/CircularProgress'
 import IconButton from '@mui/material/IconButton'
@@ -94,12 +95,12 @@ const Jobs: React.FC<JobsProps> = ({
     setState({ ...state, page: directionPage })
   }
 
-  const i18next = require('i18next')
+  const { t } = useTranslation()
   return (
     <Container maxWidth={'lg'} disableGutters>
       <Box p={2} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
         <Box display={'flex'}>
-          <MqText heading>{i18next.t('jobs_route.heading')}</MqText>
+          <MqText heading>{t('jobs_route.heading')}</MqText>
           {!isJobsLoading && (
             <Chip
               size={'small'}
@@ -136,9 +137,9 @@ const Jobs: React.FC<JobsProps> = ({
         <>
           {jobs.length === 0 ? (
             <Box p={2}>
-              <MqEmpty title={i18next.t('jobs_route.empty_title')}>
+              <MqEmpty title={t('jobs_route.empty_title')}>
                 <>
-                  <MqText subdued>{i18next.t('jobs_route.empty_body')}</MqText>
+                  <MqText subdued>{t('jobs_route.empty_body')}</MqText>
                   <Button
                     color={'primary'}
                     size={'small'}
@@ -158,20 +159,20 @@ const Jobs: React.FC<JobsProps> = ({
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell key={i18next.t('jobs_route.name_col')} align='left'>
-                      <MqText subheading>{i18next.t('datasets_route.name_col')}</MqText>
+                    <TableCell key={t('jobs_route.name_col')} align='left'>
+                      <MqText subheading>{t('datasets_route.name_col')}</MqText>
                     </TableCell>
-                    <TableCell key={i18next.t('jobs_route.namespace_col')} align='left'>
-                      <MqText subheading>{i18next.t('datasets_route.namespace_col')}</MqText>
+                    <TableCell key={t('jobs_route.namespace_col')} align='left'>
+                      <MqText subheading>{t('datasets_route.namespace_col')}</MqText>
                     </TableCell>
-                    <TableCell key={i18next.t('jobs_route.updated_col')} align='left'>
-                      <MqText subheading>{i18next.t('datasets_route.updated_col')}</MqText>
+                    <TableCell key={t('jobs_route.updated_col')} align='left'>
+                      <MqText subheading>{t('datasets_route.updated_col')}</MqText>
                     </TableCell>
-                    <TableCell key={i18next.t('jobs_route.latest_run_col')} align='left'>
-                      <MqText subheading>{i18next.t('jobs_route.latest_run_col')}</MqText>
+                    <TableCell key={t('jobs_route.latest_run_col')} align='left'>
+                      <MqText subheading>{t('jobs_route.latest_run_col')}</MqText>
                     </TableCell>
-                    <TableCell key={i18next.t('jobs_route.latest_run_state_col')} align='left'>
-                      <MqText subheading>{i18next.t('jobs_route.latest_run_state_col')}</MqText>
+                    <TableCell key={t('jobs_route.latest_run_state_col')} align='left'>
+                      <MqText subheading>{t('jobs_route.latest_run_state_col')}</MqText>
                     </TableCell>
                   </TableRow>
                 </TableHead>
@@ -200,7 +201,7 @@ const Jobs: React.FC<JobsProps> = ({
                               : 'N/A'}
                           </MqText>
                         </TableCell>
-                        <TableCell key={i18next.t('jobs_route.latest_run_col')} align='left'>
+                        <TableCell key={t('jobs_route.latest_run_col')} align='left'>
                           <MqStatus
                             color={job.latestRun && runStateColor(job.latestRun.state || 'NEW')}
                             label={

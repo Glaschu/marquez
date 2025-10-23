@@ -11,6 +11,7 @@ import MqEmpty from '../core/empty/MqEmpty'
 import MqJsonView from '../core/json-view/MqJsonView'
 import MqText from '../core/text/MqText'
 import React, { FunctionComponent } from 'react'
+import { useTranslation } from 'react-i18next'
 import SplitscreenIcon from '@mui/icons-material/Splitscreen'
 
 export interface JobFacetsProps {
@@ -26,14 +27,14 @@ type DatasetInfoProps = {
 
 const DatasetInfo: FunctionComponent<DatasetInfoProps> = (props) => {
   const { datasetFields, facets, dataset, showTags } = props
-  const i18next = require('i18next')
+  const { t } = useTranslation()
 
   return (
     <Box>
       {datasetFields.length === 0 && (
         <MqEmpty
-          title={i18next.t('dataset_info.empty_title')}
-          body={i18next.t('dataset_info.empty_body')}
+          title={t('dataset_info.empty_title')}
+          body={t('dataset_info.empty_body')}
         />
       )}
       {datasetFields.length > 0 && (
@@ -43,20 +44,20 @@ const DatasetInfo: FunctionComponent<DatasetInfoProps> = (props) => {
               <TableRow>
                 <TableCell align='left'>
                   <MqText subheading inline>
-                    {i18next.t('dataset_info_columns.name')}
+                    {t('dataset_info_columns.name')}
                   </MqText>
                 </TableCell>
                 {!showTags && (
                   <TableCell align='left'>
                     <MqText subheading inline>
-                      {i18next.t('dataset_info_columns.type')}
+                      {t('dataset_info_columns.type')}
                     </MqText>
                   </TableCell>
                 )}
                 {!showTags && (
                   <TableCell align='left'>
                     <MqText subheading inline>
-                      {i18next.t('dataset_info_columns.description')}
+                      {t('dataset_info_columns.description')}
                     </MqText>
                   </TableCell>
                 )}
@@ -64,7 +65,7 @@ const DatasetInfo: FunctionComponent<DatasetInfoProps> = (props) => {
                 {showTags && (
                   <TableCell align='left'>
                     <MqText subheading inline>
-                      {i18next.t('dataset_tags.tags')}
+                      {t('dataset_tags.tags')}
                     </MqText>
                   </TableCell>
                 )}
@@ -104,7 +105,7 @@ const DatasetInfo: FunctionComponent<DatasetInfoProps> = (props) => {
                               title={
                                 !dataset.columnLineage
                                   ? 'No Column Lineage, check facet'
-                                  : i18next.t('dataset_info_columns.column_lineage')
+                                  : t('dataset_info_columns.column_lineage')
                               }
                             >
                               <IconButton
@@ -144,9 +145,9 @@ const DatasetInfo: FunctionComponent<DatasetInfoProps> = (props) => {
       {facets && (
         <Box mt={2}>
           <Box mb={1}>
-            <MqText subheading>{i18next.t('dataset_info.facets_subhead')}</MqText>
+            <MqText subheading>{t('dataset_info.facets_subhead')}</MqText>
           </Box>
-          <MqJsonView data={facets} aria-label={i18next.t('dataset_info.facets_subhead_aria')} />
+          <MqJsonView data={facets} aria-label={t('dataset_info.facets_subhead_aria')} />
         </Box>
       )}
     </Box>

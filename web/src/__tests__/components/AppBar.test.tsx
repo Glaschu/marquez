@@ -1,16 +1,21 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-describe('AppBar Test', () => {
-  // TODO: There's an issue with rendering this component in jest
+import * as React from 'react'
+import { describe, it, expect } from 'vitest'
+import { render } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import Header from '../../components/header/Header'
 
-  // render(<MemoryRouter><AppBar /></MemoryRouter>)
-  test.skip('Should render', () => {
-    expect(screen).toBeInTheDocument()
+describe('AppBar Test', () => {
+  // TODO: Wrap in Redux Provider for tests to work
+  it.skip('Should render', () => {
+    const { container } = render(<MemoryRouter><Header /></MemoryRouter>)
+    expect(container).toBeInTheDocument()
   })
 
-  // const componentText = screen.render().text()
-  test.skip('should render the dataset name', () => {
-    expect(componentText).toContain('MARQUEZ')
+  it.skip('should render the header component', () => {
+    const { container } = render(<MemoryRouter><Header /></MemoryRouter>)
+    expect(container.querySelector('header')).toBeInTheDocument()
   })
 })

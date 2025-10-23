@@ -41,6 +41,7 @@ import MqStatus from '../../components/core/status/MqStatus'
 import MqText from '../../components/core/text/MqText'
 import NamespaceSelect from '../../components/namespace-select/NamespaceSelect'
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface StateProps {
   datasets: Dataset[]
@@ -102,12 +103,12 @@ const Datasets: React.FC<DatasetsProps> = ({
     setState({ ...state, page: directionPage })
   }
 
-  const i18next = require('i18next')
+  const { t } = useTranslation()
   return (
     <Container maxWidth={'lg'} disableGutters>
       <Box p={2} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
         <Box display={'flex'}>
-          <MqText heading>{i18next.t('datasets_route.heading')}</MqText>
+          <MqText heading>{t('datasets_route.heading')}</MqText>
           {!isDatasetsLoading && (
             <Chip
               size={'small'}
@@ -144,9 +145,9 @@ const Datasets: React.FC<DatasetsProps> = ({
         <>
           {datasets.length === 0 ? (
             <Box p={2}>
-              <MqEmpty title={i18next.t('datasets_route.empty_title')}>
+              <MqEmpty title={t('datasets_route.empty_title')}>
                 <>
-                  <MqText subdued>{i18next.t('datasets_route.empty_body')}</MqText>
+                  <MqText subdued>{t('datasets_route.empty_body')}</MqText>
                   <Button
                     color={'primary'}
                     size={'small'}
@@ -166,22 +167,22 @@ const Datasets: React.FC<DatasetsProps> = ({
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell key={i18next.t('datasets_route.name_col')} align='left'>
-                      <MqText subheading>{i18next.t('datasets_route.name_col')}</MqText>
+                    <TableCell key={t('datasets_route.name_col')} align='left'>
+                      <MqText subheading>{t('datasets_route.name_col')}</MqText>
                     </TableCell>
-                    <TableCell key={i18next.t('datasets_route.namespace_col')} align='left'>
-                      <MqText subheading>{i18next.t('datasets_route.namespace_col')}</MqText>
+                    <TableCell key={t('datasets_route.namespace_col')} align='left'>
+                      <MqText subheading>{t('datasets_route.namespace_col')}</MqText>
                     </TableCell>
-                    <TableCell key={i18next.t('datasets_route.source_col')} align='left'>
-                      <MqText subheading>{i18next.t('datasets_route.source_col')}</MqText>
+                    <TableCell key={t('datasets_route.source_col')} align='left'>
+                      <MqText subheading>{t('datasets_route.source_col')}</MqText>
                     </TableCell>
-                    <TableCell key={i18next.t('datasets_route.updated_col')} align='left'>
-                      <MqText subheading>{i18next.t('datasets_route.updated_col')}</MqText>
+                    <TableCell key={t('datasets_route.updated_col')} align='left'>
+                      <MqText subheading>{t('datasets_route.updated_col')}</MqText>
                     </TableCell>
-                    <TableCell key={i18next.t('datasets_route.quality')} align='left'>
-                      <MqText subheading>{i18next.t('datasets_route.quality')}</MqText>
+                    <TableCell key={t('datasets_route.quality')} align='left'>
+                      <MqText subheading>{t('datasets_route.quality')}</MqText>
                     </TableCell>
-                    <TableCell key={i18next.t('datasets.column_lineage_tab')} align='left'>
+                    <TableCell key={t('datasets.column_lineage_tab')} align='left'>
                       <MqText inline subheading>
                         COLUMN LINEAGE
                       </MqText>

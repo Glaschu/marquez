@@ -8,8 +8,7 @@ import IconButton from '@mui/material/IconButton'
 import MQTooltip from '../core/tooltip/MQTooltip'
 import MqText from '../core/text/MqText'
 import React, { FunctionComponent } from 'react'
-
-const i18next = require('i18next')
+import { useTranslation } from 'react-i18next'
 
 interface Props {
   pageSize: number
@@ -20,6 +19,7 @@ interface Props {
 }
 
 const MqPaging: FunctionComponent<Props> = (props) => {
+  const { t } = useTranslation()
   const { pageSize, currentPage, incrementPage, decrementPage, totalCount } = props
   return (
     <Box display={'flex'} justifyContent={'flex-end'} alignItems={'center'}>
@@ -29,7 +29,7 @@ const MqPaging: FunctionComponent<Props> = (props) => {
           {totalCount}
         </>
       </MqText>
-      <MQTooltip title={i18next.t('events_route.previous_page')}>
+      <MQTooltip title={t('events_route.previous_page')}>
         <span>
           <IconButton
             sx={{
@@ -44,7 +44,7 @@ const MqPaging: FunctionComponent<Props> = (props) => {
           </IconButton>
         </span>
       </MQTooltip>
-      <MQTooltip title={i18next.t('events_route.next_page')}>
+      <MQTooltip title={t('events_route.next_page')}>
         <span>
           <IconButton
             color='primary'

@@ -49,6 +49,7 @@ import MQTooltip from '../core/tooltip/MQTooltip'
 import MqStatus from '../core/status/MqStatus'
 import MqText from '../core/text/MqText'
 import React, { ChangeEvent, FunctionComponent, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import RuleIcon from '@mui/icons-material/Rule'
 import StorageIcon from '@mui/icons-material/Storage'
 
@@ -95,7 +96,7 @@ const DatasetDetailPage: FunctionComponent<IProps> = (props) => {
     setTabIndex,
   } = props
   const navigate = useNavigate()
-  const i18next = require('i18next')
+  const { t } = useTranslation()
   const theme = createTheme(useTheme())
   const [_, setSearchParams] = useSearchParams()
   const [showTags, setShowTags] = useState(false)
@@ -194,12 +195,12 @@ const DatasetDetailPage: FunctionComponent<IProps> = (props) => {
                   props.dialogToggle('')
                 }}
               >
-                {i18next.t('datasets.dialog_delete')}
+                {t('datasets.dialog_delete')}
               </Button>
               <Dialog
                 dialogIsOpen={display.dialogIsOpen}
                 dialogToggle={dialogToggle}
-                title={i18next.t('jobs.dialog_confirmation_title')}
+                title={t('jobs.dialog_confirmation_title')}
                 ignoreWarning={() => {
                   deleteDataset(lineageDataset.name, lineageDataset.namespace)
                   props.dialogToggle('')
@@ -298,8 +299,8 @@ const DatasetDetailPage: FunctionComponent<IProps> = (props) => {
             textColor='primary'
             indicatorColor='primary'
           >
-            <Tab label={i18next.t('datasets.latest_tab')} {...a11yProps(0)} disableRipple={true} />
-            <Tab label={i18next.t('datasets.history_tab')} {...a11yProps(2)} disableRipple={true} />
+            <Tab label={t('datasets.latest_tab')} {...a11yProps(0)} disableRipple={true} />
+            <Tab label={t('datasets.history_tab')} {...a11yProps(2)} disableRipple={true} />
           </Tabs>
         </Box>
         {tabIndex === 0 && (
@@ -318,7 +319,7 @@ const DatasetDetailPage: FunctionComponent<IProps> = (props) => {
                   disabled={isDatasetLoading}
                 />
               }
-              label={i18next.t('datasets.show_field_tags')}
+              label={t('datasets.show_field_tags')}
             />
           </Box>
         )}

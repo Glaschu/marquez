@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import React, { ChangeEvent, FunctionComponent, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import '../../i18n/config'
 import * as Redux from 'redux'
@@ -96,7 +97,7 @@ const JobDetailPage: FunctionComponent<IProps> = (props) => {
     setTabIndex(newValue)
   }
 
-  const i18next = require('i18next')
+  const { t } = useTranslation()
 
   useEffect(() => {
     fetchJob(lineageJob.namespace, lineageJob.name)
@@ -195,12 +196,12 @@ const JobDetailPage: FunctionComponent<IProps> = (props) => {
                   props.dialogToggle('')
                 }}
               >
-                {i18next.t('jobs.dialog_delete')}
+                {t('jobs.dialog_delete')}
               </Button>
               <Dialog
                 dialogIsOpen={display.dialogIsOpen}
                 dialogToggle={dialogToggle}
-                title={i18next.t('jobs.dialog_confirmation_title')}
+                title={t('jobs.dialog_confirmation_title')}
                 ignoreWarning={() => {
                   deleteJob(job.name, job.namespace)
                   props.dialogToggle('')
@@ -216,7 +217,7 @@ const JobDetailPage: FunctionComponent<IProps> = (props) => {
                 href={job.location}
                 disabled={!job.location}
               >
-                {i18next.t('jobs.location')}
+                {t('jobs.location')}
               </Button>
             </Box>
             <IconButton onClick={() => setSearchParams({})} size='small'>
@@ -310,8 +311,8 @@ const JobDetailPage: FunctionComponent<IProps> = (props) => {
         sx={{ borderBottom: 1, borderColor: 'divider', width: '100%' }}
       >
         <Tabs value={tabIndex} onChange={handleChange} textColor='primary' indicatorColor='primary'>
-          <Tab label={i18next.t('jobs.latest_tab')} disableRipple={true} />
-          <Tab label={i18next.t('jobs.history_tab')} disableRipple={true} />
+          <Tab label={t('jobs.latest_tab')} disableRipple={true} />
+          <Tab label={t('jobs.history_tab')} disableRipple={true} />
         </Tabs>
       </Box>
       {tabIndex === 0 ? (
@@ -319,7 +320,7 @@ const JobDetailPage: FunctionComponent<IProps> = (props) => {
           <RunInfo run={job.latestRun} />
         ) : (
           !job.latestRun && (
-            <MqEmpty title={i18next.t('jobs.empty_title')} body={i18next.t('jobs.empty_body')} />
+            <MqEmpty title={t('jobs.empty_title')} body={t('jobs.empty_body')} />
           )
         )
       ) : null}

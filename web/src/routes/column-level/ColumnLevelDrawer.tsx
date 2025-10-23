@@ -23,8 +23,7 @@ import IconButton from '@mui/material/IconButton'
 import MqJsonView from '../../components/core/json-view/MqJsonView'
 import MqText from '../../components/core/text/MqText'
 import React, { useEffect } from 'react'
-
-const i18next = require('i18next')
+import { useTranslation } from 'react-i18next'
 
 const WIDTH = 600
 
@@ -42,6 +41,7 @@ const ColumnLevelDrawer = ({
   columnLineage,
   isDatasetLoading,
 }: StateProps & DispatchProps) => {
+  const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   useEffect(() => {
     const dataset = searchParams.get('dataset')
@@ -114,17 +114,17 @@ const ColumnLevelDrawer = ({
                   <TableRow>
                     <TableCell align='left'>
                       <MqText subheading inline>
-                        {i18next.t('dataset_info_columns.name')}
+                        {t('dataset_info_columns.name')}
                       </MqText>
                     </TableCell>
                     <TableCell align='left'>
                       <MqText subheading inline>
-                        {i18next.t('dataset_info_columns.type')}
+                        {t('dataset_info_columns.type')}
                       </MqText>
                     </TableCell>
                     <TableCell align='left'>
                       <MqText subheading inline>
-                        {i18next.t('dataset_info_columns.description')}
+                        {t('dataset_info_columns.description')}
                       </MqText>
                     </TableCell>
                     <TableCell align='left'></TableCell>

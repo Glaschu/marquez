@@ -1,7 +1,7 @@
 import * as Redux from 'redux'
 import { ActionBar } from './ActionBar'
 import { Box } from '@mui/system'
-import { DEFAULT_MAX_SCALE, Graph, ZoomPanControls } from '../../../libs/graph'
+import { DEFAULT_MAX_SCALE, Graph, ZoomPanControls } from '../../components/graph'
 import { Drawer } from '@mui/material'
 import { HEADER_HEIGHT, theme } from '../../helpers/theme'
 import { IState } from '../../store/reducers'

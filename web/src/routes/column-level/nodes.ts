@@ -1,5 +1,5 @@
 import { ColumnLineageDatasetNode } from './ColumnLineageDatasetNode'
-import { NodeRendererMap } from '../../../libs/graph'
+import { NodeRendererMap } from '../../components/graph'
 import ColumnLineageColumnNode from './ColumnLineageColumnNode'
 
 export interface ColumnLineageColumnNodeData {

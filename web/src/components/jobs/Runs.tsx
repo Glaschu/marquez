@@ -32,6 +32,7 @@ import MqPaging from '../paging/MqPaging'
 import MqStatus from '../core/status/MqStatus'
 import MqText from '../core/text/MqText'
 import React, { FunctionComponent, SetStateAction } from 'react'
+import { useTranslation } from 'react-i18next'
 import RunInfo from './RunInfo'
 
 interface DispatchProps {
@@ -55,7 +56,7 @@ const PAGE_SIZE = 10
 
 const Runs: FunctionComponent<RunsProps & DispatchProps> = (props) => {
   const { runs, facets, totalCount, runsLoading, fetchRuns, jobName, jobNamespace } = props
-  const i18next = require('i18next')
+  const { t } = useTranslation()
 
   const [state, setState] = React.useState<RunsState>({
     page: 0,
@@ -79,7 +80,7 @@ const Runs: FunctionComponent<RunsProps & DispatchProps> = (props) => {
   const theme = createTheme(useTheme())
 
   if (runs.length === 0) {
-    return <MqEmpty title={i18next.t('jobs.empty_title')} body={i18next.t('jobs.empty_body')} />
+    return <MqEmpty title={t('jobs.empty_title')} body={t('jobs.empty_body')} />
   }
 
   if (runsLoading) {
@@ -111,32 +112,32 @@ const Runs: FunctionComponent<RunsProps & DispatchProps> = (props) => {
           <TableRow>
             <TableCell align='left'>
               <MqText subheading inline>
-                {i18next.t('runs_columns.id')}
+                {t('runs_columns.id')}
               </MqText>
             </TableCell>
             <TableCell align='left'>
               <MqText subheading inline>
-                {i18next.t('runs_columns.state')}
+                {t('runs_columns.state')}
               </MqText>
             </TableCell>
             <TableCell align='left'>
               <MqText subheading inline>
-                {i18next.t('runs_columns.created_at')}
+                {t('runs_columns.created_at')}
               </MqText>
             </TableCell>
             <TableCell align='left'>
               <MqText subheading inline>
-                {i18next.t('runs_columns.started_at')}
+                {t('runs_columns.started_at')}
               </MqText>
             </TableCell>
             <TableCell align='left'>
               <MqText subheading inline>
-                {i18next.t('runs_columns.ended_at')}
+                {t('runs_columns.ended_at')}
               </MqText>
             </TableCell>
             <TableCell align='left'>
               <MqText subheading inline>
-                {i18next.t('runs_columns.duration')}
+                {t('runs_columns.duration')}
               </MqText>
             </TableCell>
           </TableRow>
@@ -217,7 +218,7 @@ const Runs: FunctionComponent<RunsProps & DispatchProps> = (props) => {
       {facets && (
         <Box mt={2}>
           <Box mb={1}>
-            <MqText subheading>{i18next.t('jobs.runs_subhead')}</MqText>
+            <MqText subheading>{t('jobs.runs_subhead')}</MqText>
           </Box>
           <MqCode code={JSON.stringify(facets, null, '\t')} />
         </Box>

@@ -13,6 +13,7 @@ import { selectNamespace } from '../../store/actionCreators'
 import { theme } from '../../helpers/theme'
 import MqText from '../core/text/MqText'
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface OwnProps {}
 
@@ -33,7 +34,7 @@ const NamespaceSelect: React.FC<NamespaceSelectProps> = ({
   selectNamespace,
 }) => {
   const [open, setOpen] = React.useState(false)
-  const i18next = require('i18next')
+  const { t } = useTranslation()
 
   if (selectedNamespace) {
     return (
@@ -55,7 +56,7 @@ const NamespaceSelect: React.FC<NamespaceSelectProps> = ({
           }}
         >
           <MqText color={theme.palette.primary.main} font={'mono'}>
-            {i18next.t('namespace_select.prompt')}
+            {t('namespace_select.prompt')}
           </MqText>
         </Box>
         <Select

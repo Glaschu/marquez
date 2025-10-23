@@ -40,6 +40,7 @@ import MqPaging from '../../components/paging/MqPaging'
 import MqStatus from '../../components/core/status/MqStatus'
 import MqText from '../../components/core/text/MqText'
 import React, { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import moment from 'moment'
 
 interface StateProps {
@@ -171,7 +172,7 @@ const Events: React.FC<EventsProps> = ({
     fetchEvents(dateFrom, dateTo, PAGE_SIZE, state.page * PAGE_SIZE)
   }
 
-  const i18next = require('i18next')
+  const { t } = useTranslation()
   const theme = createTheme(useTheme())
 
   return (
@@ -184,7 +185,7 @@ const Events: React.FC<EventsProps> = ({
           <Box p={2} display={'flex'} justifyContent={'space-between'}>
             <Box>
               <Box display={'flex'} alignItems={'center'}>
-                <MqText heading>{i18next.t('events_route.title')}</MqText>
+                <MqText heading>{t('events_route.title')}</MqText>
                 {!isEventsLoading && (
                   <Chip
                     size={'small'}
@@ -219,13 +220,13 @@ const Events: React.FC<EventsProps> = ({
           >
             <Box display={'flex'}>
               <MqDatePicker
-                label={i18next.t('events_route.from_date')}
+                label={t('events_route.from_date')}
                 value={formatDatePicker(state.dateFrom)}
                 onChange={(e: any) => handleChangeDatepicker(e, 'from')}
               />
               <Box sx={{ marginLeft: theme.spacing(2) }} />
               <MqDatePicker
-                label={i18next.t('events_route.to_date')}
+                label={t('events_route.to_date')}
                 value={formatDatePicker(state.dateTo)}
                 onChange={(e: any) => handleChangeDatepicker(e, 'to')}
               />
@@ -234,9 +235,9 @@ const Events: React.FC<EventsProps> = ({
           </Box>
           {state.events?.length === 0 ? (
             <Box p={2}>
-              <MqEmpty title={i18next.t('events_route.empty_title')}>
+              <MqEmpty title={t('events_route.empty_title')}>
                 <>
-                  <MqText subdued>{i18next.t('events_route.empty_body')}</MqText>
+                  <MqText subdued>{t('events_route.empty_body')}</MqText>
                   <Button
                     color={'primary'}
                     size={'small'}
@@ -260,19 +261,19 @@ const Events: React.FC<EventsProps> = ({
                 <TableHead>
                   <TableRow>
                     <TableCell align='left'>
-                      <MqText subheading>{i18next.t('events_columns.id')}</MqText>
+                      <MqText subheading>{t('events_columns.id')}</MqText>
                     </TableCell>
                     <TableCell align='left'>
-                      <MqText subheading>{i18next.t('events_columns.state')}</MqText>
+                      <MqText subheading>{t('events_columns.state')}</MqText>
                     </TableCell>
                     <TableCell align='left'>
-                      <MqText subheading>{i18next.t('events_columns.name')}</MqText>
+                      <MqText subheading>{t('events_columns.name')}</MqText>
                     </TableCell>
                     <TableCell align='left'>
-                      <MqText subheading>{i18next.t('events_columns.namespace')}</MqText>
+                      <MqText subheading>{t('events_columns.namespace')}</MqText>
                     </TableCell>
                     <TableCell align='left'>
-                      <MqText subheading>{i18next.t('events_columns.time')}</MqText>
+                      <MqText subheading>{t('events_columns.time')}</MqText>
                     </TableCell>
                   </TableRow>
                 </TableHead>

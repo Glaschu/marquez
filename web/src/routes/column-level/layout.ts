@@ -1,6 +1,6 @@
 import { ColumnLevelNodeData, ColumnLevelNodeKinds } from './nodes'
 import { ColumnLineageGraph, ColumnLineageNode } from '../../types/api'
-import { Edge, Node as ElkNode } from '../../../libs/graph'
+import { Edge, Node as ElkNode } from '../../components/graph'
 import { Nullable } from '../../types/util/Nullable'
 import { theme } from '../../helpers/theme'
 

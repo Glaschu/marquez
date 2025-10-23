@@ -28,6 +28,7 @@ import MqCopy from '../core/copy/MqCopy'
 import MqPaging from '../paging/MqPaging'
 import MqText from '../core/text/MqText'
 import React, { FunctionComponent, SetStateAction } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface DatasetVersionsProps {
   versions: DatasetVersion[]
@@ -65,7 +66,7 @@ const DatasetVersions: FunctionComponent<DatasetVersionsProps & DispatchProps> =
     setState({ ...state, page: directionPage })
   }
 
-  const i18next = require('i18next')
+  const { t } = useTranslation()
   const theme = createTheme(useTheme())
 
   React.useEffect(() => {
@@ -104,27 +105,27 @@ const DatasetVersions: FunctionComponent<DatasetVersionsProps & DispatchProps> =
           <TableRow>
             <TableCell align='left'>
               <MqText subheading inline>
-                {i18next.t('dataset_versions_columns.version')}
+                {t('dataset_versions_columns.version')}
               </MqText>
             </TableCell>
             <TableCell align='left'>
               <MqText subheading inline>
-                {i18next.t('dataset_versions_columns.created_at')}
+                {t('dataset_versions_columns.created_at')}
               </MqText>
             </TableCell>
             <TableCell align='left'>
               <MqText subheading inline>
-                {i18next.t('dataset_versions_columns.fields')}
+                {t('dataset_versions_columns.fields')}
               </MqText>
             </TableCell>
             <TableCell align='left'>
               <MqText subheading inline>
-                {i18next.t('dataset_versions_columns.created_by_run')}
+                {t('dataset_versions_columns.created_by_run')}
               </MqText>
             </TableCell>
             <TableCell align='left'>
               <MqText subheading inline>
-                {i18next.t('dataset_versions_columns.lifecycle_state')}
+                {t('dataset_versions_columns.lifecycle_state')}
               </MqText>
             </TableCell>
           </TableRow>
