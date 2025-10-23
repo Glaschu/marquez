@@ -1,16 +1,16 @@
 // Copyright 2018-2025 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import React from 'react'
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import { MiniGraphContainer } from '../../../routes/dashboard/MiniGraphContainer'
 import { IntervalMetric } from '../../../store/requests/intervalMetrics'
+import { MiniGraphContainer } from '../../../routes/dashboard/MiniGraphContainer'
+import { describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import React from 'react'
 
 // Mock MiniGraph component
 vi.mock('../../../routes/dashboard/MiniGraph', () => ({
   default: ({ color, label }: { color: string; label: string }) => (
-    <div data-testid="mini-graph" data-color={color} data-label={label}>
+    <div data-testid='mini-graph' data-color={color} data-label={label}>
       Mock MiniGraph
     </div>
   ),
@@ -37,12 +37,7 @@ describe('MiniGraphContainer Component', () => {
 
   it('should render with label and metrics', () => {
     render(
-      <MiniGraphContainer
-        metrics={mockMetrics}
-        isLoading={false}
-        label="Jobs"
-        color="#ff0000"
-      />
+      <MiniGraphContainer metrics={mockMetrics} isLoading={false} label='Jobs' color='#ff0000' />
     )
 
     expect(screen.getByText('JOBS')).toBeTruthy()
@@ -54,8 +49,8 @@ describe('MiniGraphContainer Component', () => {
       <MiniGraphContainer
         metrics={mockMetrics}
         isLoading={false}
-        label="Datasets"
-        color="#00ff00"
+        label='Datasets'
+        color='#00ff00'
       />
     )
 
@@ -65,26 +60,14 @@ describe('MiniGraphContainer Component', () => {
 
   it('should uppercase the label', () => {
     render(
-      <MiniGraphContainer
-        metrics={mockMetrics}
-        isLoading={false}
-        label="sources"
-        color="#0000ff"
-      />
+      <MiniGraphContainer metrics={mockMetrics} isLoading={false} label='sources' color='#0000ff' />
     )
 
     expect(screen.getByText('SOURCES')).toBeTruthy()
   })
 
   it('should not display count when metrics is empty', () => {
-    render(
-      <MiniGraphContainer
-        metrics={[]}
-        isLoading={false}
-        label="Jobs"
-        color="#ff0000"
-      />
-    )
+    render(<MiniGraphContainer metrics={[]} isLoading={false} label='Jobs' color='#ff0000' />)
 
     expect(screen.queryByText(/\d+/)).toBeNull()
   })
@@ -92,7 +75,7 @@ describe('MiniGraphContainer Component', () => {
   it('should pass color and label to MiniGraph', () => {
     const testColor = '#123456'
     const testLabel = 'Test Metric'
-    
+
     render(
       <MiniGraphContainer
         metrics={mockMetrics}
@@ -112,8 +95,8 @@ describe('MiniGraphContainer Component', () => {
       <MiniGraphContainer
         metrics={mockMetrics}
         isLoading={true}
-        label="Loading Test"
-        color="#ff0000"
+        label='Loading Test'
+        color='#ff0000'
       />
     )
 
@@ -134,8 +117,8 @@ describe('MiniGraphContainer Component', () => {
       <MiniGraphContainer
         metrics={largeMetrics}
         isLoading={false}
-        label="Big Numbers"
-        color="#ff0000"
+        label='Big Numbers'
+        color='#ff0000'
       />
     )
 

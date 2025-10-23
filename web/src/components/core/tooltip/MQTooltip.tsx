@@ -1,17 +1,17 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
+import { type ReactElement, type SyntheticEvent } from 'react'
 import { createTheme } from '@mui/material/styles'
 import { darken } from '@mui/material'
 import { useTheme } from '@emotion/react'
-import React, { ReactElement } from 'react'
 import Tooltip from '@mui/material/Tooltip'
 
 interface MqToolTipProps {
   title: string | ReactElement
   children: ReactElement
-  onOpen?: (event: React.SyntheticEvent) => void
-  onClose?: (event: React.SyntheticEvent) => void
+  onOpen?: (event: SyntheticEvent) => void
+  onClose?: (event: SyntheticEvent) => void
   placement?:
     | 'left'
     | 'right'
@@ -27,7 +27,7 @@ interface MqToolTipProps {
     | 'right-start'
 }
 
-const MQTooltip: React.FC<MqToolTipProps> = ({ title, onOpen, onClose, children, placement }) => {
+const MQTooltip = ({ title, onOpen, onClose, children, placement }: MqToolTipProps) => {
   const theme = createTheme(useTheme())
   return (
     <Tooltip

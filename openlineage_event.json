@@ -1,0 +1,260 @@
+{
+  "eventType": "START",
+  "eventTime": "2025-10-22T20:30:00.000Z",
+  "run": {
+    "runId": "9b57354f-d4eb-4d00-baec-2557617f0d92",
+    "facets": {
+      "nominalTime": {
+        "_producer": "https://github.com/MarquezProject/marquez",
+        "_schemaURL": "https://raw.githubusercontent.com/OpenLineage/OpenLineage/main/spec/OpenLineage.json#/definitions/NominalTimeRunFacet",
+        "nominalStartTime": "2025-10-22T20:30:00.000Z"
+      }
+    }
+  },
+  "job": {
+    "namespace": "data_pipeline",
+    "name": "create_customer_summary",
+    "facets": {
+      "documentation": {
+        "_producer": "https://github.com/MarquezProject/marquez",
+        "_schemaURL": "https://raw.githubusercontent.com/OpenLineage/OpenLineage/main/spec/OpenLineage.json#/definitions/DocumentationJobFacet",
+        "description": "Creates customer summary by joining customers and orders tables with aggregations"
+      },
+      "sql": {
+        "_producer": "https://github.com/MarquezProject/marquez",
+        "_schemaURL": "https://raw.githubusercontent.com/OpenLineage/OpenLineage/main/spec/OpenLineage.json#/definitions/SqlJobFacet",
+        "query": "CREATE TABLE customer_summary AS SELECT c.customer_id, CONCAT(c.first_name, ' ', c.last_name) as full_name, c.email, CONCAT(c.city, ', ', c.state) as location, COUNT(o.order_id) as total_orders, SUM(o.total_amount) as total_spent, AVG(o.total_amount) as avg_order_value, MAX(o.order_date) as last_order_date FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.customer_id, c.first_name, c.last_name, c.email, c.city, c.state"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "namespace": "data_pipeline",
+      "name": "customers",
+      "facets": {
+        "schema": {
+          "_producer": "https://github.com/MarquezProject/marquez",
+          "_schemaURL": "https://openlineage.io/spec/facets/1-0-0/SchemaDatasetFacet.json",
+          "fields": [
+            {"name": "customer_id", "type": "INTEGER"},
+            {"name": "first_name", "type": "VARCHAR"},
+            {"name": "last_name", "type": "VARCHAR"},
+            {"name": "email", "type": "VARCHAR"},
+            {"name": "registration_date", "type": "DATE"},
+            {"name": "city", "type": "VARCHAR"},
+            {"name": "state", "type": "VARCHAR"}
+          ]
+        }
+      }
+    },
+    {
+      "namespace": "data_pipeline", 
+      "name": "orders",
+      "facets": {
+        "schema": {
+          "_producer": "https://github.com/MarquezProject/marquez",
+          "_schemaURL": "https://openlineage.io/spec/facets/1-0-0/SchemaDatasetFacet.json",
+          "fields": [
+            {"name": "order_id", "type": "INTEGER"},
+            {"name": "customer_id", "type": "INTEGER"},
+            {"name": "order_date", "type": "DATE"},
+            {"name": "total_amount", "type": "DECIMAL"},
+            {"name": "status", "type": "VARCHAR"}
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "namespace": "data_pipeline",
+      "name": "customer_summary",
+      "facets": {
+        "schema": {
+          "_producer": "https://github.com/MarquezProject/marquez",  
+          "_schemaURL": "https://openlineage.io/spec/facets/1-0-0/SchemaDatasetFacet.json",
+          "fields": [
+            {"name": "customer_id", "type": "INTEGER"},
+            {"name": "full_name", "type": "VARCHAR"},
+            {"name": "email", "type": "VARCHAR"},
+            {"name": "location", "type": "VARCHAR"},
+            {"name": "total_orders", "type": "INTEGER"},
+            {"name": "total_spent", "type": "DECIMAL"},
+            {"name": "avg_order_value", "type": "DECIMAL"},
+            {"name": "last_order_date", "type": "DATE"}
+          ]
+        },
+        "columnLineage": {
+          "_producer": "https://github.com/MarquezProject/marquez",
+          "_schemaURL": "https://openlineage.io/spec/facets/1-2-0/ColumnLineageDatasetFacet.json",
+          "fields": {
+            "customer_id": {
+              "inputFields": [
+                {
+                  "namespace": "data_pipeline",
+                  "name": "customers",
+                  "field": "customer_id",
+                  "transformations": [
+                    {
+                      "type": "DIRECT",
+                      "subtype": "IDENTITY",
+                      "description": "Direct mapping from customers.customer_id",
+                      "masking": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "full_name": {
+              "inputFields": [
+                {
+                  "namespace": "data_pipeline",
+                  "name": "customers", 
+                  "field": "first_name",
+                  "transformations": [
+                    {
+                      "type": "DIRECT",
+                      "subtype": "TRANSFORMATION",
+                      "description": "Concatenated with last_name to form full_name",
+                      "masking": false
+                    }
+                  ]
+                },
+                {
+                  "namespace": "data_pipeline",
+                  "name": "customers",
+                  "field": "last_name",
+                  "transformations": [
+                    {
+                      "type": "DIRECT", 
+                      "subtype": "TRANSFORMATION",
+                      "description": "Concatenated with first_name to form full_name",
+                      "masking": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "email": {
+              "inputFields": [
+                {
+                  "namespace": "data_pipeline",
+                  "name": "customers",
+                  "field": "email",
+                  "transformations": [
+                    {
+                      "type": "DIRECT",
+                      "subtype": "IDENTITY",
+                      "description": "Direct mapping from customers.email",
+                      "masking": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "location": {
+              "inputFields": [
+                {
+                  "namespace": "data_pipeline",
+                  "name": "customers",
+                  "field": "city",
+                  "transformations": [
+                    {
+                      "type": "DIRECT",
+                      "subtype": "TRANSFORMATION",
+                      "description": "Concatenated with state to form location",
+                      "masking": false
+                    }
+                  ]
+                },
+                {
+                  "namespace": "data_pipeline", 
+                  "name": "customers",
+                  "field": "state",
+                  "transformations": [
+                    {
+                      "type": "DIRECT",
+                      "subtype": "TRANSFORMATION", 
+                      "description": "Concatenated with city to form location",
+                      "masking": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "total_orders": {
+              "inputFields": [
+                {
+                  "namespace": "data_pipeline",
+                  "name": "orders",
+                  "field": "order_id",
+                  "transformations": [
+                    {
+                      "type": "DIRECT",
+                      "subtype": "AGGREGATION",
+                      "description": "COUNT aggregation of order_id grouped by customer",
+                      "masking": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "total_spent": {
+              "inputFields": [
+                {
+                  "namespace": "data_pipeline",
+                  "name": "orders",
+                  "field": "total_amount",
+                  "transformations": [
+                    {
+                      "type": "DIRECT",
+                      "subtype": "AGGREGATION",
+                      "description": "SUM aggregation of total_amount grouped by customer",
+                      "masking": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "avg_order_value": {
+              "inputFields": [
+                {
+                  "namespace": "data_pipeline", 
+                  "name": "orders",
+                  "field": "total_amount",
+                  "transformations": [
+                    {
+                      "type": "DIRECT",
+                      "subtype": "AGGREGATION",
+                      "description": "AVG aggregation of total_amount grouped by customer",
+                      "masking": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "last_order_date": {
+              "inputFields": [
+                {
+                  "namespace": "data_pipeline",
+                  "name": "orders", 
+                  "field": "order_date",
+                  "transformations": [
+                    {
+                      "type": "DIRECT",
+                      "subtype": "AGGREGATION",
+                      "description": "MAX aggregation of order_date grouped by customer",
+                      "masking": false
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "producer": "https://github.com/MarquezProject/marquez",
+  "schemaURL": "https://openlineage.io/spec/1-0-5/OpenLineage.json"
+}

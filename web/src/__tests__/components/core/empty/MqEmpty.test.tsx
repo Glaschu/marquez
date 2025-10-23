@@ -1,46 +1,43 @@
 // Copyright 2018-2024 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as React from 'react'
+import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
 import MqEmpty from '../../../../components/core/empty/MqEmpty'
 
 describe('MqEmpty Component', () => {
   it('should render without crashing', () => {
-    const { container } = render(<MqEmpty title="No Data" body="No data available" />)
+    const { container } = render(<MqEmpty title='No Data' body='No data available' />)
     expect(container).toBeInTheDocument()
   })
 
   it('should display title and body', () => {
-    const { getByText } = render(<MqEmpty title="No Results" body="Try a different search" />)
+    const { getByText } = render(<MqEmpty title='No Results' body='Try a different search' />)
     expect(getByText('No Results')).toBeInTheDocument()
     expect(getByText('Try a different search')).toBeInTheDocument()
   })
 
   it('should render without title', () => {
-    const { container } = render(<MqEmpty body="Only body text" />)
+    const { container } = render(<MqEmpty body='Only body text' />)
     expect(screen.getByText('Only body text')).toBeInTheDocument()
   })
 
   it('should render without body', () => {
-    const { container } = render(<MqEmpty title="Only title" />)
+    const { container } = render(<MqEmpty title='Only title' />)
     expect(screen.getByText('Only title')).toBeInTheDocument()
   })
 
   it('should render with emoji', () => {
-    const { container } = render(
-      <MqEmpty title="No Data" body="No data available" emoji="📭" />
-    )
+    const { container } = render(<MqEmpty title='No Data' body='No data available' emoji='📭' />)
     expect(screen.getByText('No Data')).toBeInTheDocument()
     expect(screen.getByRole('img', { name: 'icon' })).toBeInTheDocument()
     expect(screen.getByText('📭')).toBeInTheDocument()
   })
 
   it('should render with children', () => {
-    const CustomChild = () => <div data-testid="custom-child">Custom Content</div>
+    const CustomChild = () => <div data-testid='custom-child'>Custom Content</div>
     const { container } = render(
-      <MqEmpty title="Custom">
+      <MqEmpty title='Custom'>
         <CustomChild />
       </MqEmpty>
     )
@@ -49,9 +46,9 @@ describe('MqEmpty Component', () => {
   })
 
   it('should render with all props', () => {
-    const CustomChild = () => <div data-testid="all-props-child">All Props Child</div>
+    const CustomChild = () => <div data-testid='all-props-child'>All Props Child</div>
     const { container } = render(
-      <MqEmpty title="Complete Example" body="This has everything" emoji="🎉">
+      <MqEmpty title='Complete Example' body='This has everything' emoji='🎉'>
         <CustomChild />
       </MqEmpty>
     )
@@ -67,19 +64,19 @@ describe('MqEmpty Component', () => {
   })
 
   it('should render with only emoji', () => {
-    const { container } = render(<MqEmpty emoji="⚠️" />)
+    const { container } = render(<MqEmpty emoji='⚠️' />)
     expect(screen.getByText('⚠️')).toBeInTheDocument()
   })
 
   it('should render with complex children', () => {
     const ComplexChild = () => (
-      <div data-testid="complex-child">
+      <div data-testid='complex-child'>
         <button>Click me</button>
         <p>More info</p>
       </div>
     )
     render(
-      <MqEmpty title="Complex">
+      <MqEmpty title='Complex'>
         <ComplexChild />
       </MqEmpty>
     )

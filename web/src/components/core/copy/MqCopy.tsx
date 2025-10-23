@@ -3,19 +3,19 @@
 
 import { Check } from '@mui/icons-material'
 import { Snackbar } from '@mui/material'
+import { type SyntheticEvent, useState } from 'react'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import IconButton from '@mui/material/IconButton'
 import MQTooltip from '../tooltip/MQTooltip'
-import React from 'react'
 
 interface MqCopyProps {
   string: string
 }
 
-const MqEmpty: React.FC<MqCopyProps> = ({ string }) => {
-  const [open, setOpen] = React.useState(false)
-  const [hasCopied, setHasCopied] = React.useState(false)
-  const handleClose = (event: React.SyntheticEvent | Event, reason?: string) => {
+const MqEmpty = ({ string }: MqCopyProps) => {
+  const [open, setOpen] = useState(false)
+  const [hasCopied, setHasCopied] = useState(false)
+  const handleClose = (event: SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
       return
     }

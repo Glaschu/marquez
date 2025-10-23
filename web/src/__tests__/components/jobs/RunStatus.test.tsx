@@ -1,11 +1,10 @@
 // Copyright 2018-2024 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as React from 'react'
-import { render, screen } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
-import RunStatus from '../../../components/jobs/RunStatus'
 import { Run } from '../../../types/api'
+import { describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import RunStatus from '../../../components/jobs/RunStatus'
 
 const mockRun: Run = {
   id: 'run-1',
@@ -22,24 +21,24 @@ const mockRun: Run = {
   jobVersion: {
     namespace: 'test',
     name: 'test_job',
-    version: '1.0'
-  }
+    version: '1.0',
+  },
 }
 
 describe('RunStatus Component', () => {
   it('should render without crashing', () => {
-    const { container} = render(<RunStatus run={mockRun} />)
+    const { container } = render(<RunStatus run={mockRun} />)
     expect(container).toBeInTheDocument()
   })
 
   it('should render for RUNNING state', () => {
-    const { container } = render(<RunStatus run={{...mockRun, state: 'RUNNING'}} />)
+    const { container } = render(<RunStatus run={{ ...mockRun, state: 'RUNNING' }} />)
     // RunStatus renders a colored circle, verify it renders
     expect(container.firstChild).toBeInTheDocument()
   })
 
   it('should render for FAILED state', () => {
-    const { container } = render(<RunStatus run={{...mockRun, state: 'FAILED'}} />)
+    const { container } = render(<RunStatus run={{ ...mockRun, state: 'FAILED' }} />)
     expect(container.firstChild).toBeInTheDocument()
   })
 })

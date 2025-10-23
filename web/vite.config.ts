@@ -4,9 +4,16 @@ import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react({
+    jsxRuntime: 'automatic',
+  })],
   resolve: {
     extensions: ['.tsx', '.ts', '.js', '.json'],
+    alias: {
+      // elkjs tries to require 'web-worker' in Node.js environments
+      // but we're in a browser, so we can safely ignore it
+      'web-worker': path.resolve(__dirname, 'src/helpers/web-worker-stub.ts'),
+    },
   },
   server: {
     port: 1337,

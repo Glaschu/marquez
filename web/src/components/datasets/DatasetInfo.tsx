@@ -4,6 +4,7 @@ import { Box, Chip, Table, TableBody, TableCell, TableHead, TableRow } from '@mu
 import { Dataset, Field } from '../../types/api'
 import { Link } from 'react-router-dom'
 import { encodeQueryString } from '../../routes/column-level/ColumnLineageColumnNode'
+import { useTranslation } from 'react-i18next'
 import DatasetTags from './DatasetTags'
 import IconButton from '@mui/material/IconButton'
 import MQTooltip from '../core/tooltip/MQTooltip'
@@ -11,7 +12,6 @@ import MqEmpty from '../core/empty/MqEmpty'
 import MqJsonView from '../core/json-view/MqJsonView'
 import MqText from '../core/text/MqText'
 import React, { FunctionComponent } from 'react'
-import { useTranslation } from 'react-i18next'
 import SplitscreenIcon from '@mui/icons-material/Splitscreen'
 
 export interface JobFacetsProps {
@@ -32,10 +32,7 @@ const DatasetInfo: FunctionComponent<DatasetInfoProps> = (props) => {
   return (
     <Box>
       {datasetFields.length === 0 && (
-        <MqEmpty
-          title={t('dataset_info.empty_title')}
-          body={t('dataset_info.empty_body')}
-        />
+        <MqEmpty title={t('dataset_info.empty_title')} body={t('dataset_info.empty_body')} />
       )}
       {datasetFields.length > 0 && (
         <>

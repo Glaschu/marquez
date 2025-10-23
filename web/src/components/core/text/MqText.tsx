@@ -1,7 +1,7 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import React, { ReactElement } from 'react'
+import { type ReactElement } from 'react'
 
 import { Box, SxProps } from '@mui/system'
 import { Link as LinkRouter } from 'react-router-dom'
@@ -11,7 +11,7 @@ import { alpha, createTheme } from '@mui/material/styles'
 import { useTheme } from '@emotion/react'
 import Link from '@mui/material/Link'
 
-interface OwnProps {
+interface MqTextProps {
   heading?: boolean
   subheading?: boolean
   bold?: boolean
@@ -37,9 +37,7 @@ interface OwnProps {
   onClick?: () => void
 }
 
-type MqTextProps = OwnProps
-
-const MqText: React.FC<MqTextProps> = ({
+const MqText = ({
   heading,
   subheading,
   bold,
@@ -63,7 +61,7 @@ const MqText: React.FC<MqTextProps> = ({
   block,
   onClick,
   sx,
-}) => {
+}: MqTextProps) => {
   const theme = createTheme(useTheme())
 
   const classesObject = {

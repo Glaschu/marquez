@@ -2,16 +2,12 @@ import { ColumnLineageColumnNodeData } from './nodes'
 import { ColumnLineageGraph } from '../../types/api'
 import { IState } from '../../store/reducers'
 import { PositionedNode } from '../../components/graph'
-import { connect } from 'react-redux'
 import { grey } from '@mui/material/colors'
 import { truncateText } from '../../helpers/text'
 import { useSearchParams } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import Box from '@mui/system/Box'
 import React from 'react'
-
-interface StateProps {
-  columnLineage: ColumnLineageGraph
-}
 
 interface ColumnLineageColumnNodeProps {
   node: PositionedNode<'column', ColumnLineageColumnNodeData>
@@ -21,7 +17,8 @@ export const encodeQueryString = (namespace: string, dataset: string, column: st
   return `datasetField:${namespace}:${dataset}:${column}`
 }
 
-const ColumnLineageColumnNode = ({ node }: ColumnLineageColumnNodeProps & StateProps) => {
+const ColumnLineageColumnNode = ({ node }: ColumnLineageColumnNodeProps) => {
+  const columnLineage = useSelector((state: IState) => state.columnLineage.columnLineage)
   const [searchParams, setSearchParams] = useSearchParams()
   const [shine, setShine] = React.useState(false)
   return (
@@ -99,8 +96,4 @@ ColumnLineageColumnNode.getLayoutOptions = (node: ColumnLineageColumnNodeProps['
   ...node,
 })
 
-const mapStateToProps = (state: IState) => ({
-  columnLineage: state.columnLineage.columnLineage,
-})
-
-export default connect(mapStateToProps)(ColumnLineageColumnNode)
+export default ColumnLineageColumnNode

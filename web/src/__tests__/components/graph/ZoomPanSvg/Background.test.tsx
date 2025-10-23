@@ -1,10 +1,10 @@
 // Copyright 2018-2025 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import React from 'react'
-import { describe, it, expect } from 'vitest'
-import { render } from '@testing-library/react'
 import { Background } from '../../../../components/graph/ZoomPanSvg/Background'
+import { describe, expect, it } from 'vitest'
+import { render } from '@testing-library/react'
+import React from 'react'
 
 describe('Background Component', () => {
   it('should render pattern and rect elements', () => {
@@ -47,12 +47,7 @@ describe('Background Component', () => {
   it('should apply custom background color', () => {
     const { container } = render(
       <svg>
-        <Background
-          k={1}
-          contentWidth={500}
-          contentHeight={400}
-          backgroundColor='#ffffff'
-        />
+        <Background k={1} contentWidth={500} contentHeight={400} backgroundColor='#ffffff' />
       </svg>
     )
 

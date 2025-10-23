@@ -1,7 +1,6 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import React from 'react'
 import { useTranslation } from 'react-i18next'
 import SVG from 'react-inlinesvg'
 
@@ -24,9 +23,7 @@ import { Dashboard } from '@mui/icons-material'
 import iconSearchArrow from '../../img/iconSearchArrow.svg'
 import marquez_logo from './marquez-icon-white-solid.svg'
 
-interface SidenavProps {}
-
-const Sidenav: React.FC<SidenavProps> = () => {
+const Sidenav = () => {
   const { t, i18n } = useTranslation()
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng)

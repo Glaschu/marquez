@@ -1,11 +1,10 @@
 // Copyright 2018-2024 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as React from 'react'
-import { render } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { NotFound } from '../../../routes/not-found/NotFound'
+import { describe, expect, it } from 'vitest'
+import { render } from '@testing-library/react'
 
 describe('NotFound Component', () => {
   it('should render without crashing', () => {

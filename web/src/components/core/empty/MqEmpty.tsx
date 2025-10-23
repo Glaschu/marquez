@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Box } from '@mui/material'
+import { type ReactElement } from 'react'
 import { createTheme } from '@mui/material/styles'
 import { useTheme } from '@emotion/react'
 import MqText from '../text/MqText'
-import React, { ReactElement } from 'react'
 
 interface MqEmptyProps {
   emoji?: string
@@ -14,7 +14,7 @@ interface MqEmptyProps {
   children?: ReactElement
 }
 
-const MqEmpty: React.FC<MqEmptyProps> = ({ title, body, emoji, children }) => {
+const MqEmpty = ({ title, body, emoji, children }: MqEmptyProps) => {
   const theme = createTheme(useTheme())
 
   return (

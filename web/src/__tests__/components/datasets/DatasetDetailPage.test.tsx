@@ -1,15 +1,15 @@
 // Copyright 2018-2025 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import React from 'react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { Provider } from 'react-redux'
-import { createStore } from 'redux'
-import { MemoryRouter } from 'react-router-dom'
-import DatasetDetailPage from '../../../components/datasets/DatasetDetailPage'
 import { Dataset } from '../../../types/api'
 import { LineageDataset } from '../../../types/lineage'
+import { MemoryRouter } from 'react-router-dom'
+import { Provider } from 'react-redux'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createStore } from 'redux'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import DatasetDetailPage from '../../../components/datasets/DatasetDetailPage'
+import React from 'react'
 
 // Mock i18next
 vi.mock('react-i18next', () => ({
@@ -21,25 +21,25 @@ vi.mock('react-i18next', () => ({
 // Mock child components
 vi.mock('../../../components/datasets/DatasetInfo', () => ({
   default: ({ dataset }: { dataset: Dataset }) => (
-    <div data-testid="dataset-info">DatasetInfo: {dataset.name}</div>
+    <div data-testid='dataset-info'>DatasetInfo: {dataset.name}</div>
   ),
 }))
 
 vi.mock('../../../components/datasets/DatasetVersions', () => ({
   default: ({ dataset }: { dataset: Dataset }) => (
-    <div data-testid="dataset-versions">DatasetVersions: {dataset.name}</div>
+    <div data-testid='dataset-versions'>DatasetVersions: {dataset.name}</div>
   ),
 }))
 
 vi.mock('../../../components/datasets/DatasetTags', () => ({
   default: ({ datasetName }: { datasetName: string }) => (
-    <div data-testid="dataset-tags">DatasetTags: {datasetName}</div>
+    <div data-testid='dataset-tags'>DatasetTags: {datasetName}</div>
   ),
 }))
 
 vi.mock('../../../components/datasets/Assertions', () => ({
   default: ({ assertions }: { assertions: any[] }) => (
-    <div data-testid="assertions">Assertions: {assertions.length}</div>
+    <div data-testid='assertions'>Assertions: {assertions.length}</div>
   ),
 }))
 
@@ -54,9 +54,9 @@ vi.mock('../../../components/Dialog', () => ({
     ignoreWarning: () => void
   }) =>
     dialogIsOpen ? (
-      <div data-testid="delete-dialog">
+      <div data-testid='delete-dialog'>
         <div>{title}</div>
-        <button onClick={ignoreWarning} data-testid="confirm-delete">
+        <button onClick={ignoreWarning} data-testid='confirm-delete'>
           Confirm
         </button>
       </div>

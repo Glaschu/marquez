@@ -1,10 +1,10 @@
 // Copyright 2018-2025 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import React from 'react'
-import { describe, it, expect } from 'vitest'
-import { render } from '@testing-library/react'
 import { Edge } from '../../../../components/graph/Edge/Edge'
+import { describe, expect, it } from 'vitest'
+import { render } from '@testing-library/react'
+import React from 'react'
 import type { PositionedEdge } from '../../../../components/graph/types'
 
 describe('Edge Component', () => {

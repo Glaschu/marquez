@@ -1,10 +1,9 @@
 // Copyright 2018-2024 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { faDatabase, faServer } from '@fortawesome/free-solid-svg-icons'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import MqChipGroup from '../../../../components/core/chip/MqChipGroup'
 
 describe('MqChipGroup Component', () => {
@@ -32,7 +31,7 @@ describe('MqChipGroup Component', () => {
   it('should render without crashing', () => {
     const handleSelect = vi.fn()
     const { container } = render(
-      <MqChipGroup chips={mockChips} initialSelection="chip1" onSelect={handleSelect} />
+      <MqChipGroup chips={mockChips} initialSelection='chip1' onSelect={handleSelect} />
     )
     expect(container).toBeInTheDocument()
   })
@@ -40,7 +39,7 @@ describe('MqChipGroup Component', () => {
   it('should render all chips', () => {
     const handleSelect = vi.fn()
     const { container } = render(
-      <MqChipGroup chips={mockChips} initialSelection="chip1" onSelect={handleSelect} />
+      <MqChipGroup chips={mockChips} initialSelection='chip1' onSelect={handleSelect} />
     )
     expect(container.textContent).toContain('Chip 1')
     expect(container.textContent).toContain('Chip 2')
@@ -50,7 +49,7 @@ describe('MqChipGroup Component', () => {
   it('should render chips with icons', () => {
     const handleSelect = vi.fn()
     const { container } = render(
-      <MqChipGroup chips={mockChips} initialSelection="chip1" onSelect={handleSelect} />
+      <MqChipGroup chips={mockChips} initialSelection='chip1' onSelect={handleSelect} />
     )
     const svgElements = container.querySelectorAll('svg')
     expect(svgElements.length).toBeGreaterThan(0)
@@ -59,7 +58,7 @@ describe('MqChipGroup Component', () => {
   it('should call onSelect when a chip is clicked', async () => {
     const handleSelect = vi.fn()
     const { container } = render(
-      <MqChipGroup chips={mockChips} initialSelection="chip1" onSelect={handleSelect} />
+      <MqChipGroup chips={mockChips} initialSelection='chip1' onSelect={handleSelect} />
     )
     const chip2Element = container.querySelector('#chip-chip2')
     if (chip2Element) {
@@ -73,7 +72,7 @@ describe('MqChipGroup Component', () => {
   it('should update selected state when clicking different chips', async () => {
     const handleSelect = vi.fn()
     const { container } = render(
-      <MqChipGroup chips={mockChips} initialSelection="chip1" onSelect={handleSelect} />
+      <MqChipGroup chips={mockChips} initialSelection='chip1' onSelect={handleSelect} />
     )
     const chip3Element = container.querySelector('#chip-chip3')
     if (chip3Element) {
@@ -87,7 +86,7 @@ describe('MqChipGroup Component', () => {
   it('should render with initial selection', () => {
     const handleSelect = vi.fn()
     const { container } = render(
-      <MqChipGroup chips={mockChips} initialSelection="chip2" onSelect={handleSelect} />
+      <MqChipGroup chips={mockChips} initialSelection='chip2' onSelect={handleSelect} />
     )
     expect(container.querySelector('#chip-chip2')).toBeInTheDocument()
   })
@@ -99,7 +98,7 @@ describe('MqChipGroup Component', () => {
     ]
     const handleSelect = vi.fn()
     const { container } = render(
-      <MqChipGroup chips={chipsWithoutIcons} initialSelection="chip1" onSelect={handleSelect} />
+      <MqChipGroup chips={chipsWithoutIcons} initialSelection='chip1' onSelect={handleSelect} />
     )
     expect(container.textContent).toContain('Chip 1')
     expect(container.textContent).toContain('Chip 2')

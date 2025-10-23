@@ -7,7 +7,6 @@ import { useTheme } from '@emotion/react'
 import Box from '@mui/material/Box'
 import MqSmallIcon from '../small-icon/MqSmallIcon'
 import MqText from '../text/MqText'
-import React from 'react'
 
 interface MqChipProps {
   selected?: boolean
@@ -23,7 +22,7 @@ interface MqChipProps {
 /**
  * This is a simple button that can be either selected or unselected. Is is configurable with icons and/or text
  */
-const MqChip: React.FC<MqChipProps> = ({
+const MqChip = ({
   selected,
   onSelect,
   icon,
@@ -32,7 +31,7 @@ const MqChip: React.FC<MqChipProps> = ({
   foregroundColor,
   backgroundColor,
   selectable,
-}) => {
+}: MqChipProps) => {
   const theme = createTheme(useTheme())
 
   return (

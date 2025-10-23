@@ -10,11 +10,11 @@ import { faCog, faDatabase, faSort } from '@fortawesome/free-solid-svg-icons'
 import { fetchSearch, setSelectedNode } from '../../../store/actionCreators'
 import { parseSearchGroup } from '../../../helpers/nodes'
 import { theme } from '../../../helpers/theme'
+import { useTranslation } from 'react-i18next'
 import Box from '@mui/system/Box'
 import MqChipGroup from '../../core/chip/MqChipGroup'
 import MqText from '../../core/text/MqText'
 import React, { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import SearchListItem from '../SearchListItem'
 
 interface BaseSearchProps {
@@ -137,9 +137,7 @@ const BaseSearch: React.FC<BaseSearchProps & StateProps & DispatchProps> = ({
         {searchResults.size === 0 && (
           <Box m={2} display={'flex'} alignItems={'center'} justifyContent={'center'}>
             <MqText>
-              {isSearching || !isSearchingInit
-                ? t('search.status')
-                : t('search.none')}
+              {isSearching || !isSearchingInit ? t('search.status') : t('search.none')}
             </MqText>
           </Box>
         )}

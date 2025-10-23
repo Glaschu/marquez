@@ -1,7 +1,6 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as Redux from 'redux'
 import { ArrowBackIosRounded } from '@mui/icons-material'
 import {
   Box,
@@ -16,29 +15,21 @@ import {
 import { Dataset, DatasetVersion } from '../../types/api'
 import { IState } from '../../store/reducers'
 import { alpha, createTheme } from '@mui/material/styles'
-import { bindActionCreators } from 'redux'
-import { connect } from 'react-redux'
 import { fetchDatasetVersions } from '../../store/actionCreators'
+import { useDispatch, useSelector } from 'react-redux'
 import { formatUpdatedAt } from '../../helpers'
 import { useTheme } from '@emotion/react'
+import { useTranslation } from 'react-i18next'
 import DatasetInfo from './DatasetInfo'
 import IconButton from '@mui/material/IconButton'
 import MQTooltip from '../core/tooltip/MQTooltip'
 import MqCopy from '../core/copy/MqCopy'
 import MqPaging from '../paging/MqPaging'
 import MqText from '../core/text/MqText'
-import React, { FunctionComponent, SetStateAction } from 'react'
-import { useTranslation } from 'react-i18next'
+import React, { SetStateAction } from 'react'
 
 interface DatasetVersionsProps {
-  versions: DatasetVersion[]
   dataset: Dataset
-  isLoading: boolean
-  totalCount: number
-}
-
-interface DispatchProps {
-  fetchDatasetVersions: typeof fetchDatasetVersions
 }
 
 interface VersionsState {
@@ -47,8 +38,12 @@ interface VersionsState {
 
 const PAGE_SIZE = 10
 
-const DatasetVersions: FunctionComponent<DatasetVersionsProps & DispatchProps> = (props) => {
-  const { versions, dataset, isLoading, fetchDatasetVersions, totalCount } = props
+const DatasetVersions = (props: DatasetVersionsProps) => {
+  const { dataset } = props
+  const versions = useSelector((state: IState) => state.datasetVersions.result.versions)
+  const isLoading = useSelector((state: IState) => state.datasetVersions.isLoading)
+  const totalCount = useSelector((state: IState) => state.datasetVersions.result.totalCount)
+  const dispatch = useDispatch()
 
   const [state, setState] = React.useState<VersionsState>({
     page: 0,
@@ -70,10 +65,10 @@ const DatasetVersions: FunctionComponent<DatasetVersionsProps & DispatchProps> =
   const theme = createTheme(useTheme())
 
   React.useEffect(() => {
-    fetchDatasetVersions(dataset.namespace, dataset.name, PAGE_SIZE, state.page * PAGE_SIZE)
-  }, [state.page])
+    dispatch(fetchDatasetVersions(dataset.namespace, dataset.name, PAGE_SIZE, state.page * PAGE_SIZE))
+  }, [state.page, dispatch, dataset.namespace, dataset.name])
 
-  if (versions.length === 0) {
+  if (!versions || versions.length === 0) {
     return null
   }
 
@@ -183,18 +178,4 @@ const DatasetVersions: FunctionComponent<DatasetVersionsProps & DispatchProps> =
   )
 }
 
-const mapStateToProps = (state: IState) => ({
-  versions: state.datasetVersions.result.versions,
-  isLoading: state.datasetVersions.isLoading,
-  totalCount: state.datasetVersions.result.totalCount,
-})
-
-const mapDispatchToProps = (dispatch: Redux.Dispatch) =>
-  bindActionCreators(
-    {
-      fetchDatasetVersions: fetchDatasetVersions,
-    },
-    dispatch
-  )
-
-export default connect(mapStateToProps, mapDispatchToProps)(DatasetVersions)
+export default DatasetVersions

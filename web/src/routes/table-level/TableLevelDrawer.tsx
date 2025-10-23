@@ -1,23 +1,17 @@
-import * as Redux from 'redux'
 import { Box } from '@mui/system'
 import { IState } from '../../store/reducers'
 import { LineageDataset, LineageJob } from '../../types/lineage'
 import { LineageGraph } from '../../types/api'
-import { bindActionCreators } from 'redux'
-import { connect } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { useSearchParams } from 'react-router-dom'
 import DatasetDetailPage from '../../components/datasets/DatasetDetailPage'
 import JobDetailPage from '../../components/jobs/JobDetailPage'
-import React from 'react'
 
 const WIDTH = 800
 
-interface StateProps {
-  lineageGraph: LineageGraph
-}
-interface DispatchProps {}
-const TableLevelDrawer = ({ lineageGraph }: StateProps & DispatchProps) => {
+const TableLevelDrawer = () => {
   const [searchParams] = useSearchParams()
+  const lineageGraph = useSelector((state: IState) => state.lineage.lineage)
 
   const node = lineageGraph.graph.find(
     (node) => node.id === searchParams.get('tableLevelNode') || ''
@@ -42,9 +36,4 @@ const TableLevelDrawer = ({ lineageGraph }: StateProps & DispatchProps) => {
   )
 }
 
-const mapStateToProps = (state: IState) => ({
-  lineageGraph: state.lineage.lineage,
-})
-
-const mapDispatchToProps = (dispatch: Redux.Dispatch) => bindActionCreators({}, dispatch)
-export default connect(mapStateToProps, mapDispatchToProps)(TableLevelDrawer)
+export default TableLevelDrawer

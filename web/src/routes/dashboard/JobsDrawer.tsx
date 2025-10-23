@@ -1,11 +1,9 @@
-import * as Redux from 'redux'
 import { Box } from '@mui/system'
 import { IState } from '../../store/reducers'
 import { Job } from '../../types/api'
-import { bindActionCreators } from 'redux'
-import { connect } from 'react-redux'
 import { fetchJobs } from '../../store/actionCreators'
 import { theme } from '../../helpers/theme'
+import { useDispatch, useSelector } from 'react-redux'
 import CircularProgress from '@mui/material/CircularProgress/CircularProgress'
 import JobRunItem from './JobRunItem'
 import MqPaging from '../../components/paging/MqPaging'
@@ -14,28 +12,20 @@ import React, { useEffect } from 'react'
 const WIDTH = 800
 const PAGE_SIZE = 10
 
-interface StateProps {
-  jobs: Job[]
-  isJobsLoading: boolean
-  jobCount: number
-}
-
-interface DispatchProps {
-  fetchJobs: typeof fetchJobs
-}
-
-type JobsDrawerProps = StateProps & DispatchProps
-
-const JobsDrawer = ({ jobs, isJobsLoading, jobCount, fetchJobs }: JobsDrawerProps) => {
+const JobsDrawer = () => {
+  const jobs = useSelector((state: IState) => state.jobs.result)
+  const isJobsLoading = useSelector((state: IState) => state.jobs.isLoading)
+  const jobCount = useSelector((state: IState) => state.jobs.totalCount)
+  const dispatch = useDispatch()
   const [page, setPage] = React.useState<number>(0)
 
   useEffect(() => {
-    fetchJobs(null, PAGE_SIZE, page * PAGE_SIZE)
-  }, [page])
+    dispatch(fetchJobs(null, PAGE_SIZE, page * PAGE_SIZE))
+  }, [page, dispatch])
 
   const handleClickPage = (direction: 'prev' | 'next') => {
     const directionPage = direction === 'next' ? page + 1 : page - 1
-    fetchJobs(null, PAGE_SIZE, directionPage * PAGE_SIZE)
+    dispatch(fetchJobs(null, PAGE_SIZE, directionPage * PAGE_SIZE))
     setPage(directionPage)
   }
 
@@ -78,18 +68,5 @@ const JobsDrawer = ({ jobs, isJobsLoading, jobCount, fetchJobs }: JobsDrawerProp
     </Box>
   )
 }
-const mapStateToProps = (state: IState) => ({
-  jobs: state.jobs.result,
-  jobCount: state.jobs.totalCount,
-  isJobsLoading: state.jobs.isLoading,
-})
 
-const mapDispatchToProps = (dispatch: Redux.Dispatch) =>
-  bindActionCreators(
-    {
-      fetchJobs: fetchJobs,
-    },
-    dispatch
-  )
-
-export default connect(mapStateToProps, mapDispatchToProps)(JobsDrawer)
+export default JobsDrawer

@@ -4,16 +4,15 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { IconDefinition } from '@fortawesome/free-solid-svg-icons'
 import Box from '@mui/material/Box'
-import React from 'react'
 
-interface OwnProps {
+interface MqSmallIconProps {
   icon: IconDefinition
   backgroundColor: string
   foregroundColor: string
   shape: 'circle' | 'rect'
 }
 
-const MqSmallIcon: React.FC<OwnProps> = ({ icon, backgroundColor, foregroundColor, shape }) => {
+const MqSmallIcon = ({ icon, backgroundColor, foregroundColor, shape }: MqSmallIconProps) => {
   return (
     <Box
       width={16}

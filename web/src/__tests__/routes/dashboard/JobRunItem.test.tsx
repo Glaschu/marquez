@@ -1,12 +1,12 @@
 // Copyright 2018-2025 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import React from 'react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
-import JobRunItem from '../../../routes/dashboard/JobRunItem'
 import { Job } from '../../../types/api'
+import { MemoryRouter } from 'react-router-dom'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import JobRunItem from '../../../routes/dashboard/JobRunItem'
+import React from 'react'
 
 const mockNavigate = vi.fn()
 

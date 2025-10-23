@@ -5,16 +5,15 @@ import { THEME_EXTRA } from '../../../helpers/theme'
 import { solarizedDark } from 'react-syntax-highlighter/dist/cjs/styles/hljs'
 import Box from '@mui/material/Box'
 import MqText from '../text/MqText'
-import React from 'react'
 import SyntaxHighlighter from 'react-syntax-highlighter'
 
-interface OwnProps {
+interface MqCodeProps {
   code?: string
   language?: string
   description?: string
 }
 
-const MqCode: React.FC<OwnProps> = ({ code, description, language }) => {
+const MqCode = ({ code, description, language }: MqCodeProps) => {
   if (!code) {
     return null
   }

@@ -8,17 +8,17 @@ import { formatUpdatedAt } from '../../helpers'
 import { stopWatchDuration } from '../../helpers/time'
 import { theme } from '../../helpers/theme'
 import { truncateText } from '../../helpers/text'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import MQTooltip from '../../components/core/tooltip/MQTooltip'
 import MqStatus from '../../components/core/status/MqStatus'
 import MqText from '../../components/core/text/MqText'
-import React, { useMemo } from 'react'
 
 interface Props {
   job: Job
 }
 
-const JobRunItem: React.FC<Props> = ({ job }) => {
+const JobRunItem = ({ job }: Props) => {
   const navigate = useNavigate()
   const reversedRuns = [...(job.latestRuns || [])].reverse()
   const longestRun = useMemo(

@@ -1,9 +1,8 @@
 // Copyright 2018-2024 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as React from 'react'
+import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
 import MqJsonView from '../../../../components/core/json-view/MqJsonView'
 
 describe('MqJsonView Component', () => {

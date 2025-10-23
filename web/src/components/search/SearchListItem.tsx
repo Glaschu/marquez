@@ -11,10 +11,9 @@ import { faCog } from '@fortawesome/free-solid-svg-icons/faCog'
 import { faDatabase } from '@fortawesome/free-solid-svg-icons'
 import { theme } from '../../helpers/theme'
 import MqText from '../core/text/MqText'
-import React from 'react'
-import moment from 'moment'
+import dayjs from '../../helpers/dayjs'
 
-interface OwnProps {
+interface SearchListItemProps {
   searchResult: SearchResult
   search: string
   onClick: (nodeName: string) => void
@@ -25,9 +24,7 @@ const searchResultIcon: { [key in JobOrDataset]: JSX.Element } = {
   DATASET: <FontAwesomeIcon icon={faDatabase} color={theme.palette.info.main} />,
 }
 
-type DkSearchListItemProps = OwnProps
-
-const SearchListItem: React.FC<DkSearchListItemProps> = ({ searchResult, search, onClick }) => {
+const SearchListItem = ({ searchResult, search, onClick }: SearchListItemProps) => {
   const name = searchResult.name.substring(
     searchResult.name.lastIndexOf('.') + 1,
     searchResult.name.length
@@ -102,7 +99,7 @@ const SearchListItem: React.FC<DkSearchListItemProps> = ({ searchResult, search,
           </Box>
           <Box>
             <MqText subdued small>
-              {moment(searchResult.updatedAt).fromNow()}
+              {dayjs(searchResult.updatedAt).fromNow()}
             </MqText>
           </Box>
         </Box>

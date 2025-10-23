@@ -1,4 +1,3 @@
-import * as Redux from 'redux'
 import { Box } from '@mui/system'
 import {
   Chip,
@@ -12,44 +11,35 @@ import {
 import { ColumnLineageGraph, Dataset } from '../../types/api'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { IState } from '../../store/reducers'
-import { bindActionCreators } from 'redux'
-import { connect } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { faDatabase } from '@fortawesome/free-solid-svg-icons'
 import { fetchDataset } from '../../store/actionCreators'
 import { theme } from '../../helpers/theme'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import CloseIcon from '@mui/icons-material/Close'
 import IconButton from '@mui/material/IconButton'
 import MqJsonView from '../../components/core/json-view/MqJsonView'
 import MqText from '../../components/core/text/MqText'
-import React, { useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Fragment, useEffect } from 'react'
 
 const WIDTH = 600
 
-interface StateProps {
-  dataset: Dataset
-  isDatasetLoading: boolean
-  columnLineage: ColumnLineageGraph
-}
-interface DispatchProps {
-  fetchDataset: typeof fetchDataset
-}
-const ColumnLevelDrawer = ({
-  dataset,
-  fetchDataset,
-  columnLineage,
-  isDatasetLoading,
-}: StateProps & DispatchProps) => {
+const ColumnLevelDrawer = () => {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
+  const dataset = useSelector((state: IState) => state.dataset.result)
+  const isDatasetLoading = useSelector((state: IState) => state.dataset.isLoading)
+  const columnLineage = useSelector((state: IState) => state.columnLineage.columnLineage)
+  const dispatch = useDispatch()
+
   useEffect(() => {
-    const dataset = searchParams.get('dataset')
+    const datasetParam = searchParams.get('dataset')
     const namespace = searchParams.get('namespace')
-    if (dataset && namespace) {
-      fetchDataset(namespace, dataset)
+    if (datasetParam && namespace) {
+      dispatch(fetchDataset(namespace, datasetParam))
     }
-  }, [])
+  }, [searchParams, dispatch])
 
   if (!columnLineage) {
     return null
@@ -133,7 +123,7 @@ const ColumnLevelDrawer = ({
                 <TableBody>
                   {dataset.fields.map((field) => {
                     return (
-                      <React.Fragment key={field.name}>
+                      <Fragment key={field.name}>
                         <TableRow>
                           <TableCell align='left'>
                             <MqText font={'mono'}>{field.name}</MqText>
@@ -149,7 +139,7 @@ const ColumnLevelDrawer = ({
                             <MqText subdued>{field.description || 'no description'}</MqText>
                           </TableCell>
                         </TableRow>
-                      </React.Fragment>
+                      </Fragment>
                     )
                   })}
                 </TableBody>
@@ -170,17 +160,4 @@ const ColumnLevelDrawer = ({
   )
 }
 
-const mapStateToProps = (state: IState) => ({
-  dataset: state.dataset.result,
-  isDatasetLoading: state.dataset.isLoading,
-  columnLineage: state.columnLineage.columnLineage,
-})
-
-const mapDispatchToProps = (dispatch: Redux.Dispatch) =>
-  bindActionCreators(
-    {
-      fetchDataset: fetchDataset,
-    },
-    dispatch
-  )
-export default connect(mapStateToProps, mapDispatchToProps)(ColumnLevelDrawer)
+export default ColumnLevelDrawer

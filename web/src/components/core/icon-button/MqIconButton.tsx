@@ -1,7 +1,7 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import React, { ReactElement } from 'react'
+import { type ReactElement } from 'react'
 
 import { Link as RouterLink } from 'react-router-dom'
 import { THEME_EXTRA, theme } from '../../../helpers/theme'
@@ -9,7 +9,7 @@ import { lighten } from '@mui/material'
 import Box from '@mui/material/Box'
 import ButtonBase from '@mui/material/ButtonBase'
 
-interface OwnProps {
+interface IconButtonProps {
   id: string
   title: string
   children: ReactElement
@@ -17,9 +17,7 @@ interface OwnProps {
   to: string
 }
 
-type IconButtonProps = OwnProps
-
-const MqIconButton: React.FC<IconButtonProps> = ({ id, title, active, children, to }) => {
+const MqIconButton = ({ id, title, active, children, to }: IconButtonProps) => {
   return (
     <Box
       sx={{

@@ -96,7 +96,7 @@ export const MiniMap = ({
         borderColor: borderColor,
         borderWidth: '1px',
         borderRadius: 1,
-        zIndex: 2
+        zIndex: 2,
       }}
       {...otherProps}
     >

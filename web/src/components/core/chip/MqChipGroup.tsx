@@ -1,7 +1,7 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import React from 'react'
+import { useState } from 'react'
 
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Undefinable } from '../../../types/util/Nullable'
@@ -10,7 +10,7 @@ import { useTheme } from '@emotion/react'
 import Box from '@mui/material/Box'
 import MqChip from './MqChip'
 
-interface OwnProps {
+interface MqChipGroupProps {
   chips: {
     icon?: IconDefinition
     foregroundColor?: string
@@ -27,14 +27,12 @@ interface StateProps {
   selected: Undefinable<string>
 }
 
-type MqChipGroupProps = OwnProps
-
 /**
  * This functions as a standard button group and wraps the <Chip /> component with
  * selection logic and callbacks needed to manage and change state
  */
-const MqChipGroup: React.FC<MqChipGroupProps> = ({ chips, initialSelection, onSelect }) => {
-  const [state, setState] = React.useState<StateProps>({
+const MqChipGroup = ({ chips, initialSelection, onSelect }: MqChipGroupProps) => {
+  const [state, setState] = useState<StateProps>({
     selected: initialSelection,
   })
 

@@ -19,11 +19,13 @@ module.exports = {
   ],
   settings: {
     "react": {
-      version: "detect"
+      version: "detect",
+      runtime: "automatic"
     }
   },
   rules: {
     'react/prop-types': 'off',
+    'react/react-in-jsx-scope': 'off',
     '@typescript-eslint/camelcase': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/member-delimiter-style': [

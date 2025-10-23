@@ -1,13 +1,13 @@
 // Copyright 2018-2025 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import React from 'react'
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
 import { Provider } from 'react-redux'
-import { createStore } from 'redux'
-import RunInfo from '../../../components/jobs/RunInfo'
 import { Run } from '../../../types/api'
+import { createStore } from 'redux'
+import { describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import React from 'react'
+import RunInfo from '../../../components/jobs/RunInfo'
 
 // Mock MqCode component
 vi.mock('../../../components/core/code/MqCode', () => ({
@@ -22,7 +22,7 @@ vi.mock('../../../components/core/code/MqCode', () => ({
 // Mock MqJsonView component
 vi.mock('../../../components/core/json-view/MqJsonView', () => ({
   default: ({ data, 'aria-label': ariaLabel }: any) => (
-    <div data-testid="json-view" aria-label={ariaLabel}>
+    <div data-testid='json-view' aria-label={ariaLabel}>
       {JSON.stringify(data)}
     </div>
   ),
@@ -148,7 +148,7 @@ describe('RunInfo Component', () => {
   it('should handle empty job facets object', () => {
     const store = createMockStore({})
     const { container } = renderWithStore(store)
-    
+
     // Should still render JOB FACETS section with empty object
     expect(screen.getByText('JOB FACETS')).toBeTruthy()
   })

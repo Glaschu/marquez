@@ -1,33 +1,25 @@
 // Copyright 2018-2024 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as React from 'react'
-import * as Redux from 'redux'
 import { IState } from '../store/reducers'
 import { Snackbar, SnackbarCloseReason } from '@mui/material'
-import { bindActionCreators } from 'redux'
-import { connect } from 'react-redux'
+import { SyntheticEvent } from 'react'
 import { dialogToggle } from '../store/actionCreators'
+import { useDispatch, useSelector } from 'react-redux'
 import CloseIcon from '@mui/icons-material/Close'
 import IconButton from '@mui/material/IconButton'
 
-interface IProps {
-  error?: string
-  success?: string
-  isOpen: boolean
-}
-
-interface IDispatchProps {
-  dialogToggle: typeof dialogToggle
-}
-
-const Toast = ({ error, success, isOpen, dialogToggle }: IProps & IDispatchProps) => {
-  const handleClose = (_: React.SyntheticEvent | Event, reason?: SnackbarCloseReason) => {
+const Toast = () => {
+  const error = useSelector((state: IState) => state.display.error)
+  const success = useSelector((state: IState) => state.display.success)
+  const isOpen = useSelector((state: IState) => state.display.dialogIsOpen)
+  const dispatch = useDispatch()
+  const handleClose = (_: SyntheticEvent | Event, reason?: SnackbarCloseReason) => {
     if (reason === 'clickaway') {
       return
     }
 
-    dialogToggle('error')
+    dispatch(dialogToggle('error'))
   }
 
   const action = (
@@ -48,18 +40,4 @@ const Toast = ({ error, success, isOpen, dialogToggle }: IProps & IDispatchProps
   )
 }
 
-const mapStateToProps = (state: IState) => ({
-  error: state.display.error,
-  success: state.display.success,
-  isOpen: state.display.dialogIsOpen,
-})
-
-const mapDispatchToProps = (dispatch: Redux.Dispatch) =>
-  bindActionCreators(
-    {
-      dialogToggle: dialogToggle,
-    },
-    dispatch
-  )
-
-export default connect(mapStateToProps, mapDispatchToProps)(Toast)
+export default Toast

@@ -1,30 +1,34 @@
 // Copyright 2018-2025 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import React from 'react'
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import StackedLineageEvents from '../../../routes/dashboard/StackedLineageEvents'
 import { LineageMetric } from '../../../store/requests/lineageMetrics'
+import { describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import React from 'react'
+import StackedLineageEvents from '../../../routes/dashboard/StackedLineageEvents'
 
 // Mock @visx/responsive ParentSize
 vi.mock('@visx/responsive/lib/components/ParentSize', () => ({
-  default: ({ children }: { children: (parent: { width: number; height: number }) => React.ReactNode }) => (
-    <div data-testid="parent-size-wrapper">{children({ width: 800, height: 200 })}</div>
-  ),
+  default: ({
+    children,
+  }: {
+    children: (parent: { width: number; height: number }) => React.ReactNode
+  }) => <div data-testid='parent-size-wrapper'>{children({ width: 800, height: 200 })}</div>,
 }))
 
 // Mock @mui/x-charts
 vi.mock('@mui/x-charts', () => ({
   LineChart: ({ series, width, height }: any) => (
-    <div 
-      data-testid="stacked-line-chart" 
-      data-width={width} 
+    <div
+      data-testid='stacked-line-chart'
+      data-width={width}
       data-height={height}
       data-series-count={series.length}
     >
       {series.map((s: any, i: number) => (
-        <div key={i} data-testid={`series-${s.label}`}>{s.label}</div>
+        <div key={i} data-testid={`series-${s.label}`}>
+          {s.label}
+        </div>
       ))}
     </div>
   ),

@@ -25,6 +25,7 @@ import { fetchJobs, resetJobs } from '../../store/actionCreators'
 import { formatUpdatedAt } from '../../helpers'
 import { stopWatchDuration } from '../../helpers/time'
 import { truncateText } from '../../helpers/text'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress/CircularProgress'
@@ -35,7 +36,6 @@ import MqPaging from '../../components/paging/MqPaging'
 import MqStatus from '../../components/core/status/MqStatus'
 import MqText from '../../components/core/text/MqText'
 import NamespaceSelect from '../../components/namespace-select/NamespaceSelect'
-import React from 'react'
 
 interface StateProps {
   jobs: Job[]
@@ -59,7 +59,7 @@ type JobsProps = StateProps & DispatchProps
 const PAGE_SIZE = 20
 const JOB_HEADER_HEIGHT = 64
 
-const Jobs: React.FC<JobsProps> = ({
+const Jobs = ({
   jobs,
   totalCount,
   isJobsLoading,
@@ -67,19 +67,19 @@ const Jobs: React.FC<JobsProps> = ({
   selectedNamespace,
   fetchJobs,
   resetJobs,
-}) => {
+}: JobsProps) => {
   const defaultState = {
     page: 0,
   }
-  const [state, setState] = React.useState<JobsState>(defaultState)
+  const [state, setState] = useState<JobsState>(defaultState)
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (selectedNamespace) {
       fetchJobs(selectedNamespace, PAGE_SIZE, state.page * PAGE_SIZE)
     }
   }, [selectedNamespace, state.page])
 
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
       // on unmount
       resetJobs()

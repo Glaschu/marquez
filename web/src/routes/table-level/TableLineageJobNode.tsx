@@ -5,8 +5,8 @@ import { LineageGraph } from '../../types/api'
 import { LineageJob } from '../../types/lineage'
 import { PositionedNode } from '../../components/graph'
 import { TableLineageJobNodeData } from './nodes'
-import { connect } from 'react-redux'
 import { faCog } from '@fortawesome/free-solid-svg-icons/faCog'
+import { useSelector } from 'react-redux'
 import { formatUpdatedAt } from '../../helpers'
 import { runStateColor } from '../../helpers/nodes'
 import { theme } from '../../helpers/theme'
@@ -18,17 +18,14 @@ import MqStatus from '../../components/core/status/MqStatus'
 import MqText from '../../components/core/text/MqText'
 import React from 'react'
 
-interface StateProps {
-  lineage: LineageGraph
-}
-
 interface TableLineageJobNodeProps {
   node: PositionedNode<'job', TableLineageJobNodeData>
 }
 
 const ICON_SIZE = 12
 
-const TableLineageJobNode = ({ node }: TableLineageJobNodeProps & StateProps) => {
+const TableLineageJobNode = ({ node }: TableLineageJobNodeProps) => {
+  const lineage = useSelector((state: IState) => state.lineage.lineage)
   const navigate = useNavigate()
   const { name, namespace } = useParams()
   const isSelected = name === node.data.job.name && namespace === node.data.job.namespace
@@ -164,8 +161,4 @@ TableLineageJobNode.getLayoutOptions = (node: TableLineageJobNodeProps['node']) 
   ...node,
 })
 
-const mapStateToProps = (state: IState) => ({
-  lineage: state.lineage.lineage,
-})
-
-export default connect(mapStateToProps)(TableLineageJobNode)
+export default TableLineageJobNode

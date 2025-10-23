@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface TypewriterProps {
   words: string[]
@@ -8,13 +8,13 @@ interface TypewriterProps {
   repeatCount?: number
 }
 
-const Typewriter: React.FC<TypewriterProps> = ({
+const Typewriter = ({
   words,
   typingSpeed = 150,
   deletingSpeed = 100,
   pauseTime = 1000,
   repeatCount = Infinity,
-}) => {
+}: TypewriterProps) => {
   const [text, setText] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
   const [wordIndex, setWordIndex] = useState(0)

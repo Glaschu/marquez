@@ -1,10 +1,9 @@
 // Copyright 2018-2024 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
 import { BrowserRouter } from 'react-router-dom'
+import { describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
 import MqText from '../../../../components/core/text/MqText'
 
 const renderWithRouter = (component: React.ReactElement) => {
@@ -73,17 +72,17 @@ describe('MqText Component', () => {
   })
 
   it('should render with custom color', () => {
-    render(<MqText color="#ff0000">Red Text</MqText>)
+    render(<MqText color='#ff0000'>Red Text</MqText>)
     expect(screen.getByText('Red Text')).toBeInTheDocument()
   })
 
   it('should render with monospace font', () => {
-    render(<MqText font="mono">Monospace Text</MqText>)
+    render(<MqText font='mono'>Monospace Text</MqText>)
     expect(screen.getByText('Monospace Text')).toBeInTheDocument()
   })
 
   it('should render with primary font', () => {
-    render(<MqText font="primary">Primary Font</MqText>)
+    render(<MqText font='primary'>Primary Font</MqText>)
     expect(screen.getByText('Primary Font')).toBeInTheDocument()
   })
 
@@ -108,14 +107,22 @@ describe('MqText Component', () => {
   })
 
   it('should render link with linkTo prop', () => {
-    renderWithRouter(<MqText link linkTo="/test-route">Link Text</MqText>)
+    renderWithRouter(
+      <MqText link linkTo='/test-route'>
+        Link Text
+      </MqText>
+    )
     expect(screen.getByText('Link Text')).toBeInTheDocument()
     const link = screen.getByText('Link Text').closest('a')
     expect(link).toHaveAttribute('href', '/test-route')
   })
 
   it('should render external link with href prop', () => {
-    render(<MqText link href="https://example.com">External Link</MqText>)
+    render(
+      <MqText link href='https://example.com'>
+        External Link
+      </MqText>
+    )
     expect(screen.getByText('External Link')).toBeInTheDocument()
     const link = screen.getByText('External Link')
     expect(link).toHaveAttribute('href', 'https://example.com')
@@ -133,7 +140,11 @@ describe('MqText Component', () => {
 
   it('should handle onClick on heading', () => {
     const handleClick = vi.fn()
-    render(<MqText heading onClick={handleClick}>Clickable Heading</MqText>)
+    render(
+      <MqText heading onClick={handleClick}>
+        Clickable Heading
+      </MqText>
+    )
     const heading = screen.getByText('Clickable Heading')
     fireEvent.click(heading)
     expect(handleClick).toHaveBeenCalled()
@@ -141,7 +152,11 @@ describe('MqText Component', () => {
 
   it('should handle onClick on link', () => {
     const handleClick = vi.fn()
-    render(<MqText link href="https://example.com" onClick={handleClick}>Clickable Link</MqText>)
+    render(
+      <MqText link href='https://example.com' onClick={handleClick}>
+        Clickable Link
+      </MqText>
+    )
     const link = screen.getByText('Clickable Link')
     fireEvent.click(link)
     expect(handleClick).toHaveBeenCalled()
@@ -172,7 +187,11 @@ describe('MqText Component', () => {
   })
 
   it('should render with disabled link', () => {
-    renderWithRouter(<MqText link linkTo="/disabled" disabled>Disabled Link</MqText>)
+    renderWithRouter(
+      <MqText link linkTo='/disabled' disabled>
+        Disabled Link
+      </MqText>
+    )
     const linkContainer = screen.getByText('Disabled Link').closest('a')
     expect(linkContainer).toHaveAttribute('aria-disabled', 'true')
   })
@@ -195,15 +214,7 @@ describe('MqText Component', () => {
 
   it('should render all combined props', () => {
     render(
-      <MqText
-        bold
-        subdued
-        small
-        bottomMargin
-        inline
-        highlight
-        font="mono"
-      >
+      <MqText bold subdued small bottomMargin inline highlight font='mono'>
         All Props
       </MqText>
     )

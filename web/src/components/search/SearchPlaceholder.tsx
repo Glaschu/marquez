@@ -5,12 +5,9 @@ import { Box } from '@mui/material'
 import { theme } from '../../helpers/theme'
 import { useTranslation } from 'react-i18next'
 import MqText from '../core/text/MqText'
-import React from 'react'
 import Typewriter from './Typewriter'
 
-interface SearchPlaceholderProps {}
-
-const SearchPlaceholder: React.FC<SearchPlaceholderProps> = () => {
+const SearchPlaceholder = () => {
   const { t } = useTranslation()
   return (
     <Box

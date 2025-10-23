@@ -28,6 +28,7 @@ import { saveAs } from 'file-saver'
 import { truncateText } from '../../helpers/text'
 import { useSearchParams } from 'react-router-dom'
 import { useTheme } from '@emotion/react'
+import { useTranslation } from 'react-i18next'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress/CircularProgress'
 import IconButton from '@mui/material/IconButton'
@@ -40,8 +41,7 @@ import MqPaging from '../../components/paging/MqPaging'
 import MqStatus from '../../components/core/status/MqStatus'
 import MqText from '../../components/core/text/MqText'
 import React, { useEffect, useRef } from 'react'
-import { useTranslation } from 'react-i18next'
-import moment from 'moment'
+import dayjs from '../../helpers/dayjs'
 
 interface StateProps {
   events: Event[]
@@ -83,9 +83,8 @@ const Events: React.FC<EventsProps> = ({
     page: 0,
     events: [],
     rowExpanded: null,
-    dateFrom:
-      searchParams.get('dateFrom') || formatDateAPIQuery(moment().startOf('day').toString()),
-    dateTo: searchParams.get('dateTo') || formatDateAPIQuery(moment().endOf('day').toString()),
+    dateFrom: searchParams.get('dateFrom') || formatDateAPIQuery(dayjs().startOf('day').toString()),
+    dateTo: searchParams.get('dateTo') || formatDateAPIQuery(dayjs().endOf('day').toString()),
   })
 
   const mounted = useRef<boolean>(false)
@@ -109,8 +108,8 @@ const Events: React.FC<EventsProps> = ({
   useEffect(() => {
     if (!searchParams.get('dateFrom') && !searchParams.get('dateTo')) {
       setSearchParams({
-        dateFrom: formatDateAPIQuery(moment().startOf('day').toString()),
-        dateTo: formatDateAPIQuery(moment().endOf('day').toString()),
+        dateFrom: formatDateAPIQuery(dayjs().startOf('day').toString()),
+        dateTo: formatDateAPIQuery(dayjs().endOf('day').toString()),
       })
     }
   }, [])
@@ -166,9 +165,8 @@ const Events: React.FC<EventsProps> = ({
 
   const refresh = () => {
     const dateFrom =
-      searchParams.get('dateFrom') || formatDateAPIQuery(moment().startOf('day').toString())
-    const dateTo =
-      searchParams.get('dateTo') || formatDateAPIQuery(moment().endOf('day').toString())
+      searchParams.get('dateFrom') || formatDateAPIQuery(dayjs().startOf('day').toString())
+    const dateTo = searchParams.get('dateTo') || formatDateAPIQuery(dayjs().endOf('day').toString())
     fetchEvents(dateFrom, dateTo, PAGE_SIZE, state.page * PAGE_SIZE)
   }
 

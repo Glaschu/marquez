@@ -1,55 +1,44 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as Redux from 'redux'
 import { Box, Button } from '@mui/material'
 import { Dataset } from '../../types/api'
 import { IState } from '../../store/reducers'
 import { LineageDataset } from '../../types/lineage'
-import { bindActionCreators } from 'redux'
-import { connect } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { fetchDataset, resetDataset } from '../../store/actionCreators'
 import { fileSize } from '../../helpers'
 import { saveAs } from 'file-saver'
 import { useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import MqEmpty from '../core/empty/MqEmpty'
 import MqJsonView from '../../components/core/json-view/MqJsonView'
 import MqText from '../core/text/MqText'
-import React, { FunctionComponent, useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
+import { useEffect } from 'react'
 
 interface DatasetColumnLineageProps {
   lineageDataset: LineageDataset
 }
 
-interface StateProps {
-  dataset: Dataset
-}
-
-interface DispatchProps {
-  fetchDataset: typeof fetchDataset
-  resetDataset: typeof resetDataset
-}
-
-type IProps = DatasetColumnLineageProps & DispatchProps & StateProps
-
-const DatasetColumnLineage: FunctionComponent<IProps> = (props) => {
+const DatasetColumnLineage = (props: DatasetColumnLineageProps) => {
   const { t } = useTranslation()
-  const { dataset, lineageDataset, fetchDataset, resetDataset } = props
+  const { lineageDataset } = props
   const { name, namespace } = useParams()
+  const dataset = useSelector((state: IState) => state.dataset.result)
+  const dispatch = useDispatch()
 
   useEffect(() => {
     if (namespace && name) {
-      fetchDataset(namespace, name)
+      dispatch(fetchDataset(namespace, name))
     }
-  }, [name, namespace])
+  }, [name, namespace, dispatch])
 
   // unmounting
   useEffect(
     () => () => {
-      resetDataset()
+      dispatch(resetDataset())
     },
-    []
+    [dispatch]
   )
 
   const handleDownloadPayload = (data: object) => {
@@ -93,17 +82,4 @@ const DatasetColumnLineage: FunctionComponent<IProps> = (props) => {
   )
 }
 
-const mapStateToProps = (state: IState) => ({
-  dataset: state.dataset.result,
-})
-
-const mapDispatchToProps = (dispatch: Redux.Dispatch) =>
-  bindActionCreators(
-    {
-      fetchDataset: fetchDataset,
-      resetDataset: resetDataset,
-    },
-    dispatch
-  )
-
-export default connect(mapStateToProps, mapDispatchToProps)(DatasetColumnLineage)
+export default DatasetColumnLineage

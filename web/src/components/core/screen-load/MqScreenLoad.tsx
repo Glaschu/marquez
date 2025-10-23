@@ -1,9 +1,9 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
+import { type ReactElement } from 'react'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress/CircularProgress'
-import React, { ReactElement } from 'react'
 
 interface MqScreenLoadProps {
   children?: ReactElement
@@ -11,7 +11,7 @@ interface MqScreenLoadProps {
   customHeight?: string
 }
 
-export const MqScreenLoad: React.FC<MqScreenLoadProps> = ({ loading, children, customHeight }) => {
+export const MqScreenLoad = ({ loading, children, customHeight }: MqScreenLoadProps) => {
   return loading || !children ? (
     <Box
       height={customHeight ? customHeight : 'calc(100vh)'}

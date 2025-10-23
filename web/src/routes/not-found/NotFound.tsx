@@ -1,7 +1,6 @@
 // Copyright 2018-2024 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as React from 'react'
 import { Box } from '@mui/system'
 import { Button } from '@mui/material'
 import { Link as RouterLink } from 'react-router-dom'

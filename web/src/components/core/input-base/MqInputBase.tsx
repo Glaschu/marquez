@@ -4,11 +4,10 @@
 import { createTheme } from '@mui/material/styles'
 import { useTheme } from '@emotion/react'
 import InputBase, { InputBaseProps } from '@mui/material/InputBase'
-import React from 'react'
 
 export interface MqInputBaseProps extends InputBaseProps {}
 
-export const MqInputBase: React.FC<MqInputBaseProps> = (props) => {
+export const MqInputBase = (props: MqInputBaseProps) => {
   const theme = createTheme(useTheme())
   return (
     <InputBase
@@ -26,7 +25,7 @@ export const MqInputBase: React.FC<MqInputBaseProps> = (props) => {
   )
 }
 
-export const MqInputNoIcon: React.FC<InputBaseProps> = (props) => {
+export const MqInputNoIcon = (props: InputBaseProps) => {
   const theme = createTheme(useTheme())
 
   return (

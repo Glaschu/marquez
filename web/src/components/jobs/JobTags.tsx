@@ -1,6 +1,5 @@
 // Copyright 2018-2024 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
-import * as Redux from 'redux'
 import {
   Autocomplete,
   AutocompleteChangeDetails,
@@ -12,8 +11,7 @@ import { Box, createTheme } from '@mui/material'
 import { IState } from '../../store/reducers'
 import { Tag } from '../../types/api'
 import { addJobTag, addTags, deleteJobTag } from '../../store/actionCreators'
-import { bindActionCreators } from 'redux'
-import { connect, useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { useTheme } from '@emotion/react'
 import Button from '@mui/material/Button'
 import CheckBoxIcon from '@mui/icons-material/CheckBox'
@@ -34,16 +32,9 @@ interface JobTagsProps {
   jobTags: string[]
 }
 
-interface DispatchProps {
-  deleteJobTag: typeof deleteJobTag
-  addJobTag: typeof addJobTag
-  addTags: typeof addTags
-}
-
-type IProps = JobTagsProps & DispatchProps
-
-const JobTags: React.FC<IProps> = (props) => {
-  const { namespace, jobName, jobTags, deleteJobTag, addJobTag, addTags } = props
+const JobTags = (props: JobTagsProps) => {
+  const { namespace, jobName, jobTags } = props
+  const dispatch = useDispatch()
 
   const [listTag, setListTag] = useState('')
   const [openTagDesc, setOpenTagDesc] = useState(false)
@@ -87,12 +78,12 @@ const JobTags: React.FC<IProps> = (props) => {
       const newTag = details.option
       const newSelectedTags = selectedTags.filter((tag) => newTag !== tag)
       setSelectedTags(newSelectedTags)
-      deleteJobTag(namespace, jobName, newTag)
+      dispatch(deleteJobTag(namespace, jobName, newTag))
     } else if (details && !selectedTags.includes(details.option)) {
       const newTag = details.option
       const newSelectedTags = [...selectedTags, newTag]
       setSelectedTags(newSelectedTags)
-      addJobTag(namespace, jobName, newTag)
+      dispatch(addJobTag(namespace, jobName, newTag))
     }
   }
 
@@ -101,11 +92,11 @@ const JobTags: React.FC<IProps> = (props) => {
 
     setSelectedTags(newSelectedTags)
 
-    deleteJobTag(namespace, jobName, deletedTag)
+    dispatch(deleteJobTag(namespace, jobName, deletedTag))
   }
 
   const addTag = () => {
-    addTags(listTag, tagDescription)
+    dispatch(addTags(listTag, tagDescription))
     setSnackbarOpen(true)
     setOpenTagDesc(false)
     setListTag('')
@@ -279,14 +270,4 @@ const JobTags: React.FC<IProps> = (props) => {
   )
 }
 
-const mapDispatchToProps = (dispatch: Redux.Dispatch) =>
-  bindActionCreators(
-    {
-      deleteJobTag: deleteJobTag,
-      addJobTag: addJobTag,
-      addTags: addTags,
-    },
-    dispatch
-  )
-
-export default connect(null, mapDispatchToProps)(JobTags)
+export default JobTags

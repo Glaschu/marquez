@@ -1,10 +1,9 @@
 // Copyright 2018-2024 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
 import { MqInputBase, MqInputNoIcon } from '../../../../components/core/input-base/MqInputBase'
+import { describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
 
 describe('MqInputBase Component', () => {
   it('should render without crashing', () => {
@@ -13,13 +12,13 @@ describe('MqInputBase Component', () => {
   })
 
   it('should render with placeholder', () => {
-    const { container } = render(<MqInputBase placeholder="Enter text" />)
+    const { container } = render(<MqInputBase placeholder='Enter text' />)
     const input = container.querySelector('input')
     expect(input?.placeholder).toBe('Enter text')
   })
 
   it('should handle value prop', () => {
-    const { container } = render(<MqInputBase value="test value" onChange={() => {}} />)
+    const { container } = render(<MqInputBase value='test value' onChange={() => {}} />)
     const input = container.querySelector('input') as HTMLInputElement
     expect(input?.value).toBe('test value')
   })
@@ -28,7 +27,7 @@ describe('MqInputBase Component', () => {
     const handleChange = vi.fn()
     const { container } = render(<MqInputBase onChange={handleChange} />)
     const input = container.querySelector('input')
-    
+
     if (input) {
       fireEvent.change(input, { target: { value: 'new value' } })
       expect(handleChange).toHaveBeenCalled()
@@ -36,7 +35,7 @@ describe('MqInputBase Component', () => {
   })
 
   it('should accept custom className', () => {
-    const { container } = render(<MqInputBase className="custom-class" />)
+    const { container } = render(<MqInputBase className='custom-class' />)
     expect(container.querySelector('.custom-class')).toBeInTheDocument()
   })
 
@@ -47,7 +46,7 @@ describe('MqInputBase Component', () => {
   })
 
   it('should accept type prop', () => {
-    const { container } = render(<MqInputBase type="password" />)
+    const { container } = render(<MqInputBase type='password' />)
     const input = container.querySelector('input')
     expect(input?.type).toBe('password')
   })
@@ -77,13 +76,13 @@ describe('MqInputNoIcon Component', () => {
   })
 
   it('should render with placeholder', () => {
-    const { container } = render(<MqInputNoIcon placeholder="Enter text" />)
+    const { container } = render(<MqInputNoIcon placeholder='Enter text' />)
     const input = container.querySelector('input')
     expect(input?.placeholder).toBe('Enter text')
   })
 
   it('should handle value prop', () => {
-    const { container } = render(<MqInputNoIcon value="test value" onChange={() => {}} />)
+    const { container } = render(<MqInputNoIcon value='test value' onChange={() => {}} />)
     const input = container.querySelector('input') as HTMLInputElement
     expect(input?.value).toBe('test value')
   })
@@ -92,7 +91,7 @@ describe('MqInputNoIcon Component', () => {
     const handleChange = vi.fn()
     const { container } = render(<MqInputNoIcon onChange={handleChange} />)
     const input = container.querySelector('input')
-    
+
     if (input) {
       fireEvent.change(input, { target: { value: 'new value' } })
       expect(handleChange).toHaveBeenCalled()
@@ -106,7 +105,7 @@ describe('MqInputNoIcon Component', () => {
   })
 
   it('should accept type prop', () => {
-    const { container } = render(<MqInputNoIcon type="email" />)
+    const { container } = render(<MqInputNoIcon type='email' />)
     const input = container.querySelector('input')
     expect(input?.type).toBe('email')
   })

@@ -18,6 +18,7 @@ import {
   fetchLineageMetrics,
   fetchSourceMetrics,
 } from '../../store/actionCreators'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import CircularProgress from '@mui/material/CircularProgress/CircularProgress'
 import JobRunItem from './JobRunItem'
@@ -25,7 +26,6 @@ import JobsDrawer from './JobsDrawer'
 import MQTooltip from '../../components/core/tooltip/MQTooltip'
 import MqEmpty from '../../components/core/empty/MqEmpty'
 import MqText from '../../components/core/text/MqText'
-import React, { useEffect } from 'react'
 import SplitButton from '../../components/dashboard/SplitButton'
 import StackedLineageEvents from './StackedLineageEvents'
 
@@ -70,7 +70,7 @@ const states: { label: RunState; color: string; bgColor: string }[] = [
   { label: 'ABORTED', color: theme.palette.secondary.main, bgColor: 'secondary' },
 ]
 
-const Dashboard: React.FC = ({
+const Dashboard = ({
   lineageMetrics,
   fetchLineageMetrics,
   isLineageMetricsLoading,
@@ -88,13 +88,13 @@ const Dashboard: React.FC = ({
   isSourceMetricsLoading,
 }: StateProps & DispatchProps) => {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [timeframe, setTimeframe] = React.useState(
+  const [timeframe, setTimeframe] = useState(
     searchParams.get('timeframe') === 'week' ? '7 Days' : '24 Hours'
   )
-  const [intervalKey, setIntervalKey] = React.useState<RefreshInterval>('30s')
-  const [selectedState, setSelectedState] = React.useState<Nullable<RunState>>(null)
-  const [jobsDrawerOpen, setJobsDrawerOpen] = React.useState(false)
-  const [timelineOpen, setTimelineOpen] = React.useState(false)
+  const [intervalKey, setIntervalKey] = useState<RefreshInterval>('30s')
+  const [selectedState, setSelectedState] = useState<Nullable<RunState>>(null)
+  const [jobsDrawerOpen, setJobsDrawerOpen] = useState(false)
+  const [timelineOpen, setTimelineOpen] = useState(false)
 
   useEffect(() => {
     const currentSearchParams = searchParams.get('timeframe')

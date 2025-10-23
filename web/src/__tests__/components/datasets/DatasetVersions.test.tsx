@@ -1,13 +1,13 @@
 // Copyright 2018-2025 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import React from 'react'
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { Dataset } from '../../../types/api'
 import { Provider } from 'react-redux'
 import { createStore } from 'redux'
+import { describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
 import DatasetVersions from '../../../components/datasets/DatasetVersions'
-import { Dataset } from '../../../types/api'
+import React from 'react'
 
 // Mock i18next
 vi.mock('react-i18next', () => ({
@@ -72,7 +72,7 @@ describe('DatasetVersions Component', () => {
     ]
     const store = createMockStore(mockVersions, false, 1)
     renderWithStore(store)
-    
+
     // Component should render with data
     expect(true).toBe(true)
   })

@@ -1,7 +1,6 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as Redux from 'redux'
 import { ArrowBackIosRounded } from '@mui/icons-material'
 import {
   Box,
@@ -17,13 +16,13 @@ import {
 import { IState } from '../../store/reducers'
 import { Run } from '../../types/api'
 import { alpha, createTheme } from '@mui/material/styles'
-import { bindActionCreators } from 'redux'
-import { connect } from 'react-redux'
 import { fetchRuns } from '../../store/actionCreators'
+import { useDispatch, useSelector } from 'react-redux'
 import { formatUpdatedAt } from '../../helpers'
 import { runStateColor } from '../../helpers/nodes'
 import { stopWatchDuration } from '../../helpers/time'
 import { useTheme } from '@emotion/react'
+import { useTranslation } from 'react-i18next'
 import MQTooltip from '../core/tooltip/MQTooltip'
 import MqCode from '../core/code/MqCode'
 import MqCopy from '../core/copy/MqCopy'
@@ -31,21 +30,13 @@ import MqEmpty from '../core/empty/MqEmpty'
 import MqPaging from '../paging/MqPaging'
 import MqStatus from '../core/status/MqStatus'
 import MqText from '../core/text/MqText'
-import React, { FunctionComponent, SetStateAction } from 'react'
-import { useTranslation } from 'react-i18next'
+import React, { SetStateAction } from 'react'
 import RunInfo from './RunInfo'
 
-interface DispatchProps {
-  fetchRuns: typeof fetchRuns
-}
-
 interface RunsProps {
-  runs: Run[]
-  facets?: object
-  totalCount: number
-  runsLoading: boolean
   jobName: string
   jobNamespace: string
+  facets?: object
 }
 
 interface RunsState {
@@ -54,8 +45,12 @@ interface RunsState {
 
 const PAGE_SIZE = 10
 
-const Runs: FunctionComponent<RunsProps & DispatchProps> = (props) => {
-  const { runs, facets, totalCount, runsLoading, fetchRuns, jobName, jobNamespace } = props
+const Runs = (props: RunsProps) => {
+  const { jobName, jobNamespace, facets } = props
+  const runs = useSelector((state: IState) => state.runs.result)
+  const totalCount = useSelector((state: IState) => state.runs.totalCount)
+  const runsLoading = useSelector((state: IState) => state.runs.isLoading)
+  const dispatch = useDispatch()
   const { t } = useTranslation()
 
   const [state, setState] = React.useState<RunsState>({
@@ -74,12 +69,12 @@ const Runs: FunctionComponent<RunsProps & DispatchProps> = (props) => {
   }
 
   React.useEffect(() => {
-    fetchRuns(jobName, jobNamespace, PAGE_SIZE, state.page * PAGE_SIZE)
-  }, [state.page])
+    dispatch(fetchRuns(jobName, jobNamespace, PAGE_SIZE, state.page * PAGE_SIZE))
+  }, [state.page, dispatch, jobName, jobNamespace])
 
   const theme = createTheme(useTheme())
 
-  if (runs.length === 0) {
+  if (!runs || runs.length === 0) {
     return <MqEmpty title={t('jobs.empty_title')} body={t('jobs.empty_body')} />
   }
 
@@ -227,18 +222,4 @@ const Runs: FunctionComponent<RunsProps & DispatchProps> = (props) => {
   )
 }
 
-const mapStateToProps = (state: IState) => ({
-  runs: state.runs.result,
-  totalCount: state.runs.totalCount,
-  runsLoading: state.runs.isLoading,
-})
-
-const mapDispatchToProps = (dispatch: Redux.Dispatch) =>
-  bindActionCreators(
-    {
-      fetchRuns: fetchRuns,
-    },
-    dispatch
-  )
-
-export default connect(mapStateToProps, mapDispatchToProps)(Runs)
+export default Runs

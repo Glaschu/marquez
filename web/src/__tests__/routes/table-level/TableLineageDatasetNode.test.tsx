@@ -1,14 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
-import { createStore } from 'redux'
-import { Provider } from 'react-redux'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import TableLineageDatasetNode from '../../../routes/table-level/TableLineageDatasetNode'
-import { PositionedNode } from '../../../components/graph'
-import { TableLineageDatasetNodeData } from '../../../routes/table-level/nodes'
 import { Dataset } from '../../../types/api'
 import { LineageDataset } from '../../../types/lineage'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { PositionedNode } from '../../../components/graph'
+import { Provider } from 'react-redux'
+import { TableLineageDatasetNodeData } from '../../../routes/table-level/nodes'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createStore } from 'redux'
+import { fireEvent, render, screen } from '@testing-library/react'
 import React from 'react'
+import TableLineageDatasetNode from '../../../routes/table-level/TableLineageDatasetNode'
 
 // Mock i18next
 vi.mock('react-i18next', () => ({
@@ -21,7 +21,7 @@ vi.mock('react-i18next', () => ({
 // Mock child components
 vi.mock('../../../components/core/tooltip/MQTooltip', () => ({
   default: ({ children, title }: { children: React.ReactNode; title: React.ReactNode }) => (
-    <div data-testid="mq-tooltip" title={typeof title === 'string' ? title : 'tooltip'}>
+    <div data-testid='mq-tooltip' title={typeof title === 'string' ? title : 'tooltip'}>
       {children}
     </div>
   ),
@@ -29,7 +29,7 @@ vi.mock('../../../components/core/tooltip/MQTooltip', () => ({
 
 vi.mock('../../../components/core/status/MqStatus', () => ({
   default: ({ label, color }: { label: string; color: string }) => (
-    <div data-testid="mq-status" data-label={label} data-color={color}>
+    <div data-testid='mq-status' data-label={label} data-color={color}>
       {label}
     </div>
   ),
@@ -37,7 +37,7 @@ vi.mock('../../../components/core/status/MqStatus', () => ({
 
 vi.mock('../../../components/core/text/MqText', () => ({
   default: ({ children, ...props }: { children: React.ReactNode }) => (
-    <span data-testid="mq-text" {...props}>
+    <span data-testid='mq-text' {...props}>
       {children}
     </span>
   ),

@@ -1,13 +1,13 @@
 // Copyright 2018-2025 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import React from 'react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
 import { Provider } from 'react-redux'
-import { createStore } from 'redux'
-import Runs from '../../../components/jobs/Runs'
 import { Run } from '../../../types/api'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createStore } from 'redux'
+import { fireEvent, render, screen } from '@testing-library/react'
+import React from 'react'
+import Runs from '../../../components/jobs/Runs'
 
 // Mock i18next
 vi.mock('react-i18next', () => ({
@@ -18,7 +18,7 @@ vi.mock('react-i18next', () => ({
 
 // Mock RunInfo component
 vi.mock('../../../components/jobs/RunInfo', () => ({
-  default: ({ run }: { run: Run }) => <div data-testid="run-info">{run.id}</div>,
+  default: ({ run }: { run: Run }) => <div data-testid='run-info'>{run.id}</div>,
 }))
 
 describe('Runs Component', () => {
@@ -193,7 +193,7 @@ describe('Runs Component', () => {
 
     render(
       <Provider store={store}>
-        <Runs jobName="test-job" jobNamespace="test-namespace" />
+        <Runs jobName='test-job' jobNamespace='test-namespace' />
       </Provider>
     )
 

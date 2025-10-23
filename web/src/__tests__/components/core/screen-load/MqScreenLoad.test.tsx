@@ -1,10 +1,9 @@
 // Copyright 2018-2024 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as React from 'react'
-import { render, screen } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
 import { MqScreenLoad } from '../../../../components/core/screen-load/MqScreenLoad'
+import { describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
 
 describe('MqScreenLoad Component', () => {
   it('should render without crashing', () => {
@@ -21,7 +20,7 @@ describe('MqScreenLoad Component', () => {
   it('should show children when loading is false and children are provided', () => {
     const { container } = render(
       <MqScreenLoad loading={false}>
-        <div data-testid="child-content">Child Content</div>
+        <div data-testid='child-content'>Child Content</div>
       </MqScreenLoad>
     )
     expect(screen.getByTestId('child-content')).toBeInTheDocument()
@@ -30,7 +29,7 @@ describe('MqScreenLoad Component', () => {
   it('should not show children when loading is true', () => {
     const { container } = render(
       <MqScreenLoad loading={true}>
-        <div data-testid="child-content">Child Content</div>
+        <div data-testid='child-content'>Child Content</div>
       </MqScreenLoad>
     )
     expect(screen.queryByTestId('child-content')).not.toBeInTheDocument()
@@ -43,7 +42,7 @@ describe('MqScreenLoad Component', () => {
   })
 
   it('should use custom height when provided', () => {
-    const { container } = render(<MqScreenLoad loading={true} customHeight="500px" />)
+    const { container } = render(<MqScreenLoad loading={true} customHeight='500px' />)
     const loadingBox = container.querySelector('[style*="height"]')
     expect(loadingBox).toBeInTheDocument()
   })
@@ -67,10 +66,10 @@ describe('MqScreenLoad Component', () => {
 
     rerender(
       <MqScreenLoad loading={false}>
-        <div data-testid="loaded-content">Loaded Content</div>
+        <div data-testid='loaded-content'>Loaded Content</div>
       </MqScreenLoad>
     )
-    
+
     expect(screen.getByTestId('loaded-content')).toBeInTheDocument()
     spinner = container.querySelector('.MuiCircularProgress-root')
     expect(spinner).not.toBeInTheDocument()
@@ -78,7 +77,7 @@ describe('MqScreenLoad Component', () => {
 
   it('should render complex children components', () => {
     const ComplexChild = () => (
-      <div data-testid="complex-child">
+      <div data-testid='complex-child'>
         <h1>Title</h1>
         <p>Content</p>
       </div>
@@ -89,7 +88,7 @@ describe('MqScreenLoad Component', () => {
         <ComplexChild />
       </MqScreenLoad>
     )
-    
+
     expect(screen.getByTestId('complex-child')).toBeInTheDocument()
   })
 })

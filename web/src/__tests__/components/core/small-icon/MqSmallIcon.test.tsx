@@ -1,10 +1,9 @@
 // Copyright 2018-2024 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as React from 'react'
+import { describe, expect, it } from 'vitest'
+import { faCog, faDatabase, faServer } from '@fortawesome/free-solid-svg-icons'
 import { render } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
-import { faDatabase, faServer, faCog } from '@fortawesome/free-solid-svg-icons'
 import MqSmallIcon from '../../../../components/core/small-icon/MqSmallIcon'
 
 describe('MqSmallIcon Component', () => {
@@ -12,9 +11,9 @@ describe('MqSmallIcon Component', () => {
     const { container } = render(
       <MqSmallIcon
         icon={faDatabase}
-        backgroundColor="#000000"
-        foregroundColor="#ffffff"
-        shape="circle"
+        backgroundColor='#000000'
+        foregroundColor='#ffffff'
+        shape='circle'
       />
     )
     expect(container).toBeInTheDocument()
@@ -24,9 +23,9 @@ describe('MqSmallIcon Component', () => {
     const { container } = render(
       <MqSmallIcon
         icon={faDatabase}
-        backgroundColor="#000000"
-        foregroundColor="#ffffff"
-        shape="circle"
+        backgroundColor='#000000'
+        foregroundColor='#ffffff'
+        shape='circle'
       />
     )
     const iconBox = container.firstChild as HTMLElement
@@ -37,9 +36,9 @@ describe('MqSmallIcon Component', () => {
     const { container } = render(
       <MqSmallIcon
         icon={faDatabase}
-        backgroundColor="#000000"
-        foregroundColor="#ffffff"
-        shape="rect"
+        backgroundColor='#000000'
+        foregroundColor='#ffffff'
+        shape='rect'
       />
     )
     const iconBox = container.firstChild as HTMLElement
@@ -52,8 +51,8 @@ describe('MqSmallIcon Component', () => {
       <MqSmallIcon
         icon={faDatabase}
         backgroundColor={backgroundColor}
-        foregroundColor="#ffffff"
-        shape="circle"
+        foregroundColor='#ffffff'
+        shape='circle'
       />
     )
     expect(container).toBeInTheDocument()
@@ -64,9 +63,9 @@ describe('MqSmallIcon Component', () => {
     const { container } = render(
       <MqSmallIcon
         icon={faDatabase}
-        backgroundColor="#000000"
+        backgroundColor='#000000'
         foregroundColor={foregroundColor}
-        shape="circle"
+        shape='circle'
       />
     )
     const icon = container.querySelector('svg')
@@ -77,17 +76,17 @@ describe('MqSmallIcon Component', () => {
     const { container: container1 } = render(
       <MqSmallIcon
         icon={faDatabase}
-        backgroundColor="#000000"
-        foregroundColor="#ffffff"
-        shape="circle"
+        backgroundColor='#000000'
+        foregroundColor='#ffffff'
+        shape='circle'
       />
     )
     const { container: container2 } = render(
       <MqSmallIcon
         icon={faServer}
-        backgroundColor="#000000"
-        foregroundColor="#ffffff"
-        shape="circle"
+        backgroundColor='#000000'
+        foregroundColor='#ffffff'
+        shape='circle'
       />
     )
     expect(container1.querySelector('svg')).toBeInTheDocument()
@@ -98,9 +97,9 @@ describe('MqSmallIcon Component', () => {
     const { container } = render(
       <MqSmallIcon
         icon={faDatabase}
-        backgroundColor="#000000"
-        foregroundColor="#ffffff"
-        shape="circle"
+        backgroundColor='#000000'
+        foregroundColor='#ffffff'
+        shape='circle'
       />
     )
     const iconBox = container.firstChild
@@ -109,12 +108,7 @@ describe('MqSmallIcon Component', () => {
 
   it('should render FontAwesome icon', () => {
     const { container } = render(
-      <MqSmallIcon
-        icon={faCog}
-        backgroundColor="#333333"
-        foregroundColor="#eeeeee"
-        shape="rect"
-      />
+      <MqSmallIcon icon={faCog} backgroundColor='#333333' foregroundColor='#eeeeee' shape='rect' />
     )
     const svg = container.querySelector('svg')
     expect(svg).toBeInTheDocument()
@@ -124,9 +118,9 @@ describe('MqSmallIcon Component', () => {
     const { container } = render(
       <MqSmallIcon
         icon={faDatabase}
-        backgroundColor="#1a1a1a"
-        foregroundColor="#f0f0f0"
-        shape="circle"
+        backgroundColor='#1a1a1a'
+        foregroundColor='#f0f0f0'
+        shape='circle'
       />
     )
     expect(container).toBeInTheDocument()
@@ -136,9 +130,9 @@ describe('MqSmallIcon Component', () => {
     const { container } = render(
       <MqSmallIcon
         icon={faDatabase}
-        backgroundColor="#f0f0f0"
-        foregroundColor="#1a1a1a"
-        shape="rect"
+        backgroundColor='#f0f0f0'
+        foregroundColor='#1a1a1a'
+        shape='rect'
       />
     )
     expect(container).toBeInTheDocument()
@@ -148,17 +142,17 @@ describe('MqSmallIcon Component', () => {
     const { container: circleContainer } = render(
       <MqSmallIcon
         icon={faDatabase}
-        backgroundColor="#000000"
-        foregroundColor="#ffffff"
-        shape="circle"
+        backgroundColor='#000000'
+        foregroundColor='#ffffff'
+        shape='circle'
       />
     )
     const { container: rectContainer } = render(
       <MqSmallIcon
         icon={faServer}
-        backgroundColor="#000000"
-        foregroundColor="#ffffff"
-        shape="rect"
+        backgroundColor='#000000'
+        foregroundColor='#ffffff'
+        shape='rect'
       />
     )
     expect(circleContainer).toBeInTheDocument()

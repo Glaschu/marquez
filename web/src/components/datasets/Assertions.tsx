@@ -5,14 +5,13 @@ import { Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material'
 import { theme } from '../../helpers/theme'
 import MqStatus from '../core/status/MqStatus'
 import MqText from '../core/text/MqText'
-import React from 'react'
 
-interface OwnProps {
+interface AssertionsProps {
   assertions: Assertion[]
   hasHeader?: boolean
 }
 
-const Assertions: React.FC<OwnProps> = ({ assertions, hasHeader }) => {
+const Assertions = ({ assertions, hasHeader }: AssertionsProps) => {
   if (assertions.length === 0) {
     return null
   }

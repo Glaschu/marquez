@@ -1,17 +1,17 @@
 import React, { useMemo } from 'react'
 
-import { chakra, usePrefersReducedMotion } from '@chakra-ui/react'
 import { keyframes } from '@emotion/react'
+import useMediaQuery from '@mui/material/useMediaQuery'
 
 import { EdgeLabel } from './EdgeLabel'
 import { grey } from '@mui/material/colors'
 import type { EdgeProps } from './Edge'
 
-const ChakraPolyline = chakra('polyline') // need to use animation prop
 const marchingAnts = keyframes({ from: { strokeDashoffset: 60 }, to: { strokeDashoffset: 0 } })
 
 export const ElbowEdge = ({ edge, isMiniMap }: EdgeProps) => {
-  const reducedMotion = usePrefersReducedMotion() || isMiniMap // do not animate the minimap
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
+  const reducedMotion = prefersReducedMotion || isMiniMap // do not animate the minimap
 
   const points = useMemo(() => {
     const { startPoint, bendPoints, endPoint } = edge
@@ -47,7 +47,7 @@ export const ElbowEdge = ({ edge, isMiniMap }: EdgeProps) => {
       />
       <EdgeLabel label={edge.label} endPointY={longestEdge?.y} />
       {!reducedMotion && edge.isAnimated && (
-        <ChakraPolyline
+        <polyline
           id={`${edge.sourceNodeId}-${edge.targetNodeId}-animated`}
           fill='none'
           strokeLinecap='round'
@@ -55,8 +55,8 @@ export const ElbowEdge = ({ edge, isMiniMap }: EdgeProps) => {
           strokeWidth={edge.strokeWidth || 5}
           strokeLinejoin='round'
           strokeDasharray='0px 60px'
-          animation={`${marchingAnts} infinite 2s linear`}
           points={points.map(({ x, y }) => `${x},${y}`).join(' ')}
+          style={{ animation: `${marchingAnts} infinite 2s linear` }}
         />
       )}
     </>

@@ -1,15 +1,15 @@
 // Copyright 2018-2025 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import React from 'react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
-import { Provider } from 'react-redux'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { createStore } from 'redux'
-import DatasetColumnLineage from '../../../components/datasets/DatasetColumnLineage'
 import { Dataset } from '../../../types/api'
 import { LineageDataset } from '../../../types/lineage'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { Provider } from 'react-redux'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createStore } from 'redux'
+import { render, screen, waitFor } from '@testing-library/react'
+import DatasetColumnLineage from '../../../components/datasets/DatasetColumnLineage'
+import React from 'react'
 
 // Mock i18next
 vi.mock('react-i18next', () => ({
@@ -30,12 +30,8 @@ describe('DatasetColumnLineage Component', () => {
     fields: [],
     columnLineage: {
       graph: {
-        inputFields: [
-          { namespace: 'ns1', dataset: 'ds1', field: 'field1' },
-        ],
-        outputFields: [
-          { namespace: 'ns2', dataset: 'ds2', field: 'field2' },
-        ],
+        inputFields: [{ namespace: 'ns1', dataset: 'ds1', field: 'field1' }],
+        outputFields: [{ namespace: 'ns2', dataset: 'ds2', field: 'field2' }],
       },
     },
   } as any
@@ -100,12 +96,14 @@ describe('DatasetColumnLineage Component', () => {
 
   it('should show download button for large payloads', async () => {
     // Create a large fields array
-    const largeFields: any[] = Array(1000).fill(null).map((_, i) => ({
-      name: `field-${i}`,
-      type: 'STRING',
-      description: '',
-    }))
-    
+    const largeFields: any[] = Array(1000)
+      .fill(null)
+      .map((_, i) => ({
+        name: `field-${i}`,
+        type: 'STRING',
+        description: '',
+      }))
+
     const largeLineageDataset: LineageDataset = {
       ...mockLineageDataset,
       fields: largeFields,
@@ -120,7 +118,10 @@ describe('DatasetColumnLineage Component', () => {
       },
     })
 
-    const { container } = renderWithProviders(<DatasetColumnLineage lineageDataset={largeLineageDataset} />, { store })
+    const { container } = renderWithProviders(
+      <DatasetColumnLineage lineageDataset={largeLineageDataset} />,
+      { store }
+    )
 
     // Component should render something even with large payload
     expect(container).toBeTruthy()
@@ -133,7 +134,10 @@ describe('DatasetColumnLineage Component', () => {
       <Provider store={store}>
         <MemoryRouter initialEntries={['/']}>
           <Routes>
-            <Route path='/' element={<DatasetColumnLineage lineageDataset={mockLineageDataset} />} />
+            <Route
+              path='/'
+              element={<DatasetColumnLineage lineageDataset={mockLineageDataset} />}
+            />
           </Routes>
         </MemoryRouter>
       </Provider>

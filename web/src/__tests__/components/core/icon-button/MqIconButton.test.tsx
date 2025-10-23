@@ -1,11 +1,11 @@
 // Copyright 2018-2024 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as React from 'react'
-import { render, screen } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
 import { BrowserRouter } from 'react-router-dom'
 import { Home } from '@mui/icons-material'
+import { type ReactElement } from 'react'
+import { describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
 import MqIconButton from '../../../../components/core/icon-button/MqIconButton'
 
 describe('MqIconButton Component', () => {
@@ -17,7 +17,7 @@ describe('MqIconButton Component', () => {
     children: <Home />,
   }
 
-  const renderWithRouter = (component: React.ReactElement) => {
+  const renderWithRouter = (component: ReactElement) => {
     return render(<BrowserRouter>{component}</BrowserRouter>)
   }
 
@@ -56,16 +56,14 @@ describe('MqIconButton Component', () => {
   })
 
   it('should link to correct route', () => {
-    const { container } = renderWithRouter(<MqIconButton {...defaultProps} to="/dashboard" />)
+    const { container } = renderWithRouter(<MqIconButton {...defaultProps} to='/dashboard' />)
     const link = container.querySelector('a[href="/dashboard"]')
     expect(link).toBeInTheDocument()
   })
 
   it('should render with different icon', () => {
-    const customIcon = <div data-testid="custom-icon">Custom</div>
-    const { container } = renderWithRouter(
-      <MqIconButton {...defaultProps} children={customIcon} />
-    )
+    const customIcon = <div data-testid='custom-icon'>Custom</div>
+    const { container } = renderWithRouter(<MqIconButton {...defaultProps} children={customIcon} />)
     expect(screen.getByTestId('custom-icon')).toBeInTheDocument()
   })
 
@@ -76,7 +74,7 @@ describe('MqIconButton Component', () => {
   })
 
   it('should display title below button', () => {
-    renderWithRouter(<MqIconButton {...defaultProps} title="Dashboard" />)
+    renderWithRouter(<MqIconButton {...defaultProps} title='Dashboard' />)
     expect(screen.getByText('Dashboard')).toBeInTheDocument()
   })
 })

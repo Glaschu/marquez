@@ -1,12 +1,11 @@
 // Copyright 2018-2024 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as React from 'react'
-import { render, screen } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
-import { MemoryRouter } from 'react-router-dom'
-import DatasetInfo from '../../../components/datasets/DatasetInfo'
 import { Dataset } from '../../../types/api'
+import { MemoryRouter } from 'react-router-dom'
+import { describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import DatasetInfo from '../../../components/datasets/DatasetInfo'
 
 const mockDataset: Dataset = {
   id: { namespace: 'test', name: 'test_dataset' },
@@ -23,7 +22,7 @@ const mockDataset: Dataset = {
   description: 'Test dataset',
   facets: {},
   deleted: false,
-  columnLineage: []
+  columnLineage: [],
 }
 
 const mockFields = [
@@ -31,14 +30,14 @@ const mockFields = [
     name: 'id',
     type: 'INTEGER',
     description: 'Primary key',
-    tags: []
+    tags: [],
   },
   {
     name: 'name',
     type: 'VARCHAR',
     description: 'User name',
-    tags: []
-  }
+    tags: [],
+  },
 ]
 
 describe('DatasetInfo Component', () => {

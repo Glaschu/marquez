@@ -3,13 +3,10 @@ import { Box } from '@mui/system'
 import { THEME_EXTRA, theme } from '../../../helpers/theme'
 import { githubDarkTheme } from '@uiw/react-json-view/githubDark'
 import JsonView from '@uiw/react-json-view'
-import React from 'react'
 
-interface OwnProps {
+interface JsonViewProps {
   data: object
 }
-
-type JsonViewProps = OwnProps
 
 githubDarkTheme.background = theme.palette.background.default
 githubDarkTheme.backgroundColor = theme.palette.background.default
@@ -30,7 +27,7 @@ const mqTheme = {
   '--w-rjv-type-float-color': theme.palette.primary.main,
 }
 
-const MqJsonView: React.FC<JsonViewProps> = ({ data }) => {
+const MqJsonView = ({ data }: JsonViewProps) => {
   return (
     <Box my={2}>
       <JsonView style={mqTheme} collapsed={2} value={data} />

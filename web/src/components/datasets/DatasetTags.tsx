@@ -1,6 +1,5 @@
 // Copyright 2018-2024 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
-import * as Redux from 'redux'
 import {
   Autocomplete,
   AutocompleteChangeDetails,
@@ -18,8 +17,8 @@ import {
   deleteDatasetFieldTag,
   deleteDatasetTag,
 } from '../../store/actionCreators'
-import { bindActionCreators } from 'redux'
-import { connect, useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
+import { useState } from 'react'
 import { useTheme } from '@emotion/react'
 import Button from '@mui/material/Button'
 import CheckBoxIcon from '@mui/icons-material/CheckBox'
@@ -31,7 +30,6 @@ import DialogContent from '@mui/material/DialogContent'
 import LocalOfferIcon from '@mui/icons-material/LocalOffer'
 import MQText from '../core/text/MqText'
 import MQTooltip from '../core/tooltip/MQTooltip'
-import React, { useState } from 'react'
 import Snackbar from '@mui/material/Snackbar'
 
 interface DatasetTagsProps {
@@ -41,28 +39,9 @@ interface DatasetTagsProps {
   datasetField?: string
 }
 
-interface DispatchProps {
-  deleteDatasetTag: typeof deleteDatasetTag
-  addDatasetTag: typeof addDatasetTag
-  deleteDatasetFieldTag: typeof deleteDatasetFieldTag
-  addDatasetFieldTag: typeof addDatasetFieldTag
-  addTags: typeof addTags
-}
-
-type IProps = DatasetTagsProps & DispatchProps
-
-const DatasetTags: React.FC<IProps> = (props) => {
-  const {
-    namespace,
-    datasetName,
-    datasetTags,
-    deleteDatasetTag,
-    addDatasetTag,
-    deleteDatasetFieldTag,
-    addDatasetFieldTag,
-    datasetField,
-    addTags,
-  } = props
+const DatasetTags = (props: DatasetTagsProps) => {
+  const { namespace, datasetName, datasetTags, datasetField } = props
+  const dispatch = useDispatch()
 
   const [listTag, setListTag] = useState('')
   const [openTagDesc, setOpenTagDesc] = useState(false)
@@ -107,15 +86,15 @@ const DatasetTags: React.FC<IProps> = (props) => {
       const newSelectedTags = selectedTags.filter((tag) => newTag !== tag)
       setSelectedTags(newSelectedTags)
       datasetField
-        ? deleteDatasetFieldTag(namespace, datasetName, newTag, datasetField)
-        : deleteDatasetTag(namespace, datasetName, newTag)
+        ? dispatch(deleteDatasetFieldTag(namespace, datasetName, newTag, datasetField))
+        : dispatch(deleteDatasetTag(namespace, datasetName, newTag))
     } else if (details && !selectedTags.includes(details.option)) {
       const newTag = details.option
       const newSelectedTags = [...selectedTags, newTag]
       setSelectedTags(newSelectedTags)
       datasetField
-        ? addDatasetFieldTag(namespace, datasetName, newTag, datasetField)
-        : addDatasetTag(namespace, datasetName, newTag)
+        ? dispatch(addDatasetFieldTag(namespace, datasetName, newTag, datasetField))
+        : dispatch(addDatasetTag(namespace, datasetName, newTag))
     }
   }
 
@@ -125,12 +104,12 @@ const DatasetTags: React.FC<IProps> = (props) => {
     setSelectedTags(newSelectedTags)
 
     datasetField
-      ? deleteDatasetFieldTag(namespace, datasetName, deletedTag, datasetField)
-      : deleteDatasetTag(namespace, datasetName, deletedTag)
+      ? dispatch(deleteDatasetFieldTag(namespace, datasetName, deletedTag, datasetField))
+      : dispatch(deleteDatasetTag(namespace, datasetName, deletedTag))
   }
 
   const addTag = () => {
-    addTags(listTag, tagDescription)
+    dispatch(addTags(listTag, tagDescription))
     setSnackbarOpen(true)
     setOpenTagDesc(false)
     setListTag('')
@@ -307,16 +286,4 @@ const DatasetTags: React.FC<IProps> = (props) => {
   )
 }
 
-const mapDispatchToProps = (dispatch: Redux.Dispatch) =>
-  bindActionCreators(
-    {
-      deleteDatasetTag: deleteDatasetTag,
-      addDatasetTag: addDatasetTag,
-      deleteDatasetFieldTag: deleteDatasetFieldTag,
-      addDatasetFieldTag: addDatasetFieldTag,
-      addTags: addTags,
-    },
-    dispatch
-  )
-
-export default connect(null, mapDispatchToProps)(DatasetTags)
+export default DatasetTags

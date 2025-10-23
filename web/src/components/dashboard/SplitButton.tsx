@@ -1,4 +1,4 @@
-import * as React from 'react'
+import { MouseEvent, useRef, useState } from 'react'
 import { Refresh } from '@mui/icons-material'
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
 import Button from '@mui/material/Button'
@@ -18,16 +18,16 @@ interface Props {
 }
 
 export default function SplitButton({ options, onClick, onRefresh }: Props) {
-  const [open, setOpen] = React.useState(false)
-  const anchorRef = React.useRef<HTMLDivElement>(null)
-  const [selectedIndex, setSelectedIndex] = React.useState(0)
+  const [open, setOpen] = useState(false)
+  const anchorRef = useRef<HTMLDivElement>(null)
+  const [selectedIndex, setSelectedIndex] = useState(0)
 
   const handleClick = () => {
     onClick(options[selectedIndex])
   }
 
   const handleMenuItemClick = (
-    event: React.MouseEvent<HTMLLIElement, MouseEvent>,
+    event: MouseEvent<HTMLLIElement, globalThis.MouseEvent>,
     index: number
   ) => {
     setSelectedIndex(index)

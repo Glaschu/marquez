@@ -1,9 +1,9 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
+import { type ReactElement } from 'react'
 import Box from '@mui/material/Box'
 import MqText from '../text/MqText'
-import React, { ReactElement } from 'react'
 
 interface MqInfoProps {
   icon: ReactElement
@@ -11,7 +11,7 @@ interface MqInfoProps {
   value: ReactElement | string | number
 }
 
-export const MqInfo: React.FC<MqInfoProps> = ({ icon, label, value }) => {
+export const MqInfo = ({ icon, label, value }: MqInfoProps) => {
   return (
     <Box>
       <Box display={'flex'} alignItems={'center'} mb={1}>

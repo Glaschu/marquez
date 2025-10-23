@@ -3,14 +3,13 @@
 import { theme } from '../../../helpers/theme'
 import Box from '@mui/material/Box'
 import MqText from '../text/MqText'
-import React from 'react'
 
-interface OwnProps {
+interface MqStatusProps {
   color: string | null
   label?: string
 }
 
-const MqStatus: React.FC<OwnProps> = ({ label, color }) => {
+const MqStatus = ({ label, color }: MqStatusProps) => {
   if (!color) {
     return null
   }

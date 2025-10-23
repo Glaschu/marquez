@@ -19,5 +19,7 @@ WORKDIR /usr/src/app
 COPY --from=build /usr/src/app/api/build/libs/marquez-*.jar /usr/src/app
 COPY marquez.dev.yml marquez.dev.yml
 COPY docker/entrypoint.sh entrypoint.sh
+COPY docker/wait-for-it.sh wait-for-it.sh
+RUN chmod +x wait-for-it.sh entrypoint.sh
 EXPOSE 5000 5001
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]

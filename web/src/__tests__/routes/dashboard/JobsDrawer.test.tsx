@@ -1,14 +1,14 @@
 // Copyright 2018-2025 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import React from 'react'
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
-import { Provider } from 'react-redux'
-import { MemoryRouter } from 'react-router-dom'
-import { createStore } from 'redux'
-import JobsDrawer from '../../../routes/dashboard/JobsDrawer'
 import { Job } from '../../../types/api'
+import { MemoryRouter } from 'react-router-dom'
+import { Provider } from 'react-redux'
+import { createStore } from 'redux'
+import { describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import JobsDrawer from '../../../routes/dashboard/JobsDrawer'
+import React from 'react'
 
 // Mock JobRunItem component
 vi.mock('../../../routes/dashboard/JobRunItem', () => ({

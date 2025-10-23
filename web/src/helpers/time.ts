@@ -1,7 +1,7 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import moment from 'moment'
+import dayjs from './dayjs'
 
 function addLeadingZero(number: number) {
   if (number.toString().length === 1) {
@@ -11,7 +11,7 @@ function addLeadingZero(number: number) {
 }
 
 export function stopWatchDuration(durationMs: number) {
-  const duration = moment.duration(durationMs, 'ms')
+  const duration = dayjs.duration(durationMs, 'milliseconds')
   if (duration.asMilliseconds() === 0) {
     return '0'
   }
@@ -28,10 +28,10 @@ export function stopWatchDuration(durationMs: number) {
   }
 }
 
-export function formatDatePicker(val: string) {
-  return moment(val).format('YYYY-MM-DDTHH:mm:ss')
+export function formatDatePicker(val: string | number | Date) {
+  return dayjs(val).format('YYYY-MM-DDTHH:mm:ss')
 }
 
-export function formatDateAPIQuery(val: string) {
-  return moment(val).format('YYYY-MM-DDTHH:mm:ss[.000Z]')
+export function formatDateAPIQuery(val: string | number | Date) {
+  return dayjs(val).format('YYYY-MM-DDTHH:mm:ss[.000Z]')
 }

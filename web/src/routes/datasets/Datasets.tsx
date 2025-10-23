@@ -30,6 +30,7 @@ import { fetchDatasets, resetDatasets } from '../../store/actionCreators'
 import { formatUpdatedAt } from '../../helpers'
 import { truncateText } from '../../helpers/text'
 import { useTheme } from '@emotion/react'
+import { useTranslation } from 'react-i18next'
 import Assertions from '../../components/datasets/Assertions'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress/CircularProgress'
@@ -41,7 +42,6 @@ import MqStatus from '../../components/core/status/MqStatus'
 import MqText from '../../components/core/text/MqText'
 import NamespaceSelect from '../../components/namespace-select/NamespaceSelect'
 import React from 'react'
-import { useTranslation } from 'react-i18next'
 
 interface StateProps {
   datasets: Dataset[]

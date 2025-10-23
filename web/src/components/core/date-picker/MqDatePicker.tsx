@@ -4,24 +4,21 @@
 import { DateTimePicker } from '@mui/x-date-pickers'
 import { alpha, createTheme } from '@mui/material/styles'
 import { useTheme } from '@emotion/react'
-import React from 'react'
-import dayjs from 'dayjs'
+import dayjs from '../../../helpers/dayjs'
 
-interface OwnProps {
+interface DatePickerProps {
   value: string
   onChange: (e: any) => void
   label?: string
   format?: string
 }
 
-type DatePickerProps = OwnProps
-
-const MqDatePicker: React.FC<DatePickerProps> = ({
+const MqDatePicker = ({
   value,
   onChange,
   label = '',
   format = 'MM DD YYYY hh:mm a',
-}) => {
+}: DatePickerProps) => {
   const theme = createTheme(useTheme())
 
   return (

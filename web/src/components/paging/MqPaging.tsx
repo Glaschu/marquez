@@ -4,11 +4,11 @@
 import { Box } from '@mui/material'
 import { ChevronLeftRounded, ChevronRightRounded } from '@mui/icons-material'
 import { theme } from '../../helpers/theme'
+import { useTranslation } from 'react-i18next'
 import IconButton from '@mui/material/IconButton'
 import MQTooltip from '../core/tooltip/MQTooltip'
 import MqText from '../core/text/MqText'
 import React, { FunctionComponent } from 'react'
-import { useTranslation } from 'react-i18next'
 
 interface Props {
   pageSize: number

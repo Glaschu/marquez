@@ -1,8 +1,8 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import React, { ChangeEvent, FunctionComponent, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import React, { ChangeEvent, FunctionComponent, useEffect } from 'react'
 
 import '../../i18n/config'
 import * as Redux from 'redux'
@@ -319,9 +319,7 @@ const JobDetailPage: FunctionComponent<IProps> = (props) => {
         job.latestRun ? (
           <RunInfo run={job.latestRun} />
         ) : (
-          !job.latestRun && (
-            <MqEmpty title={t('jobs.empty_title')} body={t('jobs.empty_body')} />
-          )
+          !job.latestRun && <MqEmpty title={t('jobs.empty_title')} body={t('jobs.empty_body')} />
         )
       ) : null}
       {tabIndex === 1 && <Runs jobName={job.name} jobNamespace={job.namespace} />}

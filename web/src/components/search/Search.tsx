@@ -7,14 +7,14 @@ import { DRAWER_WIDTH, HEADER_HEIGHT, theme } from '../../helpers/theme'
 import { IState } from '../../store/reducers'
 import { MqInputBase } from '../core/input-base/MqInputBase'
 import { REACT_APP_ADVANCED_SEARCH } from '../../globals'
-import { connect } from 'react-redux'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router'
+import { useSelector } from 'react-redux'
 import BaseSearch from './base-search/BaseSearch'
 import CircularProgress from '@mui/material/CircularProgress/CircularProgress'
 import ClickAwayListener from '@mui/material/ClickAwayListener'
 import IconButton from '@mui/material/IconButton'
 import OpenSearch from './open-search/OpenSearch'
-import React, { useEffect, useRef, useState } from 'react'
 import SearchPlaceholder from './SearchPlaceholder'
 
 const useCmdKShortcut = (callback: () => void) => {
@@ -51,11 +51,12 @@ const useEscapeShortcut = (callback: () => void) => {
   }, [callback])
 }
 
-interface StateProps {
-  isLoading: boolean
-}
+const Search = () => {
+  // Redux hooks
+  const isLoading = useSelector(
+    (state: IState) => state.openSearchJobs.isLoading || state.openSearchDatasets.isLoading
+  )
 
-const Search: React.FC = ({ isLoading }: StateProps) => {
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(true)
 
@@ -203,8 +204,4 @@ const Search: React.FC = ({ isLoading }: StateProps) => {
   )
 }
 
-const mapStateToProps = (state: IState) => ({
-  isLoading: state.openSearchJobs.isLoading || state.openSearchDatasets.isLoading,
-})
-
-export default connect(mapStateToProps)(Search)
+export default Search
