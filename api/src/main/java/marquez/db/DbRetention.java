@@ -133,14 +133,28 @@ public final class DbRetention {
                         rows_deleted INT;
                         rows_deleted_total INT := 0;
                       BEGIN
+                        -- Keep at least one job per namespace+name combination (the most recent one)
+                        CREATE TEMPORARY TABLE most_recent_job_per_name AS (
+                          SELECT DISTINCT ON (namespace_uuid, name) uuid
+                            FROM jobs
+                           ORDER BY namespace_uuid, name, updated_at DESC
+                        );
+                        
+                        CREATE INDEX IF NOT EXISTS idx_most_recent_job ON most_recent_job_per_name(uuid);
+                        
                         LOOP
                           WITH deleted_rows AS (
                             DELETE FROM jobs
                               WHERE uuid IN (
-                                SELECT uuid
-                                  FROM jobs
-                                 WHERE updated_at < CURRENT_TIMESTAMP - INTERVAL '${retentionDays} days'
-                                   FOR UPDATE SKIP LOCKED
+                                SELECT j.uuid
+                                  FROM jobs AS j
+                                 WHERE j.updated_at < CURRENT_TIMESTAMP - INTERVAL '${retentionDays} days'
+                                   AND NOT EXISTS (
+                                     SELECT 1
+                                       FROM most_recent_job_per_name AS mrj
+                                      WHERE j.uuid = mrj.uuid
+                                   )
+                                   FOR UPDATE OF j SKIP LOCKED
                                  LIMIT rows_per_batch
                               ) RETURNING uuid
                           )
@@ -149,6 +163,8 @@ public final class DbRetention {
                           EXIT WHEN rows_deleted = 0;
                           PERFORM pg_sleep(0.1);
                         END LOOP;
+                        
+                        DROP TABLE most_recent_job_per_name;
                         RETURN rows_deleted_total;
                       END;
                       $$ LANGUAGE plpgsql;""",
@@ -197,6 +213,17 @@ public final class DbRetention {
                             FROM jobs
                            WHERE updated_at >= CURRENT_TIMESTAMP - INTERVAL '${retentionDays} days'
                         );
+                        
+                        -- Keep at least one job_version per job (the most recent one)
+                        CREATE TEMPORARY TABLE most_recent_job_version_per_job AS (
+                          SELECT DISTINCT ON (job_uuid) uuid
+                            FROM job_versions
+                           ORDER BY job_uuid, created_at DESC
+                        );
+                        
+                        CREATE INDEX IF NOT EXISTS idx_used_jv_current ON used_job_versions_as_current_in_x_days(current_version_uuid);
+                        CREATE INDEX IF NOT EXISTS idx_most_recent_jv ON most_recent_job_version_per_job(uuid);
+                        
                         LOOP
                           WITH deleted_rows AS (
                             DELETE FROM job_versions AS jv
@@ -210,6 +237,10 @@ public final class DbRetention {
                                 SELECT 1
                                   FROM used_job_versions_as_current_in_x_days AS ujvc
                                  WHERE jv.uuid = ujvc.current_version_uuid
+                              ) AND NOT EXISTS (
+                                SELECT 1
+                                  FROM most_recent_job_version_per_job AS mrjv
+                                 WHERE jv.uuid = mrjv.uuid
                               ) RETURNING uuid
                           )
                           SELECT COUNT(*) INTO rows_deleted FROM deleted_rows;
@@ -218,6 +249,7 @@ public final class DbRetention {
                           PERFORM pg_sleep(0.1);
                         END LOOP;
                         DROP TABLE used_job_versions_as_current_in_x_days;
+                        DROP TABLE most_recent_job_version_per_job;
                         RETURN rows_deleted_total;
                       END;
                       $$ LANGUAGE plpgsql;""",
@@ -343,8 +375,16 @@ public final class DbRetention {
                            WHERE jv.created_at >= CURRENT_TIMESTAMP - INTERVAL '${retentionDays} days'
                         );
                         
+                        -- Keep at least one dataset per namespace+name combination (the most recent one)
+                        CREATE TEMPORARY TABLE most_recent_dataset_per_name AS (
+                          SELECT DISTINCT ON (namespace_uuid, name) uuid
+                            FROM datasets
+                           ORDER BY namespace_uuid, name, updated_at DESC
+                        );
+                        
                         -- Create index for better performance
                         CREATE INDEX IF NOT EXISTS idx_used_datasets_io ON used_datasets_as_io_in_x_days(dataset_uuid);
+                        CREATE INDEX IF NOT EXISTS idx_most_recent_dataset ON most_recent_dataset_per_name(uuid);
                         
                         LOOP
                           -- Create temp table with batch of datasets to delete
@@ -359,6 +399,10 @@ public final class DbRetention {
                                SELECT 1
                                  FROM used_datasets_as_io_in_x_days AS udaio
                                 WHERE d.uuid = udaio.dataset_uuid
+                             ) AND NOT EXISTS (
+                               SELECT 1
+                                 FROM most_recent_dataset_per_name AS mrd
+                                WHERE d.uuid = mrd.uuid
                              )
                            LIMIT rows_per_batch
                              FOR UPDATE OF d SKIP LOCKED;
@@ -463,6 +507,7 @@ public final class DbRetention {
                         DROP TABLE IF EXISTS dataset_fields_to_delete;
                         DROP TABLE IF EXISTS dataset_versions_to_delete_cascade;
                         DROP TABLE used_datasets_as_io_in_x_days;
+                        DROP TABLE most_recent_dataset_per_name;
                         RETURN rows_deleted_total;
                       END;
                       $$ LANGUAGE plpgsql;""",
@@ -535,9 +580,17 @@ public final class DbRetention {
                            WHERE updated_at >= CURRENT_TIMESTAMP - INTERVAL '${retentionDays} days'
                         );
                         
+                        -- Keep at least one dataset_version per dataset (the most recent one)
+                        CREATE TEMPORARY TABLE most_recent_dataset_version_per_dataset AS (
+                          SELECT DISTINCT ON (dataset_uuid) uuid
+                            FROM dataset_versions
+                           ORDER BY dataset_uuid, created_at DESC
+                        );
+                        
                         -- Create index on temp tables for better performance
                         CREATE INDEX IF NOT EXISTS idx_used_dv_input ON used_dataset_versions_as_input_in_x_days(dataset_version_uuid);
                         CREATE INDEX IF NOT EXISTS idx_used_dv_current ON used_dataset_versions_as_current_in_x_days(current_version_uuid);
+                        CREATE INDEX IF NOT EXISTS idx_most_recent_dv ON most_recent_dataset_version_per_dataset(uuid);
                         
                         LOOP
                           -- Create temp table with batch of dataset_versions to delete
@@ -556,6 +609,10 @@ public final class DbRetention {
                                SELECT 1
                                  FROM used_dataset_versions_as_current_in_x_days AS udvc
                                 WHERE dv.uuid = udvc.current_version_uuid
+                             ) AND NOT EXISTS (
+                               SELECT 1
+                                 FROM most_recent_dataset_version_per_dataset AS mrdv
+                                WHERE dv.uuid = mrdv.uuid
                              )
                            LIMIT rows_per_batch
                              FOR UPDATE OF dv SKIP LOCKED;
@@ -610,6 +667,7 @@ public final class DbRetention {
                         DROP TABLE IF EXISTS dataset_versions_to_delete;
                         DROP TABLE used_dataset_versions_as_input_in_x_days;
                         DROP TABLE used_dataset_versions_as_current_in_x_days;
+                        DROP TABLE most_recent_dataset_version_per_dataset;
                         RETURN rows_deleted_total;
                       END;
                       $$ LANGUAGE plpgsql;""",

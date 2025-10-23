@@ -35,7 +35,9 @@ Modified `DbRetention.java` to **manually delete dependent records in batches** 
 ## Changes Made
 
 ### 1. `retentionOnDatasetVersions()` Optimization
+- **Identifies most recent dataset version per dataset** to preserve
 - Creates a temp table `dataset_versions_to_delete` with batches of UUIDs
+- Excludes the most recent version per dataset from deletion
 - Manually deletes from dependent tables in this order:
   1. `column_lineage` (output and input references)
   2. `dataset_facets`
@@ -49,7 +51,9 @@ Modified `DbRetention.java` to **manually delete dependent records in batches** 
 - **Key optimization**: Triggers are disabled during deletion to skip CASCADE constraint checks entirely
 
 ### 2. `retentionOnDatasets()` Optimization
+- **Identifies most recent dataset per namespace+name** to preserve
 - Similar approach with cascading temp tables
+- Excludes the most recent dataset per namespace+name from deletion
 - Deletes dependent records in this order:
   1. `dataset_facets`
   2. `datasets_tag_mapping`
@@ -72,6 +76,17 @@ Modified `DbRetention.java` to **manually delete dependent records in batches** 
   7. Delete `datasets` (finally - no CASCADE validation!)
   8. **Re-enables triggers**
 
+### 3. `retentionOnJobs()` Optimization
+- **Identifies most recent job per namespace+name** to preserve
+- Excludes the most recent job per namespace+name from deletion
+- Ensures at least one job record remains for each unique job
+
+### 4. `retentionOnJobVersions()` Optimization
+- **Identifies most recent job version per job** to preserve
+- Excludes current job versions (those referenced by jobs.current_version_uuid)
+- Excludes the most recent job version per job from deletion
+- Ensures at least one job version record remains for each job
+
 ## Performance Benefits
 - **Eliminates CASCADE trigger overhead** - No automatic trigger firing for each row
 - **Disables constraint validation** - `ALTER TABLE DISABLE TRIGGER ALL` completely skips CASCADE checks on parent table deletes
@@ -85,6 +100,45 @@ The batch size is controlled by `numberOfRowsPerBatch` parameter (default: 1000)
 - Increase batch size for faster deletion (e.g., 5000-10000)
 - Monitor database load and adjust accordingly
 - Consider running during low-traffic periods
+
+## Keep-At-Least-One Policy
+
+A critical feature of this retention implementation is that it **always preserves at least one record** for each entity, even if all records are older than the retention period. This ensures historical reference and prevents complete data loss for infrequently updated pipelines.
+
+### What Is Preserved
+
+1. **Jobs**: The most recent job per `namespace + name` combination is always kept
+2. **Job Versions**: The most recent job version per job is always kept
+3. **Datasets**: The most recent dataset per `namespace + name` combination is always kept
+4. **Dataset Versions**: The most recent dataset version per dataset is always kept
+
+### Why This Matters
+
+For teams that import data infrequently (e.g., monthly or quarterly):
+- Without this protection, all their metadata could be deleted
+- With this protection, at least one historical record remains for reference
+- Enables lineage queries even for old, inactive pipelines
+- Maintains continuity of the metadata catalog
+
+### Implementation
+
+Each retention function creates a temporary table identifying the most recent record per entity:
+```sql
+-- Example for dataset versions
+CREATE TEMPORARY TABLE most_recent_dataset_version_per_dataset AS (
+  SELECT DISTINCT ON (dataset_uuid) uuid
+    FROM dataset_versions
+   ORDER BY dataset_uuid, created_at DESC
+);
+```
+
+Then excludes these records from deletion:
+```sql
+AND NOT EXISTS (
+  SELECT 1 FROM most_recent_dataset_version_per_dataset AS mrdv
+  WHERE dv.uuid = mrdv.uuid
+)
+```
 
 ## Important Safety Notes
 
