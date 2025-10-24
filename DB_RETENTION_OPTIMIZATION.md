@@ -32,6 +32,15 @@ Modified `DbRetention.java` to **manually delete dependent records in batches** 
 6. **Disables triggers during parent deletion** - Uses `ALTER TABLE DISABLE TRIGGER ALL` to completely skip CASCADE constraint validation when deleting dataset_versions and datasets, since we've already deleted all dependents
 7. **Safe re-enabling** - Triggers are re-enabled after each batch to ensure data integrity for normal operations
 
+## Orphaned Data Cleanup
+
+In addition to time-based retention, the system now includes automatic cleanup of **orphaned datasets and dataset versions**:
+
+- **Orphaned Datasets**: Datasets not referenced by any job in `job_versions_io_mapping`
+- **Orphaned Dataset Versions**: Dataset versions not referenced by any run in `runs_input_mapping` and not the current version
+
+These cleanup functions run automatically after time-based retention to remove disconnected metadata. See `ORPHANED_DATA_CLEANUP.md` for detailed documentation.
+
 ## Changes Made
 
 ### 1. `retentionOnDatasetVersions()` Optimization
