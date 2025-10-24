@@ -70,6 +70,36 @@ public final class DbRetention {
   /* Disable retention dry run by default. */
   public static final boolean DEFAULT_DRY_RUN = false;
 
+  /**
+   * Namespaces excluded from keep-at-least-one protection.
+   * Records in these namespaces will be deleted based purely on retention days,
+   * without preserving the most recent record. Useful for test/temporary namespaces.
+   * Example: "local" namespace for local development/testing.
+   */
+  private static final String[] NAMESPACES_EXCLUDED_FROM_KEEP_AT_LEAST_ONE = {
+    "local"
+  };
+
+  /**
+   * Generates SQL fragment to filter excluded namespaces.
+   * Returns SQL condition to add to WHERE clause that excludes namespaces
+   * from the keep-at-least-one protection list.
+   */
+  private static String getNamespaceExclusionFilter(String tableAlias) {
+    if (NAMESPACES_EXCLUDED_FROM_KEEP_AT_LEAST_ONE.length == 0) {
+      return "";
+    }
+    StringBuilder filter = new StringBuilder(" AND ");
+    filter.append(tableAlias).append(".namespace_uuid NOT IN (");
+    filter.append("SELECT uuid FROM namespaces WHERE name IN (");
+    for (int i = 0; i < NAMESPACES_EXCLUDED_FROM_KEEP_AT_LEAST_ONE.length; i++) {
+      if (i > 0) filter.append(", ");
+      filter.append("'").append(NAMESPACES_EXCLUDED_FROM_KEEP_AT_LEAST_ONE[i]).append("'");
+    }
+    filter.append("))");
+    return filter.toString();
+  }
+
   /** Applies the retention policy to database. */
   public static void retentionOnDbOrError(
       @NonNull final Jdbi jdbi, final int numberOfRowsPerBatch, final int retentionDays)
@@ -96,6 +126,12 @@ public final class DbRetention {
     retentionOnRuns(jdbi, numberOfRowsPerBatch, retentionDays, dryRun);
     retentionOnDatasets(jdbi, numberOfRowsPerBatch, retentionDays, dryRun);
     retentionOnDatasetVersions(jdbi, numberOfRowsPerBatch, retentionDays, dryRun);
+
+    // Clean up orphaned datasets and dataset versions not connected to any jobs/runs.
+    if (!dryRun) {
+      retentionOnOrphanedDatasets(jdbi, numberOfRowsPerBatch);
+      retentionOnOrphanedDatasetVersions(jdbi, numberOfRowsPerBatch);
+    }
 
     // Finally, apply retention policy to lineage events.
     retentionOnLineageEvents(jdbi, numberOfRowsPerBatch, retentionDays, dryRun);
@@ -124,7 +160,7 @@ public final class DbRetention {
         jdbi.withHandle(
             handle -> {
               handle.execute(
-                  sql(
+                  sqlWithExclusions(
                       """
                       CREATE OR REPLACE FUNCTION delete_jobs_older_than_x_days()
                         RETURNS INT AS $$
@@ -134,10 +170,15 @@ public final class DbRetention {
                         rows_deleted_total INT := 0;
                       BEGIN
                         -- Keep at least one job per namespace+name combination (the most recent one)
+                        -- Excludes namespaces in the exclusion list (e.g., 'local')
                         CREATE TEMPORARY TABLE most_recent_job_per_name AS (
-                          SELECT DISTINCT ON (namespace_uuid, name) uuid
-                            FROM jobs
-                           ORDER BY namespace_uuid, name, updated_at DESC
+                          SELECT DISTINCT ON (j.namespace_uuid, j.name) j.uuid
+                            FROM jobs AS j
+                           WHERE j.namespace_uuid NOT IN (
+                             SELECT uuid FROM namespaces 
+                              WHERE name IN (${excludedNamespaces})
+                           )
+                           ORDER BY j.namespace_uuid, j.name, j.updated_at DESC
                         );
                         
                         CREATE INDEX IF NOT EXISTS idx_most_recent_job ON most_recent_job_per_name(uuid);
@@ -199,7 +240,7 @@ public final class DbRetention {
         jdbi.withHandle(
             handle -> {
               handle.execute(
-                  sql(
+                  sqlWithExclusions(
                       """
                       CREATE OR REPLACE FUNCTION delete_job_versions_older_than_x_days()
                         RETURNS INT AS $$
@@ -215,10 +256,16 @@ public final class DbRetention {
                         );
                         
                         -- Keep at least one job_version per job (the most recent one)
+                        -- Excludes job versions for jobs in excluded namespaces
                         CREATE TEMPORARY TABLE most_recent_job_version_per_job AS (
-                          SELECT DISTINCT ON (job_uuid) uuid
-                            FROM job_versions
-                           ORDER BY job_uuid, created_at DESC
+                          SELECT DISTINCT ON (jv.job_uuid) jv.uuid
+                            FROM job_versions AS jv
+                           INNER JOIN jobs AS j ON jv.job_uuid = j.uuid
+                           WHERE j.namespace_uuid NOT IN (
+                             SELECT uuid FROM namespaces 
+                              WHERE name IN (${excludedNamespaces})
+                           )
+                           ORDER BY jv.job_uuid, jv.created_at DESC
                         );
                         
                         CREATE INDEX IF NOT EXISTS idx_used_jv_current ON used_job_versions_as_current_in_x_days(current_version_uuid);
@@ -359,7 +406,7 @@ public final class DbRetention {
         jdbi.withHandle(
             handle -> {
               handle.execute(
-                  sql(
+                  sqlWithExclusions(
                       """
                       CREATE OR REPLACE FUNCTION delete_datasets_older_than_x_days()
                         RETURNS INT AS $$
@@ -376,10 +423,15 @@ public final class DbRetention {
                         );
                         
                         -- Keep at least one dataset per namespace+name combination (the most recent one)
+                        -- Excludes datasets in excluded namespaces
                         CREATE TEMPORARY TABLE most_recent_dataset_per_name AS (
-                          SELECT DISTINCT ON (namespace_uuid, name) uuid
-                            FROM datasets
-                           ORDER BY namespace_uuid, name, updated_at DESC
+                          SELECT DISTINCT ON (d.namespace_uuid, d.name) d.uuid
+                            FROM datasets AS d
+                           WHERE d.namespace_uuid NOT IN (
+                             SELECT uuid FROM namespaces 
+                              WHERE name IN (${excludedNamespaces})
+                           )
+                           ORDER BY d.namespace_uuid, d.name, d.updated_at DESC
                         );
                         
                         -- Create index for better performance
@@ -559,7 +611,7 @@ public final class DbRetention {
         jdbi.withHandle(
             handle -> {
               handle.execute(
-                  sql(
+                  sqlWithExclusions(
                       """
                       CREATE OR REPLACE FUNCTION delete_dataset_versions_older_than_x_days()
                         RETURNS INT AS $$
@@ -581,10 +633,16 @@ public final class DbRetention {
                         );
                         
                         -- Keep at least one dataset_version per dataset (the most recent one)
+                        -- Excludes dataset versions for datasets in excluded namespaces
                         CREATE TEMPORARY TABLE most_recent_dataset_version_per_dataset AS (
-                          SELECT DISTINCT ON (dataset_uuid) uuid
-                            FROM dataset_versions
-                           ORDER BY dataset_uuid, created_at DESC
+                          SELECT DISTINCT ON (dv.dataset_uuid) dv.uuid
+                            FROM dataset_versions AS dv
+                           INNER JOIN datasets AS d ON dv.dataset_uuid = d.uuid
+                           WHERE d.namespace_uuid NOT IN (
+                             SELECT uuid FROM namespaces 
+                              WHERE name IN (${excludedNamespaces})
+                           )
+                           ORDER BY dv.dataset_uuid, dv.created_at DESC
                         );
                         
                         -- Create index on temp tables for better performance
@@ -682,6 +740,250 @@ public final class DbRetention {
         rowsDeleteTime.elapsed().toMillis());
   }
 
+  /**
+   * Apply retention policy on orphaned {@code datasets}.
+   * Deletes datasets that are not referenced by any job as input or output.
+   */
+  private static void retentionOnOrphanedDatasets(
+      @NonNull final Jdbi jdbi, final int numberOfRowsPerBatch) {
+    log.info("Deleting orphaned datasets not connected to any jobs...");
+    final Stopwatch rowsDeleteTime = Stopwatch.createStarted();
+    final int rowsDeleted =
+        jdbi.withHandle(
+            handle -> {
+              handle.execute(
+                  sql(
+                      """
+                      CREATE OR REPLACE FUNCTION delete_orphaned_datasets()
+                        RETURNS INT AS $$
+                      DECLARE
+                        rows_per_batch INT := ${numberOfRowsPerBatch};
+                        rows_deleted INT;
+                        rows_deleted_total INT := 0;
+                      BEGIN
+                        LOOP
+                          -- Create temp table with batch of orphaned datasets to delete
+                          CREATE TEMPORARY TABLE IF NOT EXISTS orphaned_datasets_to_delete (uuid UUID);
+                          TRUNCATE TABLE orphaned_datasets_to_delete;
+                          
+                          INSERT INTO orphaned_datasets_to_delete
+                          SELECT d.uuid
+                            FROM datasets AS d
+                           WHERE NOT EXISTS (
+                             SELECT 1
+                               FROM job_versions_io_mapping AS jvio
+                              WHERE jvio.dataset_uuid = d.uuid
+                           )
+                           LIMIT rows_per_batch
+                             FOR UPDATE OF d SKIP LOCKED;
+                          
+                          GET DIAGNOSTICS rows_deleted = ROW_COUNT;
+                          EXIT WHEN rows_deleted = 0;
+                          
+                          -- Manually delete dependent records to avoid CASCADE overhead
+                          
+                          -- Delete from dataset_facets
+                          DELETE FROM dataset_facets
+                           WHERE dataset_uuid IN (SELECT uuid FROM orphaned_datasets_to_delete);
+                          
+                          -- Delete from datasets_tag_mapping
+                          DELETE FROM datasets_tag_mapping
+                           WHERE dataset_uuid IN (SELECT uuid FROM orphaned_datasets_to_delete);
+                          
+                          -- Get dataset_fields to delete
+                          CREATE TEMPORARY TABLE IF NOT EXISTS orphaned_dataset_fields_to_delete (uuid UUID);
+                          TRUNCATE TABLE orphaned_dataset_fields_to_delete;
+                          
+                          INSERT INTO orphaned_dataset_fields_to_delete
+                          SELECT uuid FROM dataset_fields
+                           WHERE dataset_uuid IN (SELECT uuid FROM orphaned_datasets_to_delete);
+                          
+                          -- Delete from dataset_fields_tag_mapping
+                          DELETE FROM dataset_fields_tag_mapping
+                           WHERE dataset_field_uuid IN (SELECT uuid FROM orphaned_dataset_fields_to_delete);
+                          
+                          -- Delete from column_lineage (field references)
+                          DELETE FROM column_lineage
+                           WHERE output_dataset_field_uuid IN (SELECT uuid FROM orphaned_dataset_fields_to_delete);
+                          
+                          DELETE FROM column_lineage
+                           WHERE input_dataset_field_uuid IN (SELECT uuid FROM orphaned_dataset_fields_to_delete);
+                          
+                          -- Delete from dataset_versions_field_mapping
+                          DELETE FROM dataset_versions_field_mapping
+                           WHERE dataset_field_uuid IN (SELECT uuid FROM orphaned_dataset_fields_to_delete);
+                          
+                          -- Delete from dataset_fields
+                          DELETE FROM dataset_fields
+                           WHERE uuid IN (SELECT uuid FROM orphaned_dataset_fields_to_delete);
+                          
+                          -- Get dataset_versions to delete
+                          CREATE TEMPORARY TABLE IF NOT EXISTS orphaned_dataset_versions_to_delete (uuid UUID);
+                          TRUNCATE TABLE orphaned_dataset_versions_to_delete;
+                          
+                          INSERT INTO orphaned_dataset_versions_to_delete
+                          SELECT uuid FROM dataset_versions
+                           WHERE dataset_uuid IN (SELECT uuid FROM orphaned_datasets_to_delete);
+                          
+                          -- Delete dependent records of dataset_versions
+                          DELETE FROM column_lineage
+                           WHERE output_dataset_version_uuid IN (SELECT uuid FROM orphaned_dataset_versions_to_delete);
+                          
+                          DELETE FROM column_lineage
+                           WHERE input_dataset_version_uuid IN (SELECT uuid FROM orphaned_dataset_versions_to_delete);
+                          
+                          DELETE FROM dataset_facets
+                           WHERE dataset_version_uuid IN (SELECT uuid FROM orphaned_dataset_versions_to_delete);
+                          
+                          DELETE FROM dataset_versions_field_mapping
+                           WHERE dataset_version_uuid IN (SELECT uuid FROM orphaned_dataset_versions_to_delete);
+                          
+                          DELETE FROM runs_input_mapping
+                           WHERE dataset_version_uuid IN (SELECT uuid FROM orphaned_dataset_versions_to_delete);
+                          
+                          DELETE FROM stream_versions
+                           WHERE dataset_version_uuid IN (SELECT uuid FROM orphaned_dataset_versions_to_delete);
+                          
+                          -- Disable triggers for dataset_versions
+                          ALTER TABLE dataset_versions DISABLE TRIGGER ALL;
+                          
+                          -- Delete dataset_versions
+                          DELETE FROM dataset_versions
+                           WHERE uuid IN (SELECT uuid FROM orphaned_dataset_versions_to_delete);
+                          
+                          -- Re-enable triggers
+                          ALTER TABLE dataset_versions ENABLE TRIGGER ALL;
+                          
+                          -- Disable triggers for datasets
+                          ALTER TABLE datasets DISABLE TRIGGER ALL;
+                          
+                          -- Finally delete the orphaned datasets themselves
+                          DELETE FROM datasets
+                           WHERE uuid IN (SELECT uuid FROM orphaned_datasets_to_delete);
+                          
+                          -- Re-enable triggers
+                          ALTER TABLE datasets ENABLE TRIGGER ALL;
+                          
+                          rows_deleted_total := rows_deleted_total + rows_deleted;
+                          
+                          -- Sleep briefly to reduce load on the database
+                          PERFORM pg_sleep(0.1);
+                        END LOOP;
+                        
+                        DROP TABLE IF EXISTS orphaned_datasets_to_delete;
+                        DROP TABLE IF EXISTS orphaned_dataset_fields_to_delete;
+                        DROP TABLE IF EXISTS orphaned_dataset_versions_to_delete;
+                        RETURN rows_deleted_total;
+                      END;
+                      $$ LANGUAGE plpgsql;""",
+                      numberOfRowsPerBatch,
+                      0)); // retentionDays not applicable for orphaned cleanup
+              return callWith(handle, "delete_orphaned_datasets()");
+            });
+    rowsDeleteTime.stop();
+    log.info(
+        "Deleted '{}' orphaned datasets in '{}' ms!",
+        rowsDeleted,
+        rowsDeleteTime.elapsed().toMillis());
+  }
+
+  /**
+   * Apply retention policy on orphaned {@code dataset versions}.
+   * Deletes dataset versions that are not referenced by any run as input.
+   */
+  private static void retentionOnOrphanedDatasetVersions(
+      @NonNull final Jdbi jdbi, final int numberOfRowsPerBatch) {
+    log.info("Deleting orphaned dataset versions not connected to any runs...");
+    final Stopwatch rowsDeleteTime = Stopwatch.createStarted();
+    final int rowsDeleted =
+        jdbi.withHandle(
+            handle -> {
+              handle.execute(
+                  sql(
+                      """
+                      CREATE OR REPLACE FUNCTION delete_orphaned_dataset_versions()
+                        RETURNS INT AS $$
+                      DECLARE
+                        rows_per_batch INT := ${numberOfRowsPerBatch};
+                        rows_deleted INT;
+                        rows_deleted_total INT := 0;
+                      BEGIN
+                        LOOP
+                          -- Create temp table with batch of orphaned dataset_versions to delete
+                          CREATE TEMPORARY TABLE IF NOT EXISTS orphaned_dv_to_delete (uuid UUID);
+                          TRUNCATE TABLE orphaned_dv_to_delete;
+                          
+                          INSERT INTO orphaned_dv_to_delete
+                          SELECT dv.uuid
+                            FROM dataset_versions AS dv
+                           WHERE NOT EXISTS (
+                             SELECT 1
+                               FROM runs_input_mapping AS rim
+                              WHERE rim.dataset_version_uuid = dv.uuid
+                           ) AND dv.uuid NOT IN (
+                             -- Don't delete current versions of datasets
+                             SELECT current_version_uuid
+                               FROM datasets
+                              WHERE current_version_uuid IS NOT NULL
+                           )
+                           LIMIT rows_per_batch
+                             FOR UPDATE OF dv SKIP LOCKED;
+                          
+                          GET DIAGNOSTICS rows_deleted = ROW_COUNT;
+                          EXIT WHEN rows_deleted = 0;
+                          
+                          -- Manually delete dependent records to avoid CASCADE overhead
+                          
+                          -- Delete from column_lineage (both input and output references)
+                          DELETE FROM column_lineage
+                           WHERE output_dataset_version_uuid IN (SELECT uuid FROM orphaned_dv_to_delete);
+                          
+                          DELETE FROM column_lineage
+                           WHERE input_dataset_version_uuid IN (SELECT uuid FROM orphaned_dv_to_delete);
+                          
+                          -- Delete from dataset_facets
+                          DELETE FROM dataset_facets
+                           WHERE dataset_version_uuid IN (SELECT uuid FROM orphaned_dv_to_delete);
+                          
+                          -- Delete from dataset_versions_field_mapping
+                          DELETE FROM dataset_versions_field_mapping
+                           WHERE dataset_version_uuid IN (SELECT uuid FROM orphaned_dv_to_delete);
+                          
+                          -- Delete from stream_versions
+                          DELETE FROM stream_versions
+                           WHERE dataset_version_uuid IN (SELECT uuid FROM orphaned_dv_to_delete);
+                          
+                          -- Disable triggers on dataset_versions
+                          ALTER TABLE dataset_versions DISABLE TRIGGER ALL;
+                          
+                          -- Finally delete the orphaned dataset_versions themselves
+                          DELETE FROM dataset_versions
+                           WHERE uuid IN (SELECT uuid FROM orphaned_dv_to_delete);
+                          
+                          -- Re-enable triggers
+                          ALTER TABLE dataset_versions ENABLE TRIGGER ALL;
+                          
+                          rows_deleted_total := rows_deleted_total + rows_deleted;
+                          
+                          -- Sleep briefly to reduce load on the database
+                          PERFORM pg_sleep(0.1);
+                        END LOOP;
+                        
+                        DROP TABLE IF EXISTS orphaned_dv_to_delete;
+                        RETURN rows_deleted_total;
+                      END;
+                      $$ LANGUAGE plpgsql;""",
+                      numberOfRowsPerBatch,
+                      0)); // retentionDays not applicable for orphaned cleanup
+              return callWith(handle, "delete_orphaned_dataset_versions()");
+            });
+    rowsDeleteTime.stop();
+    log.info(
+        "Deleted '{}' orphaned dataset versions in '{}' ms!",
+        rowsDeleted,
+        rowsDeleteTime.elapsed().toMillis());
+  }
+
   private static void retentionOnLineageEvents(
       @NonNull final Jdbi jdbi,
       final int numberOfRowsPerBatch,
@@ -760,6 +1062,33 @@ public final class DbRetention {
    */
   private static String sql(@NonNull final String sqlTemplate, final int retentionDays) {
     return checkNotBlank(sqlTemplate).replace("${retentionDays}", String.valueOf(retentionDays));
+  }
+
+  /**
+   * Returns {@code sql} with excluded namespaces replaced.
+   * Generates SQL-safe quoted list like: 'local', 'test'
+   */
+  private static String getExcludedNamespacesForSql() {
+    if (NAMESPACES_EXCLUDED_FROM_KEEP_AT_LEAST_ONE.length == 0) {
+      return "''";  // Empty string will never match
+    }
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < NAMESPACES_EXCLUDED_FROM_KEEP_AT_LEAST_ONE.length; i++) {
+      if (i > 0) sb.append(", ");
+      sb.append("'").append(NAMESPACES_EXCLUDED_FROM_KEEP_AT_LEAST_ONE[i]).append("'");
+    }
+    return sb.toString();
+  }
+
+  /**
+   * Returns {@code sql} with parameters replaced including excluded namespaces.
+   */
+  private static String sqlWithExclusions(
+      @NonNull final String sqlTemplate, final int numberOfRowsPerBatch, final int retentionDays) {
+    return checkNotBlank(sqlTemplate)
+        .replace("${numberOfRowsPerBatch}", String.valueOf(numberOfRowsPerBatch))
+        .replace("${retentionDays}", String.valueOf(retentionDays))
+        .replace("${excludedNamespaces}", getExcludedNamespacesForSql());
   }
 
   /** Returns estimate of rows older than X days. */
