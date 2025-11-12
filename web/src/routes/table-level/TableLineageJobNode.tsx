@@ -39,58 +39,52 @@ const TableLineageJobNode = ({ node }: TableLineageJobNodeProps) => {
 
   const addToToolTip = (job: LineageJob) => {
     return (
-      <foreignObject>
-        <Box>
-          <Box display={'flex'} justifyContent={'space-between'}>
-            <MqText block bold sx={{ mr: 6 }}>
-              Namespace:
-            </MqText>
-            <MqText block font={'mono'}>
-              {truncateTextFront(job.namespace, 40)}
-            </MqText>
-          </Box>
-          <Box display={'flex'} justifyContent={'space-between'}>
-            <MqText block bold sx={{ mr: 6 }}>
-              Name:
-            </MqText>
-            <MqText block font={'mono'}>
-              {truncateTextFront(job.name, 40)}
-            </MqText>
-          </Box>
-          {job.description && (
-            <Box display={'flex'} justifyContent={'space-between'}>
-              <MqText block bold sx={{ mr: 6 }}>
-                Description:
-              </MqText>
-              <MqText block font={'mono'}>
-                {job.description}
-              </MqText>
-            </Box>
-          )}
-          <Box display={'flex'} justifyContent={'space-between'}>
-            <MqText block bold sx={{ mr: 6 }}>
-              Updated at:
-            </MqText>
-            <MqText block font={'mono'}>
-              {formatUpdatedAt(job.updatedAt)}
-            </MqText>
-          </Box>
-          <Divider sx={{ my: 1 }} />
-          <Box display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
-            <MqText block bold sx={{ mr: 6 }}>
-              Latest Run:
-            </MqText>
-            <MqStatus
-              label={job.latestRun?.state || 'N/A'}
-              color={
-                job.latestRun?.state
-                  ? runStateColor(job.latestRun?.state)
-                  : theme.palette.secondary.main
-              }
-            />
-          </Box>
+      <Box>
+        <Box display={'flex'} justifyContent={'space-between'}>
+          <MqText block bold sx={{ mr: 6 }}>
+            Namespace:
+          </MqText>
+          <MqText block font={'mono'}>
+            {truncateTextFront(job.namespace, 40)}
+          </MqText>
         </Box>
-      </foreignObject>
+        <Box display={'flex'} justifyContent={'space-between'}>
+          <MqText block bold sx={{ mr: 6 }}>
+            Name:
+          </MqText>
+          <MqText block font={'mono'}>
+            {truncateTextFront(job.name, 40)}
+          </MqText>
+        </Box>
+        {job.description && (
+          <Box display={'flex'} justifyContent={'space-between'}>
+            <MqText block bold sx={{ mr: 6 }}>
+              Description:
+            </MqText>
+            <MqText block font={'mono'}>{job.description}</MqText>
+          </Box>
+        )}
+        <Box display={'flex'} justifyContent={'space-between'}>
+          <MqText block bold sx={{ mr: 6 }}>
+            Updated at:
+          </MqText>
+          <MqText block font={'mono'}>
+            {formatUpdatedAt(job.updatedAt)}
+          </MqText>
+        </Box>
+        <Divider sx={{ my: 1 }} />
+        <Box display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
+          <MqText block bold sx={{ mr: 6 }}>
+            Latest Run:
+          </MqText>
+          <MqStatus
+            label={job.latestRun?.state || 'N/A'}
+            color={
+              job.latestRun?.state ? runStateColor(job.latestRun?.state) : theme.palette.secondary.main
+            }
+          />
+        </Box>
+      </Box>
     )
   }
 

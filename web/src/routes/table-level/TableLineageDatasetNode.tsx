@@ -57,62 +57,60 @@ const TableLineageDatasetNode = ({ node }: TableLineageDatasetNodeProps) => {
 
   const addToToolTip = (lineageDataset: LineageDataset, dataset?: Dataset | null) => {
     return (
-      <foreignObject>
-        <Box>
+      <Box>
+        <Box display={'flex'} justifyContent={'space-between'}>
+          <MqText block bold sx={{ mr: 6 }}>
+            Namespace:
+          </MqText>
+          <MqText block font={'mono'}>
+            {truncateTextFront(lineageDataset.namespace, 40)}
+          </MqText>
+        </Box>
+        <Box display={'flex'} justifyContent={'space-between'}>
+          <MqText block bold sx={{ mr: 6 }}>
+            Name:
+          </MqText>
+          <MqText block font={'mono'}>
+            {truncateTextFront(lineageDataset.name, 40)}
+          </MqText>
+        </Box>
+        {lineageDataset.description && (
           <Box display={'flex'} justifyContent={'space-between'}>
             <MqText block bold sx={{ mr: 6 }}>
-              Namespace:
+              Description:
             </MqText>
             <MqText block font={'mono'}>
-              {truncateTextFront(lineageDataset.namespace, 40)}
+              {lineageDataset.description}
             </MqText>
           </Box>
-          <Box display={'flex'} justifyContent={'space-between'}>
-            <MqText block bold sx={{ mr: 6 }}>
-              Name:
-            </MqText>
-            <MqText block font={'mono'}>
-              {truncateTextFront(lineageDataset.name, 40)}
-            </MqText>
-          </Box>
-          {lineageDataset.description && (
+        )}
+        <Box display={'flex'} justifyContent={'space-between'}>
+          <MqText block bold sx={{ mr: 6 }}>
+            Updated at:
+          </MqText>
+          <MqText block font={'mono'}>
+            {formatUpdatedAt(lineageDataset.updatedAt)}
+          </MqText>
+        </Box>
+        {dataset && datasetFacetsStatus(dataset.facets) && (
+          <>
+            <Divider sx={{ my: 1 }} />
             <Box display={'flex'} justifyContent={'space-between'}>
               <MqText block bold sx={{ mr: 6 }}>
-                Description:
+                Quality:
               </MqText>
-              <MqText block font={'mono'}>
-                {lineageDataset.description}
-              </MqText>
+              <MqStatus
+                label={
+                  datasetFacetsQualityAssertions(dataset.facets).find((a) => !a.success)
+                    ? 'UNHEALTHY'
+                    : 'HEALTHY'
+                }
+                color={datasetFacetsStatus(dataset.facets)}
+              />
             </Box>
-          )}
-          <Box display={'flex'} justifyContent={'space-between'}>
-            <MqText block bold sx={{ mr: 6 }}>
-              Updated at:
-            </MqText>
-            <MqText block font={'mono'}>
-              {formatUpdatedAt(lineageDataset.updatedAt)}
-            </MqText>
-          </Box>
-          {dataset && datasetFacetsStatus(dataset.facets) && (
-            <>
-              <Divider sx={{ my: 1 }} />
-              <Box display={'flex'} justifyContent={'space-between'}>
-                <MqText block bold sx={{ mr: 6 }}>
-                  Quality:
-                </MqText>
-                <MqStatus
-                  label={
-                    datasetFacetsQualityAssertions(dataset.facets).find((a) => !a.success)
-                      ? 'UNHEALTHY'
-                      : 'HEALTHY'
-                  }
-                  color={datasetFacetsStatus(dataset.facets)}
-                />
-              </Box>
-            </>
-          )}
-        </Box>
-      </foreignObject>
+          </>
+        )}
+      </Box>
     )
   }
 

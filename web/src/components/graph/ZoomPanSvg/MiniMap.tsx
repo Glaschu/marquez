@@ -37,6 +37,17 @@ export const MiniMap = ({
   children,
   ...otherProps
 }: Props) => {
+  if (
+    placement === MiniMapPlacement.None ||
+    containerWidth <= 0 ||
+    containerHeight <= 0 ||
+    contentWidth <= 0 ||
+    contentHeight <= 0 ||
+    !Number.isFinite(zoomTransform.k)
+  ) {
+    return null
+  }
+
   const backgroundColor = grey['700']
   const borderColor = 'black'
   const maskColor = 'black'
@@ -66,13 +77,11 @@ export const MiniMap = ({
   ]
   const lensRect = extentToRect(lensExtent)
 
-  return placement !== MiniMapPlacement.None ? (
+  return (
     <Box
       position='absolute'
       top={
-        placement === MiniMapPlacement.TopLeft || placement === MiniMapPlacement.TopRight
-          ? 4
-          : undefined
+        placement === MiniMapPlacement.TopLeft || placement === MiniMapPlacement.TopRight ? 4 : undefined
       }
       bottom={
         placement === MiniMapPlacement.BottomLeft || placement === MiniMapPlacement.BottomRight
@@ -80,14 +89,10 @@ export const MiniMap = ({
           : undefined
       }
       right={
-        placement === MiniMapPlacement.TopRight || placement === MiniMapPlacement.BottomRight
-          ? 4
-          : undefined
+        placement === MiniMapPlacement.TopRight || placement === MiniMapPlacement.BottomRight ? 4 : undefined
       }
       left={
-        placement === MiniMapPlacement.TopLeft || placement === MiniMapPlacement.BottomLeft
-          ? 4
-          : undefined
+        placement === MiniMapPlacement.TopLeft || placement === MiniMapPlacement.BottomLeft ? 4 : undefined
       }
       width={`${width}px`}
       height={`${height}px`}
@@ -125,5 +130,5 @@ export const MiniMap = ({
         />
       </svg>
     </Box>
-  ) : null
+  )
 }
