@@ -1,7 +1,6 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as Redux from 'redux'
 import {
   Button,
   Chip,
@@ -14,12 +13,9 @@ import {
 } from '@mui/material'
 import { HEADER_HEIGHT } from '../../helpers/theme'
 import { IState } from '../../store/reducers'
-import { Job } from '../../types/api'
 import { MqScreenLoad } from '../../components/core/screen-load/MqScreenLoad'
-import { Nullable } from '../../types/util/Nullable'
 import { Refresh } from '@mui/icons-material'
-import { bindActionCreators } from 'redux'
-import { connect } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { encodeNode, runStateColor } from '../../helpers/nodes'
 import { fetchJobs, resetJobs } from '../../store/actionCreators'
 import { formatUpdatedAt } from '../../helpers'
@@ -37,37 +33,20 @@ import MqStatus from '../../components/core/status/MqStatus'
 import MqText from '../../components/core/text/MqText'
 import NamespaceSelect from '../../components/namespace-select/NamespaceSelect'
 
-interface StateProps {
-  jobs: Job[]
-  isJobsInit: boolean
-  isJobsLoading: boolean
-  selectedNamespace: Nullable<string>
-  totalCount: number
-}
-
 interface JobsState {
   page: number
 }
 
-interface DispatchProps {
-  fetchJobs: typeof fetchJobs
-  resetJobs: typeof resetJobs
-}
-
-type JobsProps = StateProps & DispatchProps
-
 const PAGE_SIZE = 20
 const JOB_HEADER_HEIGHT = 64
 
-const Jobs = ({
-  jobs,
-  totalCount,
-  isJobsLoading,
-  isJobsInit,
-  selectedNamespace,
-  fetchJobs,
-  resetJobs,
-}: JobsProps) => {
+const Jobs = () => {
+  const jobs = useSelector((state: IState) => state.jobs.result) ?? []
+  const totalCount = useSelector((state: IState) => state.jobs.totalCount)
+  const isJobsLoading = useSelector((state: IState) => state.jobs.isLoading)
+  const isJobsInit = useSelector((state: IState) => state.jobs.init)
+  const selectedNamespace = useSelector((state: IState) => state.namespaces.selectedNamespace)
+  const dispatch = useDispatch()
   const defaultState = {
     page: 0,
   }
@@ -75,24 +54,24 @@ const Jobs = ({
 
   useEffect(() => {
     if (selectedNamespace) {
-      fetchJobs(selectedNamespace, PAGE_SIZE, state.page * PAGE_SIZE)
+      dispatch(fetchJobs(selectedNamespace, PAGE_SIZE, state.page * PAGE_SIZE))
     }
-  }, [selectedNamespace, state.page])
+  }, [dispatch, selectedNamespace, state.page])
 
   useEffect(() => {
     return () => {
       // on unmount
-      resetJobs()
+      dispatch(resetJobs())
     }
-  }, [])
+  }, [dispatch])
 
   const handleClickPage = (direction: 'prev' | 'next') => {
     const directionPage = direction === 'next' ? state.page + 1 : state.page - 1
 
-    fetchJobs(selectedNamespace || '', PAGE_SIZE, directionPage * PAGE_SIZE)
+  dispatch(fetchJobs(selectedNamespace || '', PAGE_SIZE, directionPage * PAGE_SIZE))
     // reset page scroll
     window.scrollTo(0, 0)
-    setState({ ...state, page: directionPage })
+  setState((prev) => ({ ...prev, page: directionPage }))
   }
 
   const { t } = useTranslation()
@@ -121,7 +100,7 @@ const Jobs = ({
               size={'small'}
               onClick={() => {
                 if (selectedNamespace) {
-                  fetchJobs(selectedNamespace, PAGE_SIZE, state.page * PAGE_SIZE)
+                  dispatch(fetchJobs(selectedNamespace, PAGE_SIZE, state.page * PAGE_SIZE))
                 }
               }}
             >
@@ -145,7 +124,7 @@ const Jobs = ({
                     size={'small'}
                     onClick={() => {
                       if (selectedNamespace) {
-                        fetchJobs(selectedNamespace, PAGE_SIZE, state.page * PAGE_SIZE)
+                        dispatch(fetchJobs(selectedNamespace, PAGE_SIZE, state.page * PAGE_SIZE))
                       }
                     }}
                   >
@@ -229,21 +208,4 @@ const Jobs = ({
   )
 }
 
-const mapStateToProps = (state: IState) => ({
-  jobs: state.jobs.result,
-  isJobsInit: state.jobs.init,
-  isJobsLoading: state.jobs.isLoading,
-  selectedNamespace: state.namespaces.selectedNamespace,
-  totalCount: state.jobs.totalCount,
-})
-
-const mapDispatchToProps = (dispatch: Redux.Dispatch) =>
-  bindActionCreators(
-    {
-      fetchJobs: fetchJobs,
-      resetJobs: resetJobs,
-    },
-    dispatch
-  )
-
-export default connect(mapStateToProps, mapDispatchToProps)(Jobs)
+export default Jobs

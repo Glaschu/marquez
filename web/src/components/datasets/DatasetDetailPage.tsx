@@ -1,7 +1,6 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as Redux from 'redux'
 import {
   Box,
   Button,
@@ -15,14 +14,11 @@ import {
 } from '@mui/material'
 import { CalendarIcon } from '@mui/x-date-pickers'
 import { CircularProgress } from '@mui/material'
-import { Dataset } from '../../types/api'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { IState } from '../../store/reducers'
 import { LineageDataset } from '../../types/lineage'
 import { MqInfo } from '../core/info/MqInfo'
 import { alpha } from '@mui/material/styles'
-import { bindActionCreators } from 'redux'
-import { connect } from 'react-redux'
 import { datasetFacetsQualityAssertions, datasetFacetsStatus } from '../../helpers/nodes'
 import {
   deleteDataset,
@@ -49,29 +45,14 @@ import ListIcon from '@mui/icons-material/List'
 import MQTooltip from '../core/tooltip/MQTooltip'
 import MqStatus from '../core/status/MqStatus'
 import MqText from '../core/text/MqText'
-import React, { ChangeEvent, FunctionComponent, useEffect, useState } from 'react'
+import React, { ChangeEvent, useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import RuleIcon from '@mui/icons-material/Rule'
 import StorageIcon from '@mui/icons-material/Storage'
 
-interface StateProps {
+interface DatasetDetailPageProps {
   lineageDataset: LineageDataset
-  dataset: Dataset
-  isDatasetLoading: boolean
-  datasets: IState['datasets']
-  display: IState['display']
-  tabIndex: IState['lineage']['tabIndex']
 }
-
-interface DispatchProps {
-  fetchDataset: typeof fetchDataset
-  resetDatasetVersions: typeof resetDatasetVersions
-  resetDataset: typeof resetDataset
-  deleteDataset: typeof deleteDataset
-  dialogToggle: typeof dialogToggle
-  setTabIndex: typeof setTabIndex
-}
-
-type IProps = StateProps & DispatchProps
 
 function a11yProps(index: number) {
   return {
@@ -80,50 +61,44 @@ function a11yProps(index: number) {
   }
 }
 
-const DatasetDetailPage: FunctionComponent<IProps> = (props) => {
-  const {
-    datasets,
-    dataset,
-    isDatasetLoading,
-    display,
-    fetchDataset,
-    resetDataset,
-    resetDatasetVersions,
-    deleteDataset,
-    dialogToggle,
-    lineageDataset,
-    tabIndex,
-    setTabIndex,
-  } = props
+const DatasetDetailPage: React.FC<DatasetDetailPageProps> = ({ lineageDataset }) => {
+  const dispatch = useDispatch()
+  const dataset = useSelector((state: IState) => state.dataset.result)
+  const isDatasetLoading = useSelector((state: IState) => state.dataset.isLoading)
+  const dialogIsOpen = useSelector((state: IState) => state.display.dialogIsOpen)
+  const tabIndex = useSelector((state: IState) => state.lineage.tabIndex)
+  const deletedDatasetName = useSelector(
+    (state: IState) => state.datasets.deletedDatasetName
+  )
   const navigate = useNavigate()
   const { t } = useTranslation()
   const theme = createTheme(useTheme())
-  const [_, setSearchParams] = useSearchParams()
+  const [, setSearchParams] = useSearchParams()
   const [showTags, setShowTags] = useState(false)
 
   // unmounting
   useEffect(
     () => () => {
-      resetDataset()
-      resetDatasetVersions()
+      dispatch(resetDataset())
+      dispatch(resetDatasetVersions())
     },
-    []
+    [dispatch]
   )
 
   // might need to map first version to its own state
   useEffect(() => {
-    fetchDataset(lineageDataset.namespace, lineageDataset.name)
-  }, [lineageDataset.name])
+    dispatch(fetchDataset(lineageDataset.namespace, lineageDataset.name))
+  }, [dispatch, lineageDataset.namespace, lineageDataset.name])
 
   // if the dataset is deleted then redirect to datasets end point
   useEffect(() => {
-    if (datasets.deletedDatasetName) {
+    if (deletedDatasetName) {
       navigate('/datasets')
     }
-  }, [datasets.deletedDatasetName])
+  }, [deletedDatasetName, navigate])
 
   const handleChange = (_: ChangeEvent, newValue: number) => {
-    setTabIndex(newValue)
+    dispatch(setTabIndex(newValue))
   }
 
   if (!dataset || isDatasetLoading) {
@@ -192,18 +167,18 @@ const DatasetDetailPage: FunctionComponent<IProps> = (props) => {
                   },
                 }}
                 onClick={() => {
-                  props.dialogToggle('')
+                  dispatch(dialogToggle(''))
                 }}
               >
                 {t('datasets.dialog_delete')}
               </Button>
               <Dialog
-                dialogIsOpen={display.dialogIsOpen}
-                dialogToggle={dialogToggle}
+                dialogIsOpen={dialogIsOpen}
+                dialogToggle={(field) => dispatch(dialogToggle(field))}
                 title={t('jobs.dialog_confirmation_title')}
                 ignoreWarning={() => {
-                  deleteDataset(lineageDataset.name, lineageDataset.namespace)
-                  props.dialogToggle('')
+                  dispatch(deleteDataset(lineageDataset.name, lineageDataset.namespace))
+                  dispatch(dialogToggle(''))
                 }}
               />
             </Box>
@@ -337,26 +312,4 @@ const DatasetDetailPage: FunctionComponent<IProps> = (props) => {
     </Box>
   )
 }
-
-const mapStateToProps = (state: IState) => ({
-  datasets: state.datasets,
-  dataset: state.dataset.result,
-  isDatasetLoading: state.dataset.isLoading,
-  display: state.display,
-  tabIndex: state.lineage.tabIndex,
-})
-
-const mapDispatchToProps = (dispatch: Redux.Dispatch) =>
-  bindActionCreators(
-    {
-      fetchDataset: fetchDataset,
-      resetDatasetVersions: resetDatasetVersions,
-      resetDataset: resetDataset,
-      deleteDataset: deleteDataset,
-      dialogToggle: dialogToggle,
-      setTabIndex: setTabIndex,
-    },
-    dispatch
-  )
-
-export default connect(mapStateToProps, mapDispatchToProps)(DatasetDetailPage)
+export default DatasetDetailPage

@@ -1,15 +1,11 @@
 // Copyright 2018-2024 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as Redux from 'redux'
 import { Chip, Divider } from '@mui/material'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { IOpenSearchDatasetsState } from '../../../store/reducers/openSearchDatasets'
-import { IOpenSearchJobsState } from '../../../store/reducers/openSearch'
 import { IState } from '../../../store/reducers'
 import { Nullable } from '../../../types/util/Nullable'
-import { bindActionCreators } from 'redux'
-import { connect } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { debounce } from 'lodash'
 import { encodeNode, eventTypeColor } from '../../../helpers/nodes'
 import { faCog } from '@fortawesome/free-solid-svg-icons/faCog'
@@ -27,16 +23,6 @@ import React, { useCallback, useEffect } from 'react'
 import airflow_logo from './airlfow-logo.svg'
 import dbt_logo from './dbt-logo.svg'
 import spark_logo from './spark-logo.svg'
-
-interface StateProps {
-  openSearchJobs: IOpenSearchJobsState
-  openSearchDatasets: IOpenSearchDatasetsState
-}
-
-interface DispatchProps {
-  fetchOpenSearchJobs: typeof fetchOpenSearchJobs
-  fetchOpenSearchDatasets: typeof fetchOpenSearchDatasets
-}
 
 interface Props {
   search: string
@@ -93,13 +79,10 @@ const useArrowKeys = (callback: (key: 'up' | 'down' | 'enter') => void) => {
 const FIELDS_TO_PRINT = 5
 const DEBOUNCE_TIME_MS = 200
 
-const OpenSearch: React.FC<StateProps & DispatchProps & Props> = ({
-  search,
-  fetchOpenSearchJobs,
-  fetchOpenSearchDatasets,
-  openSearchJobs,
-  openSearchDatasets,
-}) => {
+const OpenSearch: React.FC<Props> = ({ search }) => {
+  const dispatch = useDispatch()
+  const openSearchJobs = useSelector((state: IState) => state.openSearchJobs)
+  const openSearchDatasets = useSelector((state: IState) => state.openSearchDatasets)
   const [selectedIndex, setSelectedIndex] = React.useState<Nullable<number>>(null)
   const [isDebouncing, setIsDebouncing] = React.useState<boolean>(true)
   const navigate = useNavigate()
@@ -130,18 +113,18 @@ const OpenSearch: React.FC<StateProps & DispatchProps & Props> = ({
 
   const debouncedFetchJobs = useCallback(
     debounce(async (searchTerm) => {
-      fetchOpenSearchJobs(searchTerm)
+      dispatch(fetchOpenSearchJobs(searchTerm))
       setIsDebouncing(false) // Set loading to false after the fetch completes
     }, DEBOUNCE_TIME_MS),
-    []
+    [dispatch]
   )
 
   const debouncedFetchDatasets = useCallback(
     debounce(async (searchTerm) => {
-      fetchOpenSearchDatasets(searchTerm)
+      dispatch(fetchOpenSearchDatasets(searchTerm))
       setIsDebouncing(false) // Set loading to false after the fetch completes
     }, DEBOUNCE_TIME_MS),
-    []
+    [dispatch]
   )
 
   useEffect(() => {
@@ -411,20 +394,4 @@ const OpenSearch: React.FC<StateProps & DispatchProps & Props> = ({
   )
 }
 
-const mapStateToProps = (state: IState) => {
-  return {
-    openSearchJobs: state.openSearchJobs,
-    openSearchDatasets: state.openSearchDatasets,
-  }
-}
-
-const mapDispatchToProps = (dispatch: Redux.Dispatch) =>
-  bindActionCreators(
-    {
-      fetchOpenSearchJobs: fetchOpenSearchJobs,
-      fetchOpenSearchDatasets: fetchOpenSearchDatasets,
-    },
-    dispatch
-  )
-
-export default connect(mapStateToProps, mapDispatchToProps)(OpenSearch)
+export default OpenSearch

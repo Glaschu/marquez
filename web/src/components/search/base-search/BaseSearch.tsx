@@ -1,11 +1,9 @@
 // Copyright 2018-2024 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as Redux from 'redux'
 import { GroupedSearch } from '../../../types/api'
 import { IState } from '../../../store/reducers'
-import { bindActionCreators } from 'redux'
-import { connect } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { faCog, faDatabase, faSort } from '@fortawesome/free-solid-svg-icons'
 import { fetchSearch, setSelectedNode } from '../../../store/actionCreators'
 import { parseSearchGroup } from '../../../helpers/nodes'
@@ -19,17 +17,6 @@ import SearchListItem from '../SearchListItem'
 
 interface BaseSearchProps {
   search: string
-}
-
-interface StateProps {
-  searchResults: Map<string, GroupedSearch[]>
-  isSearching: boolean
-  isSearchingInit: boolean
-}
-
-interface DispatchProps {
-  setSelectedNode: typeof setSelectedNode
-  fetchSearch: typeof fetchSearch
 }
 
 const INITIAL_SEARCH_FILTER = [
@@ -71,14 +58,12 @@ const INITIAL_SEARCH_SORT_FILTER = [
   },
 ]
 
-const BaseSearch: React.FC<BaseSearchProps & StateProps & DispatchProps> = ({
-  search,
-  isSearchingInit,
-  searchResults,
-  isSearching,
-  fetchSearch,
-  setSelectedNode,
-}) => {
+const BaseSearch = ({ search }: BaseSearchProps) => {
+  const dispatch = useDispatch()
+  const searchResults =
+    useSelector((state: IState) => state.search.data.results) ?? new Map<string, GroupedSearch[]>()
+  const isSearching = useSelector((state: IState) => state.search.isLoading)
+  const isSearchingInit = useSelector((state: IState) => state.search.init)
   const [filter, setFilter] = useState('All')
   const [sort, setSort] = useState('UPDATE_AT')
 
@@ -86,23 +71,23 @@ const BaseSearch: React.FC<BaseSearchProps & StateProps & DispatchProps> = ({
 
   const onSelectFilter = (label: string) => {
     setFilter(label)
-    fetchSearch(search, label.toUpperCase(), sort.toUpperCase())
+    dispatch(fetchSearch(search, label.toUpperCase(), sort.toUpperCase()))
   }
 
   const onSelectSortFilter = (label: string) => {
     setSort(label)
-    fetchSearch(search, filter.toUpperCase(), label.toUpperCase())
+    dispatch(fetchSearch(search, filter.toUpperCase(), label.toUpperCase()))
   }
 
   const searchApi = (q: string, filter = 'ALL', sort = 'NAME') => {
-    fetchSearch(q, filter, sort)
+    dispatch(fetchSearch(q, filter, sort))
   }
 
   useEffect(() => {
     if (search.length > 0) {
       searchApi(search, filter, sort)
     }
-  }, [search, filter, sort])
+  }, [dispatch, search, filter, sort])
 
   return (
     <>
@@ -185,7 +170,7 @@ const BaseSearch: React.FC<BaseSearchProps & StateProps & DispatchProps> = ({
                           searchResult={listItem}
                           search={search}
                           onClick={() => {
-                            setSelectedNode(listItem.nodeId)
+                            dispatch(setSelectedNode(listItem.nodeId))
                           }}
                         />
                       </React.Fragment>
@@ -203,22 +188,4 @@ const BaseSearch: React.FC<BaseSearchProps & StateProps & DispatchProps> = ({
   )
 }
 
-const mapStateToProps = (state: IState) => {
-  return {
-    searchResults: state.search.data.results,
-    rawResults: state.search.data.rawResults,
-    isSearching: state.search.isLoading,
-    isSearchingInit: state.search.init,
-  }
-}
-
-const mapDispatchToProps = (dispatch: Redux.Dispatch) =>
-  bindActionCreators(
-    {
-      setSelectedNode: setSelectedNode,
-      fetchSearch: fetchSearch,
-    },
-    dispatch
-  )
-
-export default connect(mapStateToProps, mapDispatchToProps)(BaseSearch)
+export default BaseSearch

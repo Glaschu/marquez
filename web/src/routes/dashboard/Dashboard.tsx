@@ -1,16 +1,12 @@
-import * as Redux from 'redux'
 import { Box, Stack } from '@mui/system'
 import { Button, ButtonGroup, Container, Divider, Drawer, Grid, Skeleton } from '@mui/material'
 import { ChevronRight } from '@mui/icons-material'
 import { HEADER_HEIGHT, theme } from '../../helpers/theme'
 import { IState } from '../../store/reducers'
-import { IntervalMetric } from '../../store/requests/intervalMetrics'
-import { Job, RunState } from '../../types/api'
-import { LineageMetric } from '../../store/requests/lineageMetrics'
+import { RunState } from '../../types/api'
 import { MiniGraphContainer } from './MiniGraphContainer'
 import { Nullable } from '../../types/util/Nullable'
-import { bindActionCreators } from 'redux'
-import { connect } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import {
   fetchDatasetMetrics,
   fetchJobMetrics,
@@ -28,27 +24,6 @@ import MqEmpty from '../../components/core/empty/MqEmpty'
 import MqText from '../../components/core/text/MqText'
 import SplitButton from '../../components/dashboard/SplitButton'
 import StackedLineageEvents from './StackedLineageEvents'
-
-interface StateProps {
-  lineageMetrics: LineageMetric[]
-  isLineageMetricsLoading: boolean
-  jobs: Job[]
-  isJobsLoading: boolean
-  jobMetrics: IntervalMetric[]
-  datasetMetrics: IntervalMetric[]
-  sourceMetrics: IntervalMetric[]
-  isSourceMetricsLoading: boolean
-  isJobMetricsLoading: boolean
-  isDatasetMetricsLoading: boolean
-}
-
-interface DispatchProps {
-  fetchLineageMetrics: typeof fetchLineageMetrics
-  fetchJobMetrics: typeof fetchJobMetrics
-  fetchDatasetMetrics: typeof fetchDatasetMetrics
-  fetchJobs: typeof fetchJobs
-  fetchSourceMetrics: typeof fetchSourceMetrics
-}
 
 const TIMEFRAMES = ['24 Hours', '7 Days']
 type RefreshInterval = '30s' | '5m' | '10m' | 'Never'
@@ -70,23 +45,18 @@ const states: { label: RunState; color: string; bgColor: string }[] = [
   { label: 'ABORTED', color: theme.palette.secondary.main, bgColor: 'secondary' },
 ]
 
-const Dashboard = ({
-  lineageMetrics,
-  fetchLineageMetrics,
-  isLineageMetricsLoading,
-  jobs,
-  fetchJobs,
-  isJobsLoading,
-  fetchJobMetrics,
-  fetchDatasetMetrics,
-  fetchSourceMetrics,
-  jobMetrics,
-  datasetMetrics,
-  sourceMetrics,
-  isJobMetricsLoading,
-  isDatasetMetricsLoading,
-  isSourceMetricsLoading,
-}: StateProps & DispatchProps) => {
+const Dashboard = () => {
+  const lineageMetrics = useSelector((state: IState) => state.lineageMetrics.data) ?? []
+  const isLineageMetricsLoading = useSelector((state: IState) => state.lineageMetrics.isLoading)
+  const jobs = useSelector((state: IState) => state.jobs.result) ?? []
+  const isJobsLoading = useSelector((state: IState) => state.jobs.isLoading)
+  const jobMetrics = useSelector((state: IState) => state.jobMetrics.data) ?? []
+  const isJobMetricsLoading = useSelector((state: IState) => state.jobMetrics.isLoading)
+  const datasetMetrics = useSelector((state: IState) => state.datasetMetrics.data) ?? []
+  const isDatasetMetricsLoading = useSelector((state: IState) => state.datasetMetrics.isLoading)
+  const sourceMetrics = useSelector((state: IState) => state.sourceMetrics.data) ?? []
+  const isSourceMetricsLoading = useSelector((state: IState) => state.sourceMetrics.isLoading)
+  const dispatch = useDispatch()
   const [searchParams, setSearchParams] = useSearchParams()
   const [timeframe, setTimeframe] = useState(
     searchParams.get('timeframe') === 'week' ? '7 Days' : '24 Hours'
@@ -107,21 +77,21 @@ const Dashboard = ({
 
   useEffect(() => {
     if (timeframe === '24 Hours') {
-      fetchLineageMetrics('day')
-      fetchJobMetrics('day')
-      fetchDatasetMetrics('day')
-      fetchSourceMetrics('day')
+      dispatch(fetchLineageMetrics('day'))
+      dispatch(fetchJobMetrics('day'))
+      dispatch(fetchDatasetMetrics('day'))
+      dispatch(fetchSourceMetrics('day'))
     } else if (timeframe === '7 Days') {
-      fetchLineageMetrics('week')
-      fetchJobMetrics('week')
-      fetchDatasetMetrics('week')
-      fetchSourceMetrics('week')
+      dispatch(fetchLineageMetrics('week'))
+      dispatch(fetchJobMetrics('week'))
+      dispatch(fetchDatasetMetrics('week'))
+      dispatch(fetchSourceMetrics('week'))
     }
-  }, [timeframe])
+  }, [dispatch, timeframe])
 
   useEffect(() => {
-    fetchJobs(null, JOB_RUN_LIMIT, 0, selectedState ? selectedState : undefined)
-  }, [selectedState])
+    dispatch(fetchJobs(null, JOB_RUN_LIMIT, 0, selectedState ? selectedState : undefined))
+  }, [dispatch, selectedState])
 
   useEffect(() => {
     const intervalTime = INTERVAL_TO_MS_MAP[intervalKey]
@@ -129,15 +99,16 @@ const Dashboard = ({
     if (intervalTime > 0) {
       const intervalId = setInterval(() => {
         const currentSearchParams = searchParams.get('timeframe')
-        fetchLineageMetrics(currentSearchParams === 'week' ? 'week' : 'day')
-        fetchJobMetrics(currentSearchParams === 'week' ? 'week' : 'day')
-        fetchDatasetMetrics(currentSearchParams === 'week' ? 'week' : 'day')
-        fetchSourceMetrics(currentSearchParams === 'week' ? 'week' : 'day')
+        const range = currentSearchParams === 'week' ? 'week' : 'day'
+        dispatch(fetchLineageMetrics(range))
+        dispatch(fetchJobMetrics(range))
+        dispatch(fetchDatasetMetrics(range))
+        dispatch(fetchSourceMetrics(range))
       }, intervalTime)
       return () => clearInterval(intervalId)
     }
     return () => clearInterval(0)
-  }, [intervalKey, searchParams])
+  }, [dispatch, intervalKey, searchParams])
 
   const metrics = lineageMetrics.reduce(
     (acc, item) => {
@@ -152,11 +123,12 @@ const Dashboard = ({
 
   const refresh = () => {
     const currentSearchParams = searchParams.get('timeframe')
-    fetchJobs(null, JOB_RUN_LIMIT, 0)
-    fetchLineageMetrics(currentSearchParams === 'week' ? 'week' : 'day')
-    fetchJobMetrics(currentSearchParams === 'week' ? 'week' : 'day')
-    fetchDatasetMetrics(currentSearchParams === 'week' ? 'week' : 'day')
-    fetchSourceMetrics(currentSearchParams === 'week' ? 'week' : 'day')
+    const range = currentSearchParams === 'week' ? 'week' : 'day'
+    dispatch(fetchJobs(null, JOB_RUN_LIMIT, 0))
+    dispatch(fetchLineageMetrics(range))
+    dispatch(fetchJobMetrics(range))
+    dispatch(fetchDatasetMetrics(range))
+    dispatch(fetchSourceMetrics(range))
   }
 
   const { failed, started, completed, aborted } = metrics
@@ -168,7 +140,7 @@ const Dashboard = ({
         open={jobsDrawerOpen}
         onClose={() => {
           setJobsDrawerOpen(false)
-          fetchJobs(null, JOB_RUN_LIMIT, 0)
+          dispatch(fetchJobs(null, JOB_RUN_LIMIT, 0))
         }}
         PaperProps={{
           sx: {
@@ -373,29 +345,4 @@ const Dashboard = ({
   )
 }
 
-const mapStateToProps = (state: IState) => ({
-  lineageMetrics: state.lineageMetrics.data,
-  isLineageMetricsLoading: state.lineageMetrics.isLoading,
-  jobs: state.jobs.result,
-  isJobsLoading: state.jobs.isLoading,
-  jobMetrics: state.jobMetrics.data,
-  isJobMetricsLoading: state.jobMetrics.isLoading,
-  datasetMetrics: state.datasetMetrics.data,
-  isDatasetMetricsLoading: state.datasetMetrics.isLoading,
-  sourceMetrics: state.sourceMetrics.data,
-  isSourceMetricsLoading: state.sourceMetrics.isLoading,
-})
-
-const mapDispatchToProps = (dispatch: Redux.Dispatch) =>
-  bindActionCreators(
-    {
-      fetchLineageMetrics: fetchLineageMetrics,
-      fetchJobMetrics: fetchJobMetrics,
-      fetchSourceMetrics: fetchSourceMetrics,
-      fetchDatasetMetrics: fetchDatasetMetrics,
-      fetchJobs: fetchJobs,
-    },
-    dispatch
-  )
-
-export default connect(mapStateToProps, mapDispatchToProps)(Dashboard)
+export default Dashboard

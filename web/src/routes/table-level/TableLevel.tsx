@@ -1,4 +1,3 @@
-import * as Redux from 'redux'
 import { ActionBar } from './ActionBar'
 import { Box } from '@mui/system'
 import { DEFAULT_MAX_SCALE, Graph, ZoomPanControls } from '../../components/graph'
@@ -9,33 +8,21 @@ import { JobOrDataset } from '../../types/lineage'
 import { LineageGraph } from '../../types/api'
 import { TableLevelNodeData, tableLevelNodeRenderer } from './nodes'
 import { ZoomControls } from '../column-level/ZoomControls'
-import { bindActionCreators } from 'redux'
-import { connect } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { createElkNodes } from './layout'
 import { fetchLineage } from '../../store/actionCreators'
 import { useCallbackRef } from '../../helpers/hooks'
 import { useParams, useSearchParams } from 'react-router-dom'
 import ParentSize from '@visx/responsive/lib/components/ParentSize'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import TableLevelDrawer from './TableLevelDrawer'
-
-interface StateProps {
-  lineage: LineageGraph
-}
-
-interface DispatchProps {
-  fetchLineage: typeof fetchLineage
-}
-
-type ColumnLevelProps = StateProps & DispatchProps
 
 const zoomInFactor = 1.5
 const zoomOutFactor = 1 / zoomInFactor
 
-const ColumnLevel: React.FC<ColumnLevelProps> = ({
-  fetchLineage: fetchLineage,
-  lineage: lineage,
-}: ColumnLevelProps) => {
+const ColumnLevel = () => {
+  const dispatch = useDispatch()
+  const lineage = useSelector((state: IState) => state.lineage.lineage)
   const { nodeType, namespace, name } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -48,11 +35,23 @@ const ColumnLevel: React.FC<ColumnLevelProps> = ({
 
   const collapsedNodes = searchParams.get('collapsedNodes')
 
+  const fetchLineageAction = useCallback(
+    (
+      targetNodeType: JobOrDataset,
+      targetNamespace: string,
+      targetName: string,
+      targetDepth: number
+    ) => {
+      return dispatch(fetchLineage(targetNodeType, targetNamespace, targetName, targetDepth))
+    },
+    [dispatch]
+  )
+
   useEffect(() => {
     if (name && namespace && nodeType) {
-      fetchLineage(nodeType as JobOrDataset, namespace, name, depth)
+      fetchLineageAction(nodeType as JobOrDataset, namespace, name, depth)
     }
-  }, [name, namespace, depth])
+  }, [fetchLineageAction, name, namespace, nodeType, depth])
 
   if (!lineage) {
     return <div />
@@ -95,7 +94,7 @@ const ColumnLevel: React.FC<ColumnLevelProps> = ({
     <>
       <ActionBar
         nodeType={nodeType?.toUpperCase() as JobOrDataset}
-        fetchLineage={fetchLineage}
+        fetchLineage={fetchLineageAction}
         depth={depth}
         setDepth={setDepth}
         isCompact={isCompact}
@@ -146,16 +145,4 @@ const ColumnLevel: React.FC<ColumnLevelProps> = ({
   )
 }
 
-const mapStateToProps = (state: IState) => ({
-  lineage: state.lineage.lineage,
-})
-
-const mapDispatchToProps = (dispatch: Redux.Dispatch) =>
-  bindActionCreators(
-    {
-      fetchLineage: fetchLineage,
-    },
-    dispatch
-  )
-
-export default connect(mapStateToProps, mapDispatchToProps)(ColumnLevel)
+export default ColumnLevel

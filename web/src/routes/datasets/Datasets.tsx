@@ -1,7 +1,6 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as Redux from 'redux'
 import {
   Button,
   Chip,
@@ -17,10 +16,7 @@ import { Dataset } from '../../types/api'
 import { HEADER_HEIGHT } from '../../helpers/theme'
 import { IState } from '../../store/reducers'
 import { MqScreenLoad } from '../../components/core/screen-load/MqScreenLoad'
-import { Nullable } from '../../types/util/Nullable'
 import { Refresh } from '@mui/icons-material'
-import { bindActionCreators } from 'redux'
-import { connect } from 'react-redux'
 import {
   datasetFacetsQualityAssertions,
   datasetFacetsStatus,
@@ -42,38 +38,22 @@ import MqStatus from '../../components/core/status/MqStatus'
 import MqText from '../../components/core/text/MqText'
 import NamespaceSelect from '../../components/namespace-select/NamespaceSelect'
 import React from 'react'
-
-interface StateProps {
-  datasets: Dataset[]
-  isDatasetsLoading: boolean
-  isDatasetsInit: boolean
-  selectedNamespace: Nullable<string>
-  totalCount: number
-}
+import { useDispatch, useSelector } from 'react-redux'
 
 interface DatasetsState {
   page: number
 }
 
-interface DispatchProps {
-  fetchDatasets: typeof fetchDatasets
-  resetDatasets: typeof resetDatasets
-}
-
-type DatasetsProps = StateProps & DispatchProps
-
 const PAGE_SIZE = 20
 const DATASET_HEADER_HEIGHT = 64
 
-const Datasets: React.FC<DatasetsProps> = ({
-  datasets,
-  totalCount,
-  isDatasetsLoading,
-  isDatasetsInit,
-  selectedNamespace,
-  fetchDatasets,
-  resetDatasets,
-}) => {
+const Datasets: React.FC = () => {
+  const dispatch = useDispatch()
+  const datasets = useSelector((state: IState) => state.datasets.result)
+  const totalCount = useSelector((state: IState) => state.datasets.totalCount)
+  const isDatasetsLoading = useSelector((state: IState) => state.datasets.isLoading)
+  const isDatasetsInit = useSelector((state: IState) => state.datasets.init)
+  const selectedNamespace = useSelector((state: IState) => state.namespaces.selectedNamespace)
   const defaultState = {
     page: 0,
   }
@@ -83,21 +63,21 @@ const Datasets: React.FC<DatasetsProps> = ({
 
   React.useEffect(() => {
     if (selectedNamespace) {
-      fetchDatasets(selectedNamespace, PAGE_SIZE, state.page * PAGE_SIZE)
+      dispatch(fetchDatasets(selectedNamespace, PAGE_SIZE, state.page * PAGE_SIZE))
     }
-  }, [selectedNamespace, state.page])
+  }, [dispatch, selectedNamespace, state.page])
 
   React.useEffect(() => {
     return () => {
       // on unmount
-      resetDatasets()
+      dispatch(resetDatasets())
     }
-  }, [])
+  }, [dispatch])
 
   const handleClickPage = (direction: 'prev' | 'next') => {
     const directionPage = direction === 'next' ? state.page + 1 : state.page - 1
 
-    fetchDatasets(selectedNamespace || '', PAGE_SIZE, directionPage * PAGE_SIZE)
+    dispatch(fetchDatasets(selectedNamespace || '', PAGE_SIZE, directionPage * PAGE_SIZE))
     // reset page scroll
     window.scrollTo(0, 0)
     setState({ ...state, page: directionPage })
@@ -129,7 +109,7 @@ const Datasets: React.FC<DatasetsProps> = ({
               size={'small'}
               onClick={() => {
                 if (selectedNamespace) {
-                  fetchDatasets(selectedNamespace, PAGE_SIZE, state.page * PAGE_SIZE)
+                  dispatch(fetchDatasets(selectedNamespace, PAGE_SIZE, state.page * PAGE_SIZE))
                 }
               }}
             >
@@ -153,7 +133,7 @@ const Datasets: React.FC<DatasetsProps> = ({
                     size={'small'}
                     onClick={() => {
                       if (selectedNamespace) {
-                        fetchDatasets(selectedNamespace, PAGE_SIZE, state.page * PAGE_SIZE)
+                        dispatch(fetchDatasets(selectedNamespace, PAGE_SIZE, state.page * PAGE_SIZE))
                       }
                     }}
                   >
@@ -191,8 +171,8 @@ const Datasets: React.FC<DatasetsProps> = ({
                 </TableHead>
                 <TableBody>
                   {datasets
-                    .filter((dataset) => !dataset.deleted)
-                    .map((dataset) => {
+                    .filter((dataset: Dataset) => !dataset.deleted)
+                    .map((dataset: Dataset) => {
                       const assertions = datasetFacetsQualityAssertions(dataset.facets)
                       return (
                         <TableRow key={dataset.name}>
@@ -269,21 +249,4 @@ const Datasets: React.FC<DatasetsProps> = ({
   )
 }
 
-const mapStateToProps = (state: IState) => ({
-  datasets: state.datasets.result,
-  totalCount: state.datasets.totalCount,
-  isDatasetsLoading: state.datasets.isLoading,
-  isDatasetsInit: state.datasets.init,
-  selectedNamespace: state.namespaces.selectedNamespace,
-})
-
-const mapDispatchToProps = (dispatch: Redux.Dispatch) =>
-  bindActionCreators(
-    {
-      fetchDatasets: fetchDatasets,
-      resetDatasets: resetDatasets,
-    },
-    dispatch
-  )
-
-export default connect(mapStateToProps, mapDispatchToProps)(Datasets)
+export default Datasets

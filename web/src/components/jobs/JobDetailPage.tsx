@@ -2,10 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useTranslation } from 'react-i18next'
-import React, { ChangeEvent, FunctionComponent, useEffect } from 'react'
+import React, { ChangeEvent, useEffect } from 'react'
 
 import '../../i18n/config'
-import * as Redux from 'redux'
 import { Box, Button, CircularProgress, Divider, Grid, Tab, Tabs } from '@mui/material'
 import { CalendarIcon } from '@mui/x-date-pickers'
 import {
@@ -18,13 +17,10 @@ import {
 } from '@mui/icons-material'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { IState } from '../../store/reducers'
-import { Job, Run } from '../../types/api'
+import { Run } from '../../types/api'
 import { LineageJob } from '../../types/lineage'
 import { MqInfo } from '../core/info/MqInfo'
-import { Nullable } from '../../types/util/Nullable'
 import { alpha, createTheme } from '@mui/material/styles'
-import { bindActionCreators } from 'redux'
-import { connect } from 'react-redux'
 import {
   deleteJob,
   dialogToggle,
@@ -51,73 +47,49 @@ import MqStatus from '../core/status/MqStatus'
 import MqText from '../core/text/MqText'
 import RunInfo from './RunInfo'
 import Runs from './Runs'
+import { useDispatch, useSelector } from 'react-redux'
 
-interface DispatchProps {
-  fetchLatestRuns: typeof fetchLatestRuns
-  resetRuns: typeof resetRuns
-  resetJobs: typeof resetJobs
-  deleteJob: typeof deleteJob
-  dialogToggle: typeof dialogToggle
-  setTabIndex: typeof setTabIndex
-  fetchJob: typeof fetchJob
+interface JobDetailPageProps {
+  lineageJob: LineageJob
 }
 
-type IProps = {
-  lineageJob: LineageJob
-  job: Nullable<Job>
-  isJobLoading: boolean
-  jobs: IState['jobs']
-  display: IState['display']
-  tabIndex: IState['lineage']['tabIndex']
-  latestRuns: Run[]
-  isLatestRunsLoading: boolean
-} & DispatchProps
-
-const JobDetailPage: FunctionComponent<IProps> = (props) => {
+const JobDetailPage: React.FC<JobDetailPageProps> = ({ lineageJob }) => {
+  const dispatch = useDispatch()
+  const job = useSelector((state: IState) => state.job.result)
+  const isJobLoading = useSelector((state: IState) => state.job.isLoading)
+  const isLatestRunsLoading = useSelector((state: IState) => state.runs.isLatestRunsLoading)
+  const dialogIsOpen = useSelector((state: IState) => state.display.dialogIsOpen)
+  const deletedJobName = useSelector((state: IState) => state.jobs.deletedJobName)
+  const tabIndex = useSelector((state: IState) => state.lineage.tabIndex)
   const theme = createTheme(useTheme())
-  const {
-    job,
-    isJobLoading,
-    lineageJob,
-    jobs,
-    fetchLatestRuns,
-    resetRuns,
-    deleteJob,
-    dialogToggle,
-    display,
-    tabIndex,
-    setTabIndex,
-    fetchJob,
-    isLatestRunsLoading,
-  } = props
   const navigate = useNavigate()
-  const [_, setSearchParams] = useSearchParams()
+  const [, setSearchParams] = useSearchParams()
 
   const handleChange = (_: ChangeEvent, newValue: number) => {
-    setTabIndex(newValue)
+    dispatch(setTabIndex(newValue))
   }
 
   const { t } = useTranslation()
 
   useEffect(() => {
-    fetchJob(lineageJob.namespace, lineageJob.name)
-    fetchLatestRuns(lineageJob.name, lineageJob.namespace)
-  }, [lineageJob.name])
+    dispatch(fetchJob(lineageJob.namespace, lineageJob.name))
+    dispatch(fetchLatestRuns(lineageJob.name, lineageJob.namespace))
+  }, [dispatch, lineageJob.namespace, lineageJob.name])
 
   useEffect(() => {
-    if (jobs.deletedJobName) {
+    if (deletedJobName) {
       navigate('/')
     }
-  }, [jobs.deletedJobName])
+  }, [deletedJobName, navigate])
 
   // unmounting
   useEffect(() => {
     return () => {
-      resetJobs()
-      resetRuns()
-      setTabIndex(0)
+      dispatch(resetJobs())
+      dispatch(resetRuns())
+      dispatch(setTabIndex(0))
     }
-  }, [])
+  }, [dispatch])
 
   if (!job || isJobLoading || isLatestRunsLoading) {
     return (
@@ -128,12 +100,12 @@ const JobDetailPage: FunctionComponent<IProps> = (props) => {
   }
 
   const lastFinished = (() => {
-    const last = job.latestRuns?.find((run) => run.state !== 'RUNNING')
+    const last = job.latestRuns?.find((run: Run) => run.state !== 'RUNNING')
     return last ? formatUpdatedAt(last.endedAt) : 'N/A'
   })()
 
   const lastRuntime = (() => {
-    const last = job.latestRuns?.find((run) => run.state !== 'RUNNING')
+    const last = job.latestRuns?.find((run: Run) => run.state !== 'RUNNING')
     return last ? stopWatchDuration(last.durationMs) : 'N/A'
   })()
 
@@ -193,18 +165,18 @@ const JobDetailPage: FunctionComponent<IProps> = (props) => {
                   },
                 }}
                 onClick={() => {
-                  props.dialogToggle('')
+                  dispatch(dialogToggle(''))
                 }}
               >
                 {t('jobs.dialog_delete')}
               </Button>
               <Dialog
-                dialogIsOpen={display.dialogIsOpen}
-                dialogToggle={dialogToggle}
+                dialogIsOpen={dialogIsOpen}
+                dialogToggle={(field) => dispatch(dialogToggle(field))}
                 title={t('jobs.dialog_confirmation_title')}
                 ignoreWarning={() => {
-                  deleteJob(job.name, job.namespace)
-                  props.dialogToggle('')
+                  dispatch(deleteJob(job.name, job.namespace))
+                  dispatch(dialogToggle(''))
                 }}
               />
             </Box>
@@ -327,28 +299,4 @@ const JobDetailPage: FunctionComponent<IProps> = (props) => {
   )
 }
 
-const mapStateToProps = (state: IState) => ({
-  latestRuns: state.runs.latestRuns,
-  isLatestRunsLoading: state.runs.isLatestRunsLoading,
-  display: state.display,
-  jobs: state.jobs,
-  tabIndex: state.lineage.tabIndex,
-  job: state.job.result,
-  isJobLoading: state.job.isLoading,
-})
-
-const mapDispatchToProps = (dispatch: Redux.Dispatch) =>
-  bindActionCreators(
-    {
-      fetchLatestRuns: fetchLatestRuns,
-      resetRuns: resetRuns,
-      resetJobs: resetJobs,
-      deleteJob: deleteJob,
-      dialogToggle: dialogToggle,
-      setTabIndex: setTabIndex,
-      fetchJob: fetchJob,
-    },
-    dispatch
-  )
-
-export default connect(mapStateToProps, mapDispatchToProps)(JobDetailPage)
+export default JobDetailPage

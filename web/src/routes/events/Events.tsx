@@ -1,7 +1,6 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as Redux from 'redux'
 import {
   Button,
   Chip,
@@ -18,8 +17,7 @@ import { HEADER_HEIGHT } from '../../helpers/theme'
 import { IState } from '../../store/reducers'
 import { MqScreenLoad } from '../../components/core/screen-load/MqScreenLoad'
 import { Refresh } from '@mui/icons-material'
-import { bindActionCreators } from 'redux'
-import { connect } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { eventTypeColor } from '../../helpers/nodes'
 import { fetchEvents, resetEvents } from '../../store/actionCreators'
 import { fileSize, formatUpdatedAt } from '../../helpers'
@@ -43,13 +41,6 @@ import MqText from '../../components/core/text/MqText'
 import React, { useEffect, useRef } from 'react'
 import dayjs from '../../helpers/dayjs'
 
-interface StateProps {
-  events: Event[]
-  totalCount: number
-  isEventsLoading: boolean
-  isEventsInit: boolean
-}
-
 interface EventsState {
   events: Event[]
   rowExpanded: number | null
@@ -58,26 +49,17 @@ interface EventsState {
   page: number
 }
 
-interface DispatchProps {
-  fetchEvents: typeof fetchEvents
-  resetEvents: typeof resetEvents
-}
-
-type EventsProps = StateProps & DispatchProps
-
 const EVENTS_COLUMNS = ['ID', 'STATE', 'NAME', 'NAMESPACE', 'TIME']
 
 const PAGE_SIZE = 50
 const EVENTS_HEADER_HEIGHT = 64
 
-const Events: React.FC<EventsProps> = ({
-  events,
-  totalCount,
-  isEventsLoading,
-  isEventsInit,
-  fetchEvents,
-  resetEvents,
-}) => {
+const Events = () => {
+  const events = useSelector((state: IState) => state.events?.result ?? [])
+  const totalCount = useSelector((state: IState) => state.events.totalCount)
+  const isEventsLoading = useSelector((state: IState) => state.events?.isLoading)
+  const isEventsInit = useSelector((state: IState) => state.events?.init)
+  const dispatch = useDispatch()
   const [searchParams, setSearchParams] = useSearchParams()
   const [state, setState] = React.useState<EventsState>({
     page: 0,
@@ -91,19 +73,17 @@ const Events: React.FC<EventsProps> = ({
 
   useEffect(() => {
     if (!mounted.current) {
-      // on mount
-      fetchEvents(state.dateFrom, state.dateTo, PAGE_SIZE, state.page * PAGE_SIZE)
+      dispatch(fetchEvents(state.dateFrom, state.dateTo, PAGE_SIZE, state.page * PAGE_SIZE))
       mounted.current = true
-    } else {
-      // on update
-      if (events !== state.events) {
-        setState({
-          ...state,
-          events: events,
-        })
-      }
     }
-  })
+  }, [dispatch, state.dateFrom, state.dateTo, state.page])
+
+  useEffect(() => {
+    setState((prev) => ({
+      ...prev,
+      events,
+    }))
+  }, [events])
 
   useEffect(() => {
     if (!searchParams.get('dateFrom') && !searchParams.get('dateTo')) {
@@ -117,44 +97,48 @@ const Events: React.FC<EventsProps> = ({
   useEffect(() => {
     return () => {
       // on unmount
-      resetEvents()
+      dispatch(resetEvents())
     }
-  }, [])
+  }, [dispatch])
 
   const handleChangeDatepicker = (e: any, direction: 'from' | 'to') => {
     const isDirectionFrom = direction === 'from'
     const keyDate = isDirectionFrom ? 'dateFrom' : 'dateTo'
 
-    fetchEvents(
-      formatDateAPIQuery(isDirectionFrom ? e.toDate() : state.dateFrom),
-      formatDateAPIQuery(isDirectionFrom ? state.dateTo : e.toDate()),
-      PAGE_SIZE,
-      state.page * PAGE_SIZE
+    dispatch(
+      fetchEvents(
+        formatDateAPIQuery(isDirectionFrom ? e.toDate() : state.dateFrom),
+        formatDateAPIQuery(isDirectionFrom ? state.dateTo : e.toDate()),
+        PAGE_SIZE,
+        state.page * PAGE_SIZE
+      )
     )
 
     const params: { [key: string]: string } = {}
     searchParams.forEach((value, key) => (params[key] = value))
     setSearchParams({ ...params, [keyDate]: formatDateAPIQuery(e.toDate()) })
-    setState({
-      ...state,
+    setState((prev) => ({
+      ...prev,
       [keyDate]: formatDatePicker(e.toDate()),
       page: 0,
       rowExpanded: null,
-    } as any)
+    }))
   }
 
   const handleClickPage = (direction: 'prev' | 'next') => {
     const directionPage = direction === 'next' ? state.page + 1 : state.page - 1
 
-    fetchEvents(
-      formatDateAPIQuery(state.dateFrom),
-      formatDateAPIQuery(state.dateTo),
-      PAGE_SIZE,
-      directionPage * PAGE_SIZE
+    dispatch(
+      fetchEvents(
+        formatDateAPIQuery(state.dateFrom),
+        formatDateAPIQuery(state.dateTo),
+        PAGE_SIZE,
+        directionPage * PAGE_SIZE
+      )
     )
     // reset page scroll
     window.scrollTo(0, 0)
-    setState({ ...state, page: directionPage, rowExpanded: null })
+    setState((prev) => ({ ...prev, page: directionPage, rowExpanded: null }))
   }
 
   const handleDownloadPayload = (data: Event) => {
@@ -167,7 +151,7 @@ const Events: React.FC<EventsProps> = ({
     const dateFrom =
       searchParams.get('dateFrom') || formatDateAPIQuery(dayjs().startOf('day').toString())
     const dateTo = searchParams.get('dateTo') || formatDateAPIQuery(dayjs().endOf('day').toString())
-    fetchEvents(dateFrom, dateTo, PAGE_SIZE, state.page * PAGE_SIZE)
+    dispatch(fetchEvents(dateFrom, dateTo, PAGE_SIZE, state.page * PAGE_SIZE))
   }
 
   const { t } = useTranslation()
@@ -276,7 +260,7 @@ const Events: React.FC<EventsProps> = ({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {events.map((event, key: number) => {
+                  {state.events.map((event, key: number) => {
                     return (
                       <React.Fragment key={key}>
                         <TableRow
@@ -287,10 +271,10 @@ const Events: React.FC<EventsProps> = ({
                             },
                           }}
                           onClick={() => {
-                            setState({
-                              ...state,
-                              rowExpanded: key === state.rowExpanded ? null : key,
-                            })
+                            setState((prev) => ({
+                              ...prev,
+                              rowExpanded: key === prev.rowExpanded ? null : key,
+                            }))
                           }}
                         >
                           <TableCell align='left'>
@@ -366,20 +350,4 @@ const Events: React.FC<EventsProps> = ({
   )
 }
 
-const mapStateToProps = (state: IState) => ({
-  events: state.events?.result,
-  totalCount: state.events.totalCount,
-  isEventsLoading: state.events?.isLoading,
-  isEventsInit: state.events?.init,
-})
-
-const mapDispatchToProps = (dispatch: Redux.Dispatch) =>
-  bindActionCreators(
-    {
-      fetchEvents: fetchEvents,
-      resetEvents: resetEvents,
-    },
-    dispatch
-  )
-
-export default connect(mapStateToProps, mapDispatchToProps)(Events)
+export default Events
