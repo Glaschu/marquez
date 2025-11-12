@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react'
+import type { ComponentProps } from 'react'
 import useSize from '@react-hook/size'
 import 'reactflow/dist/style.css'
 
@@ -11,7 +12,6 @@ import ReactFlow, {
   MiniMap,
   Node as FlowNode,
   Edge as FlowEdge,
-  Position,
   ReactFlowProvider,
   useReactFlow,
 } from 'reactflow'
@@ -79,6 +79,24 @@ const getExtentSize = (extent: Extent) => ({
   width: extent[1][0] - extent[0][0],
   height: extent[1][1] - extent[0][1],
 })
+
+const toMiniMapPosition = (
+  placement: MiniMapPlacement
+): ComponentProps<typeof MiniMap>['position'] | undefined => {
+  switch (placement) {
+    case MiniMapPlacement.TopLeft:
+      return 'top-left'
+    case MiniMapPlacement.TopRight:
+      return 'top-right'
+    case MiniMapPlacement.BottomLeft:
+      return 'bottom-left'
+    case MiniMapPlacement.BottomRight:
+      return 'bottom-right'
+    case MiniMapPlacement.None:
+    default:
+      return undefined
+  }
+}
 
 interface Props<K, D> {
   id: string
@@ -323,6 +341,10 @@ const GraphInner = <K, D>({
   const edgeTypes = useMemo(() => ({ graphEdge: GraphEdge }), [])
 
   const shouldRenderGraph = measuredWidth > 0 && measuredHeight > 0
+  const miniMapPosition = useMemo(
+    () => toMiniMapPosition(miniMapPlacement),
+    [miniMapPlacement]
+  )
 
   return (
     <Box
@@ -369,13 +391,7 @@ const GraphInner = <K, D>({
           style={{ width: '100%', height: '100%' }}
         >
           {!hideDotGrid && <Background color={dotGridColor} />}
-          {miniMapPlacement !== MiniMapPlacement.None && (
-            <MiniMap
-              position={miniMapPlacement as Exclude<MiniMapPlacement, MiniMapPlacement.None> as Position}
-              pannable
-              zoomable
-            />
-          )}
+          {miniMapPosition ? <MiniMap position={miniMapPosition} pannable zoomable /> : null}
         </ReactFlow>
       )}
       {isRendering && (
