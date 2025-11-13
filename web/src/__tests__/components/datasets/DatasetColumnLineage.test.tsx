@@ -1,149 +1,216 @@
 // Copyright 2018-2025 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import { Dataset } from '../../../types/api'
-import { LineageDataset } from '../../../types/lineage'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { Provider } from 'react-redux'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createStore } from 'redux'
-import { render, screen, waitFor } from '@testing-library/react'
-import DatasetColumnLineage from '../../../components/datasets/DatasetColumnLineage'
 import React from 'react'
+import { Provider } from 'react-redux'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { createStore } from 'redux'
 
-// Mock i18next
+import DatasetColumnLineage from '../../../components/datasets/DatasetColumnLineage'
+import type { Dataset } from '../../../types/api'
+import type { LineageDataset } from '../../../types/lineage'
+
+const {
+  fetchDatasetMock,
+  resetDatasetMock,
+  fileSizeMock,
+  saveAsMock,
+} = vi.hoisted(() => {
+  const fetchDatasetMock = vi.fn((namespace: string, name: string) => ({
+    type: 'FETCH_DATASET',
+    namespace,
+    name,
+  }))
+  const resetDatasetMock = vi.fn(() => ({ type: 'RESET_DATASET' }))
+  const fileSizeMock = vi.fn((payload: string) => ({ kiloBytes: payload.length, megaBytes: payload.length / 1024 }))
+  const saveAsMock = vi.fn()
+
+  return {
+    fetchDatasetMock,
+    resetDatasetMock,
+    fileSizeMock,
+    saveAsMock,
+  }
+})
+
+vi.mock('../../../store/actionCreators', () => ({
+  fetchDataset: (...args: Parameters<typeof fetchDatasetMock>) => fetchDatasetMock(...args),
+  resetDataset: () => resetDatasetMock(),
+}))
+
+vi.mock('../../../helpers', () => ({
+  fileSize: (...args: Parameters<typeof fileSizeMock>) => fileSizeMock(...args),
+}))
+
+vi.mock('file-saver', () => ({
+  saveAs: (...args: Parameters<typeof saveAsMock>) => saveAsMock(...args),
+}))
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
   }),
 }))
 
-describe('DatasetColumnLineage Component', () => {
-  const mockDataset: Dataset = {
-    id: { namespace: 'test-namespace', name: 'test-dataset' },
-    name: 'test-dataset',
-    namespace: 'test-namespace',
-    type: 'DB_TABLE',
-    createdAt: '2023-01-01T00:00:00Z',
-    updatedAt: '2023-01-01T00:00:00Z',
-    tags: [],
-    fields: [],
-    columnLineage: {
-      graph: {
-        inputFields: [{ namespace: 'ns1', dataset: 'ds1', field: 'field1' }],
-        outputFields: [{ namespace: 'ns2', dataset: 'ds2', field: 'field2' }],
-      },
+vi.mock('../../../components/core/json-view/MqJsonView', () => ({
+  __esModule: true,
+  default: ({ data }: { data: unknown }) => (
+    <div data-testid='mq-json-view'>{JSON.stringify(data)}</div>
+  ),
+}))
+
+vi.mock('../../../components/core/empty/MqEmpty', () => ({
+  __esModule: true,
+  default: ({ title, body, children }: { title?: React.ReactNode; body?: React.ReactNode; children?: React.ReactNode }) => (
+    <div data-testid='mq-empty'>
+      <div>{title}</div>
+      <div>{body}</div>
+      <div>{children}</div>
+    </div>
+  ),
+}))
+
+vi.mock('../../../components/core/text/MqText', () => ({
+  __esModule: true,
+  default: ({ children, subdued }: { children: React.ReactNode; subdued?: boolean }) => (
+    <span data-subdued={subdued}>{children}</span>
+  ),
+}))
+
+const lineageDataset: LineageDataset = {
+  namespace: 'analytics',
+  name: 'orders',
+  type: 'DB_TABLE',
+  inEdges: [],
+  outEdges: [],
+} as LineageDataset
+
+const makeDataset = (overrides: Partial<Dataset> = {}): Dataset => ({
+  id: { namespace: 'analytics', name: 'orders' },
+  type: 'DB_TABLE',
+  name: 'orders',
+  physicalName: 'orders',
+  createdAt: '',
+  updatedAt: '',
+  namespace: 'analytics',
+  sourceName: 'warehouse',
+  fields: [],
+  tags: [],
+  lastModifiedAt: '',
+  description: '',
+  facets: {},
+  deleted: false,
+  columnLineage: {
+    graph: {
+      nodes: [],
     },
-  } as any
+  },
+  ...overrides,
+})
 
-  const mockLineageDataset: LineageDataset = {
-    namespace: 'test-namespace',
-    name: 'test-dataset',
-    type: 'DB_TABLE',
-    inEdges: [],
-    outEdges: [],
-  } as any
-
-  const createMockStore = (dataset: any = mockDataset) => {
-    return createStore(() => ({
-      dataset: {
-        result: dataset,
-        isLoading: false,
-        init: true,
-      },
-    }))
+const renderDatasetColumnLineage = (
+  stateOverride: Partial<{
+    dataset: {
+      result: Dataset | null
+    }
+  }> = {},
+  options: { route?: string } = {}
+) => {
+  const baseState = {
+    dataset: {
+      result: makeDataset(),
+    },
   }
 
-  const renderWithProviders = (
-    component: React.ReactElement,
-    { store = createMockStore(), route = '/test-namespace/test-dataset' } = {}
-  ) => {
-    return render(
-      <Provider store={store}>
+  const mergedState = {
+    ...baseState,
+    ...stateOverride,
+    dataset: {
+      ...baseState.dataset,
+      ...(stateOverride.dataset ?? {}),
+    },
+  }
+
+  const store = createStore(() => mergedState)
+  const dispatchSpy = vi.fn((action) => action)
+  store.dispatch = dispatchSpy as unknown as typeof store.dispatch
+
+  const route = options.route ?? '/analytics/orders'
+
+  const utils = render(
+    <Provider store={store}>
+      <ThemeProvider theme={createTheme()}>
         <MemoryRouter initialEntries={[route]}>
           <Routes>
-            <Route path='/:namespace/:name' element={component} />
+            <Route path='/:namespace/:name' element={<DatasetColumnLineage lineageDataset={lineageDataset} />} />
+            <Route path='/' element={<DatasetColumnLineage lineageDataset={lineageDataset} />} />
           </Routes>
         </MemoryRouter>
-      </Provider>
-    )
-  }
+      </ThemeProvider>
+    </Provider>
+  )
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
+  return { ...utils, dispatchSpy }
+}
 
-  it('should render column lineage data when available', async () => {
-    renderWithProviders(<DatasetColumnLineage lineageDataset={mockLineageDataset} />)
+beforeEach(() => {
+  fetchDatasetMock.mockClear()
+  resetDatasetMock.mockClear()
+  fileSizeMock.mockClear()
+  saveAsMock.mockClear()
+})
 
-    await waitFor(() => {
-      // MqJsonView should be rendered with data
-      expect(screen.queryByText('datasets_column_lineage.empty_title')).toBeFalsy()
-    })
-  })
-
-  it('should show empty state when no column lineage', async () => {
-    const datasetWithoutLineage = { ...mockDataset, columnLineage: null }
-    const store = createMockStore(datasetWithoutLineage)
-
-    renderWithProviders(<DatasetColumnLineage lineageDataset={mockLineageDataset} />, { store })
-
-    await waitFor(() => {
-      expect(screen.getByText('datasets_column_lineage.empty_title')).toBeTruthy()
-      expect(screen.getByText('datasets_column_lineage.empty_body')).toBeTruthy()
-    })
-  })
-
-  it('should show download button for large payloads', async () => {
-    // Create a large fields array
-    const largeFields: any[] = Array(1000)
-      .fill(null)
-      .map((_, i) => ({
-        name: `field-${i}`,
-        type: 'STRING',
-        description: '',
-      }))
-
-    const largeLineageDataset: LineageDataset = {
-      ...mockLineageDataset,
-      fields: largeFields,
-    }
-
-    const store = createMockStore({
-      lineage: {
-        columnLineage: {
-          graph: {},
-          origin: largeLineageDataset,
-        },
+describe('DatasetColumnLineage', () => {
+  it('fetches dataset on mount, renders json, and resets on unmount', () => {
+    const columnLineage = { graph: { edges: [] } }
+    const { unmount, dispatchSpy } = renderDatasetColumnLineage({
+      dataset: {
+        result: makeDataset({ columnLineage }),
       },
     })
 
-    const { container } = renderWithProviders(
-      <DatasetColumnLineage lineageDataset={largeLineageDataset} />,
-      { store }
-    )
+    expect(fetchDatasetMock).toHaveBeenCalledWith('analytics', 'orders')
+    expect(screen.getByTestId('mq-json-view')).toHaveTextContent(JSON.stringify(columnLineage))
 
-    // Component should render something even with large payload
-    expect(container).toBeTruthy()
+    unmount()
+    expect(resetDatasetMock).toHaveBeenCalledTimes(1)
+    expect(dispatchSpy.mock.calls.at(-1)?.[0]).toEqual({ type: 'RESET_DATASET' })
   })
 
-  it('should handle missing namespace and name params', () => {
-    const store = createMockStore()
+  it('renders empty state when column lineage is missing', () => {
+    renderDatasetColumnLineage({
+      dataset: {
+        result: makeDataset({ columnLineage: null as unknown as Dataset['columnLineage'] }),
+      },
+    })
 
-    render(
-      <Provider store={store}>
-        <MemoryRouter initialEntries={['/']}>
-          <Routes>
-            <Route
-              path='/'
-              element={<DatasetColumnLineage lineageDataset={mockLineageDataset} />}
-            />
-          </Routes>
-        </MemoryRouter>
-      </Provider>
-    )
+    expect(screen.getByTestId('mq-empty')).toBeInTheDocument()
+    expect(screen.queryByTestId('mq-json-view')).toBeNull()
+  })
 
-    // Should render without crashing
-    expect(true).toBe(true)
+  it('shows download option for large payloads and saves file', () => {
+    fileSizeMock.mockReturnValueOnce({ kiloBytes: 501, megaBytes: 0.49 })
+
+    renderDatasetColumnLineage({
+      dataset: {
+        result: makeDataset({ columnLineage: { graph: { nodes: [1, 2, 3] } } }),
+      },
+    })
+
+    const downloadButton = screen.getByRole('button', { name: 'Download payload' })
+    fireEvent.click(downloadButton)
+    expect(saveAsMock).toHaveBeenCalledTimes(1)
+
+    const [blob, fileName] = saveAsMock.mock.calls[0]
+    expect(blob).toBeInstanceOf(Blob)
+    expect(fileName).toBe('orders-analytics-columnLineage.json')
+  })
+
+  it('does not fetch dataset when namespace or name missing', () => {
+    renderDatasetColumnLineage({}, { route: '/' })
+    expect(fetchDatasetMock).not.toHaveBeenCalled()
   })
 })
