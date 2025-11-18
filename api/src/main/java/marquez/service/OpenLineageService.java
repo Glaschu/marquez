@@ -53,19 +53,22 @@ import marquez.service.models.RunMeta;
 @Slf4j
 public class OpenLineageService extends DelegatingDaos.DelegatingOpenLineageDao {
   private final RunService runService;
+  private final Neo4jService neo4jService;
   private final DatasetVersionDao datasetVersionDao;
   private final ObjectMapper mapper = Utils.newObjectMapper();
 
   private final Executor executor;
 
-  public OpenLineageService(BaseDao baseDao, RunService runService) {
-    this(baseDao, runService, ForkJoinPool.commonPool());
+  public OpenLineageService(BaseDao baseDao, RunService runService, Neo4jService neo4jService) {
+    this(baseDao, runService, neo4jService, ForkJoinPool.commonPool());
   }
 
-  public OpenLineageService(BaseDao baseDao, RunService runService, Executor executor) {
+  public OpenLineageService(
+      BaseDao baseDao, RunService runService, Neo4jService neo4jService, Executor executor) {
     super(baseDao.createOpenLineageDao());
     this.runService = runService;
     this.datasetVersionDao = baseDao.createDatasetVersionDao();
+    this.neo4jService = neo4jService;
     this.executor = executor;
   }
 
@@ -138,7 +141,14 @@ public class OpenLineageService extends DelegatingDaos.DelegatingOpenLineageDao 
 
     CompletableFuture<Void> marquez =
         CompletableFuture.supplyAsync(
-                withSentry(withMdc(() -> updateMarquezModel(event, mapper))), executor)
+                withSentry(
+                    withMdc(
+                        () -> {
+                          UpdateLineageRow row = updateMarquezModel(event, mapper);
+                          neo4jService.updateMarquezModel(row);
+                          return row;
+                        })),
+                executor)
             .thenAccept(
                 (update) -> {
                   if (event.getEventType() != null) {

@@ -23,10 +23,10 @@ import marquez.common.models.DatasetId;
 import marquez.common.models.DatasetVersionId;
 import marquez.common.models.JobId;
 import marquez.common.models.JobVersionId;
-import marquez.db.ColumnLineageDao;
 import marquez.db.DatasetFieldDao;
 import marquez.db.models.ColumnLineageNodeData;
 import marquez.db.models.InputFieldNodeData;
+import marquez.db.repository.LineageRepository;
 import marquez.service.models.ColumnLineage;
 import marquez.service.models.ColumnLineageInputField;
 import marquez.service.models.Dataset;
@@ -37,11 +37,13 @@ import marquez.service.models.NodeId;
 import org.apache.commons.lang3.tuple.Pair;
 
 @Slf4j
-public class ColumnLineageService extends DelegatingDaos.DelegatingColumnLineageDao {
+public class ColumnLineageService {
+  private final LineageRepository lineageRepository;
   private final DatasetFieldDao datasetFieldDao;
 
-  public ColumnLineageService(ColumnLineageDao dao, DatasetFieldDao datasetFieldDao) {
-    super(dao);
+  public ColumnLineageService(
+      LineageRepository lineageRepository, DatasetFieldDao datasetFieldDao) {
+    this.lineageRepository = lineageRepository;
     this.datasetFieldDao = datasetFieldDao;
   }
 
@@ -52,7 +54,8 @@ public class ColumnLineageService extends DelegatingDaos.DelegatingColumnLineage
     }
 
     return toLineage(
-        getLineage(depth, columnNodes.nodeIds, withDownstream, columnNodes.createdAtUntil),
+        lineageRepository.getLineage(
+            depth, columnNodes.nodeIds, withDownstream, columnNodes.createdAtUntil),
         nodeId.hasVersion());
   }
 
@@ -206,7 +209,7 @@ public class ColumnLineageService extends DelegatingDaos.DelegatingColumnLineage
     }
 
     Set<ColumnLineageNodeData> lineageRowsForDatasets =
-        getLineageRowsForDatasets(
+        lineageRepository.getLineageRowsForDatasets(
             datasets.stream()
                 .map(d -> Pair.of(d.getNamespace().getValue(), d.getName().getValue()))
                 .collect(Collectors.toList()));

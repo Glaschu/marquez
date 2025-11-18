@@ -30,5 +30,6 @@ public class UpdateLineageRow {
     DatasetVersionRow datasetVersionRow;
     NamespaceRow namespaceRow;
     List<ColumnLineageRow> columnLineageRows;
+    List<DatasetFieldRow> fields;
   }
 }

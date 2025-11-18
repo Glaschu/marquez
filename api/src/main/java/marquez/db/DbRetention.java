@@ -71,19 +71,15 @@ public final class DbRetention {
   public static final boolean DEFAULT_DRY_RUN = false;
 
   /**
-   * Namespaces excluded from keep-at-least-one protection.
-   * Records in these namespaces will be deleted based purely on retention days,
-   * without preserving the most recent record. Useful for test/temporary namespaces.
-   * Example: "local" namespace for local development/testing.
+   * Namespaces excluded from keep-at-least-one protection. Records in these namespaces will be
+   * deleted based purely on retention days, without preserving the most recent record. Useful for
+   * test/temporary namespaces. Example: "local" namespace for local development/testing.
    */
-  private static final String[] NAMESPACES_EXCLUDED_FROM_KEEP_AT_LEAST_ONE = {
-    "local"
-  };
+  private static final String[] NAMESPACES_EXCLUDED_FROM_KEEP_AT_LEAST_ONE = {"local"};
 
   /**
-   * Generates SQL fragment to filter excluded namespaces.
-   * Returns SQL condition to add to WHERE clause that excludes namespaces
-   * from the keep-at-least-one protection list.
+   * Generates SQL fragment to filter excluded namespaces. Returns SQL condition to add to WHERE
+   * clause that excludes namespaces from the keep-at-least-one protection list.
    */
   private static String getNamespaceExclusionFilter(String tableAlias) {
     if (NAMESPACES_EXCLUDED_FROM_KEEP_AT_LEAST_ONE.length == 0) {
@@ -175,14 +171,14 @@ public final class DbRetention {
                           SELECT DISTINCT ON (j.namespace_uuid, j.name) j.uuid
                             FROM jobs AS j
                            WHERE j.namespace_uuid NOT IN (
-                             SELECT uuid FROM namespaces 
+                             SELECT uuid FROM namespaces
                               WHERE name IN (${excludedNamespaces})
                            )
                            ORDER BY j.namespace_uuid, j.name, j.updated_at DESC
                         );
-                        
+
                         CREATE INDEX IF NOT EXISTS idx_most_recent_job ON most_recent_job_per_name(uuid);
-                        
+
                         LOOP
                           WITH deleted_rows AS (
                             DELETE FROM jobs
@@ -204,7 +200,7 @@ public final class DbRetention {
                           EXIT WHEN rows_deleted = 0;
                           PERFORM pg_sleep(0.1);
                         END LOOP;
-                        
+
                         DROP TABLE most_recent_job_per_name;
                         RETURN rows_deleted_total;
                       END;
@@ -254,7 +250,7 @@ public final class DbRetention {
                             FROM jobs
                            WHERE updated_at >= CURRENT_TIMESTAMP - INTERVAL '${retentionDays} days'
                         );
-                        
+
                         -- Keep at least one job_version per job (the most recent one)
                         -- Excludes job versions for jobs in excluded namespaces
                         CREATE TEMPORARY TABLE most_recent_job_version_per_job AS (
@@ -262,15 +258,15 @@ public final class DbRetention {
                             FROM job_versions AS jv
                            INNER JOIN jobs AS j ON jv.job_uuid = j.uuid
                            WHERE j.namespace_uuid NOT IN (
-                             SELECT uuid FROM namespaces 
+                             SELECT uuid FROM namespaces
                               WHERE name IN (${excludedNamespaces})
                            )
                            ORDER BY jv.job_uuid, jv.created_at DESC
                         );
-                        
+
                         CREATE INDEX IF NOT EXISTS idx_used_jv_current ON used_job_versions_as_current_in_x_days(current_version_uuid);
                         CREATE INDEX IF NOT EXISTS idx_most_recent_jv ON most_recent_job_version_per_job(uuid);
-                        
+
                         LOOP
                           WITH deleted_rows AS (
                             DELETE FROM job_versions AS jv
@@ -421,28 +417,28 @@ public final class DbRetention {
                               ON jvio.job_version_uuid = jv.uuid
                            WHERE jv.created_at >= CURRENT_TIMESTAMP - INTERVAL '${retentionDays} days'
                         );
-                        
+
                         -- Keep at least one dataset per namespace+name combination (the most recent one)
                         -- Excludes datasets in excluded namespaces
                         CREATE TEMPORARY TABLE most_recent_dataset_per_name AS (
                           SELECT DISTINCT ON (d.namespace_uuid, d.name) d.uuid
                             FROM datasets AS d
                            WHERE d.namespace_uuid NOT IN (
-                             SELECT uuid FROM namespaces 
+                             SELECT uuid FROM namespaces
                               WHERE name IN (${excludedNamespaces})
                            )
                            ORDER BY d.namespace_uuid, d.name, d.updated_at DESC
                         );
-                        
+
                         -- Create index for better performance
                         CREATE INDEX IF NOT EXISTS idx_used_datasets_io ON used_datasets_as_io_in_x_days(dataset_uuid);
                         CREATE INDEX IF NOT EXISTS idx_most_recent_dataset ON most_recent_dataset_per_name(uuid);
-                        
+
                         LOOP
                           -- Create temp table with batch of datasets to delete
                           CREATE TEMPORARY TABLE IF NOT EXISTS datasets_to_delete (uuid UUID);
                           TRUNCATE TABLE datasets_to_delete;
-                          
+
                           INSERT INTO datasets_to_delete
                           SELECT d.uuid
                             FROM datasets AS d
@@ -458,103 +454,103 @@ public final class DbRetention {
                              )
                            LIMIT rows_per_batch
                              FOR UPDATE OF d SKIP LOCKED;
-                          
+
                           GET DIAGNOSTICS rows_deleted = ROW_COUNT;
                           EXIT WHEN rows_deleted = 0;
-                          
+
                           -- Manually delete dependent records in batches to avoid CASCADE overhead
                           -- Delete from dataset_facets
                           DELETE FROM dataset_facets
                            WHERE dataset_uuid IN (SELECT uuid FROM datasets_to_delete);
-                          
+
                           -- Delete from datasets_tag_mapping
                           DELETE FROM datasets_tag_mapping
                            WHERE dataset_uuid IN (SELECT uuid FROM datasets_to_delete);
-                          
+
                           -- Delete from job_versions_io_mapping
                           DELETE FROM job_versions_io_mapping
                            WHERE dataset_uuid IN (SELECT uuid FROM datasets_to_delete);
-                          
+
                           -- Get dataset_fields to delete (for subsequent cascade deletes)
                           CREATE TEMPORARY TABLE IF NOT EXISTS dataset_fields_to_delete (uuid UUID);
                           TRUNCATE TABLE dataset_fields_to_delete;
-                          
+
                           INSERT INTO dataset_fields_to_delete
                           SELECT uuid FROM dataset_fields
                            WHERE dataset_uuid IN (SELECT uuid FROM datasets_to_delete);
-                          
+
                           -- Delete from dataset_fields_tag_mapping
                           DELETE FROM dataset_fields_tag_mapping
                            WHERE dataset_field_uuid IN (SELECT uuid FROM dataset_fields_to_delete);
-                          
+
                           -- Delete from column_lineage (field references)
                           DELETE FROM column_lineage
                            WHERE output_dataset_field_uuid IN (SELECT uuid FROM dataset_fields_to_delete);
-                          
+
                           DELETE FROM column_lineage
                            WHERE input_dataset_field_uuid IN (SELECT uuid FROM dataset_fields_to_delete);
-                          
+
                           -- Delete from dataset_versions_field_mapping
                           DELETE FROM dataset_versions_field_mapping
                            WHERE dataset_field_uuid IN (SELECT uuid FROM dataset_fields_to_delete);
-                          
+
                           -- Delete from dataset_fields
                           DELETE FROM dataset_fields
                            WHERE uuid IN (SELECT uuid FROM dataset_fields_to_delete);
-                          
+
                           -- Get dataset_versions to delete (for subsequent cascade deletes)
                           CREATE TEMPORARY TABLE IF NOT EXISTS dataset_versions_to_delete_cascade (uuid UUID);
                           TRUNCATE TABLE dataset_versions_to_delete_cascade;
-                          
+
                           INSERT INTO dataset_versions_to_delete_cascade
                           SELECT uuid FROM dataset_versions
                            WHERE dataset_uuid IN (SELECT uuid FROM datasets_to_delete);
-                          
+
                           -- Delete dependent records of dataset_versions
                           DELETE FROM column_lineage
                            WHERE output_dataset_version_uuid IN (SELECT uuid FROM dataset_versions_to_delete_cascade);
-                          
+
                           DELETE FROM column_lineage
                            WHERE input_dataset_version_uuid IN (SELECT uuid FROM dataset_versions_to_delete_cascade);
-                          
+
                           DELETE FROM dataset_facets
                            WHERE dataset_version_uuid IN (SELECT uuid FROM dataset_versions_to_delete_cascade);
-                          
+
                           DELETE FROM dataset_versions_field_mapping
                            WHERE dataset_version_uuid IN (SELECT uuid FROM dataset_versions_to_delete_cascade);
-                          
+
                           DELETE FROM runs_input_mapping
                            WHERE dataset_version_uuid IN (SELECT uuid FROM dataset_versions_to_delete_cascade);
-                          
+
                           DELETE FROM stream_versions
                            WHERE dataset_version_uuid IN (SELECT uuid FROM dataset_versions_to_delete_cascade);
-                          
+
                           -- Disable triggers to skip CASCADE constraint validation
                           ALTER TABLE dataset_versions DISABLE TRIGGER ALL;
-                          
+
                           -- Delete dataset_versions
                           DELETE FROM dataset_versions
                            WHERE uuid IN (SELECT uuid FROM dataset_versions_to_delete_cascade);
-                          
+
                           -- Re-enable triggers
                           ALTER TABLE dataset_versions ENABLE TRIGGER ALL;
-                          
+
                           -- Disable triggers on datasets to skip CASCADE constraint validation
                           ALTER TABLE datasets DISABLE TRIGGER ALL;
-                          
+
                           -- Finally delete the datasets themselves
                           DELETE FROM datasets
                            WHERE uuid IN (SELECT uuid FROM datasets_to_delete);
-                          
+
                           -- Re-enable triggers
                           ALTER TABLE datasets ENABLE TRIGGER ALL;
-                          
+
                           rows_deleted_total := rows_deleted_total + rows_deleted;
-                          
+
                           -- Sleep briefly to reduce load on the database
                           PERFORM pg_sleep(0.1);
                         END LOOP;
-                        
+
                         DROP TABLE IF EXISTS datasets_to_delete;
                         DROP TABLE IF EXISTS dataset_fields_to_delete;
                         DROP TABLE IF EXISTS dataset_versions_to_delete_cascade;
@@ -631,7 +627,7 @@ public final class DbRetention {
                             FROM datasets
                            WHERE updated_at >= CURRENT_TIMESTAMP - INTERVAL '${retentionDays} days'
                         );
-                        
+
                         -- Keep at least one dataset_version per dataset (the most recent one)
                         -- Excludes dataset versions for datasets in excluded namespaces
                         CREATE TEMPORARY TABLE most_recent_dataset_version_per_dataset AS (
@@ -639,22 +635,22 @@ public final class DbRetention {
                             FROM dataset_versions AS dv
                            INNER JOIN datasets AS d ON dv.dataset_uuid = d.uuid
                            WHERE d.namespace_uuid NOT IN (
-                             SELECT uuid FROM namespaces 
+                             SELECT uuid FROM namespaces
                               WHERE name IN (${excludedNamespaces})
                            )
                            ORDER BY dv.dataset_uuid, dv.created_at DESC
                         );
-                        
+
                         -- Create index on temp tables for better performance
                         CREATE INDEX IF NOT EXISTS idx_used_dv_input ON used_dataset_versions_as_input_in_x_days(dataset_version_uuid);
                         CREATE INDEX IF NOT EXISTS idx_used_dv_current ON used_dataset_versions_as_current_in_x_days(current_version_uuid);
                         CREATE INDEX IF NOT EXISTS idx_most_recent_dv ON most_recent_dataset_version_per_dataset(uuid);
-                        
+
                         LOOP
                           -- Create temp table with batch of dataset_versions to delete
                           CREATE TEMPORARY TABLE IF NOT EXISTS dataset_versions_to_delete (uuid UUID);
                           TRUNCATE TABLE dataset_versions_to_delete;
-                          
+
                           INSERT INTO dataset_versions_to_delete
                           SELECT dv.uuid
                             FROM dataset_versions AS dv
@@ -674,54 +670,54 @@ public final class DbRetention {
                              )
                            LIMIT rows_per_batch
                              FOR UPDATE OF dv SKIP LOCKED;
-                          
+
                           GET DIAGNOSTICS rows_deleted = ROW_COUNT;
                           EXIT WHEN rows_deleted = 0;
-                          
+
                           -- Manually delete dependent records in batches to avoid CASCADE overhead
                           -- These tables have no outgoing CASCADE constraints, so deletion is fast
-                          
+
                           -- Delete from column_lineage (both input and output references)
                           DELETE FROM column_lineage
                            WHERE output_dataset_version_uuid IN (SELECT uuid FROM dataset_versions_to_delete);
-                          
+
                           DELETE FROM column_lineage
                            WHERE input_dataset_version_uuid IN (SELECT uuid FROM dataset_versions_to_delete);
-                          
+
                           -- Delete from dataset_facets
                           DELETE FROM dataset_facets
                            WHERE dataset_version_uuid IN (SELECT uuid FROM dataset_versions_to_delete);
-                          
+
                           -- Delete from dataset_versions_field_mapping
                           DELETE FROM dataset_versions_field_mapping
                            WHERE dataset_version_uuid IN (SELECT uuid FROM dataset_versions_to_delete);
-                          
+
                           -- Delete from runs_input_mapping
                           DELETE FROM runs_input_mapping
                            WHERE dataset_version_uuid IN (SELECT uuid FROM dataset_versions_to_delete);
-                          
+
                           -- Delete from stream_versions
                           DELETE FROM stream_versions
                            WHERE dataset_version_uuid IN (SELECT uuid FROM dataset_versions_to_delete);
-                          
+
                           -- Disable triggers on dataset_versions to skip CASCADE constraint validation
                           -- We've already manually deleted all dependent records, so validation is unnecessary
                           ALTER TABLE dataset_versions DISABLE TRIGGER ALL;
-                          
+
                           -- Finally delete the dataset_versions themselves
                           -- With triggers disabled, this is a simple DELETE without any CASCADE overhead
                           DELETE FROM dataset_versions
                            WHERE uuid IN (SELECT uuid FROM dataset_versions_to_delete);
-                          
+
                           -- Re-enable triggers for subsequent operations
                           ALTER TABLE dataset_versions ENABLE TRIGGER ALL;
-                          
+
                           rows_deleted_total := rows_deleted_total + rows_deleted;
-                          
+
                           -- Sleep briefly to reduce load on the database
                           PERFORM pg_sleep(0.1);
                         END LOOP;
-                        
+
                         DROP TABLE IF EXISTS dataset_versions_to_delete;
                         DROP TABLE used_dataset_versions_as_input_in_x_days;
                         DROP TABLE used_dataset_versions_as_current_in_x_days;
@@ -741,8 +737,8 @@ public final class DbRetention {
   }
 
   /**
-   * Apply retention policy on orphaned {@code datasets}.
-   * Deletes datasets that are not referenced by any job as input or output.
+   * Apply retention policy on orphaned {@code datasets}. Deletes datasets that are not referenced
+   * by any job as input or output.
    */
   private static void retentionOnOrphanedDatasets(
       @NonNull final Jdbi jdbi, final int numberOfRowsPerBatch) {
@@ -765,7 +761,7 @@ public final class DbRetention {
                           -- Create temp table with batch of orphaned datasets to delete
                           CREATE TEMPORARY TABLE IF NOT EXISTS orphaned_datasets_to_delete (uuid UUID);
                           TRUNCATE TABLE orphaned_datasets_to_delete;
-                          
+
                           INSERT INTO orphaned_datasets_to_delete
                           SELECT d.uuid
                             FROM datasets AS d
@@ -776,100 +772,100 @@ public final class DbRetention {
                            )
                            LIMIT rows_per_batch
                              FOR UPDATE OF d SKIP LOCKED;
-                          
+
                           GET DIAGNOSTICS rows_deleted = ROW_COUNT;
                           EXIT WHEN rows_deleted = 0;
-                          
+
                           -- Manually delete dependent records to avoid CASCADE overhead
-                          
+
                           -- Delete from dataset_facets
                           DELETE FROM dataset_facets
                            WHERE dataset_uuid IN (SELECT uuid FROM orphaned_datasets_to_delete);
-                          
+
                           -- Delete from datasets_tag_mapping
                           DELETE FROM datasets_tag_mapping
                            WHERE dataset_uuid IN (SELECT uuid FROM orphaned_datasets_to_delete);
-                          
+
                           -- Get dataset_fields to delete
                           CREATE TEMPORARY TABLE IF NOT EXISTS orphaned_dataset_fields_to_delete (uuid UUID);
                           TRUNCATE TABLE orphaned_dataset_fields_to_delete;
-                          
+
                           INSERT INTO orphaned_dataset_fields_to_delete
                           SELECT uuid FROM dataset_fields
                            WHERE dataset_uuid IN (SELECT uuid FROM orphaned_datasets_to_delete);
-                          
+
                           -- Delete from dataset_fields_tag_mapping
                           DELETE FROM dataset_fields_tag_mapping
                            WHERE dataset_field_uuid IN (SELECT uuid FROM orphaned_dataset_fields_to_delete);
-                          
+
                           -- Delete from column_lineage (field references)
                           DELETE FROM column_lineage
                            WHERE output_dataset_field_uuid IN (SELECT uuid FROM orphaned_dataset_fields_to_delete);
-                          
+
                           DELETE FROM column_lineage
                            WHERE input_dataset_field_uuid IN (SELECT uuid FROM orphaned_dataset_fields_to_delete);
-                          
+
                           -- Delete from dataset_versions_field_mapping
                           DELETE FROM dataset_versions_field_mapping
                            WHERE dataset_field_uuid IN (SELECT uuid FROM orphaned_dataset_fields_to_delete);
-                          
+
                           -- Delete from dataset_fields
                           DELETE FROM dataset_fields
                            WHERE uuid IN (SELECT uuid FROM orphaned_dataset_fields_to_delete);
-                          
+
                           -- Get dataset_versions to delete
                           CREATE TEMPORARY TABLE IF NOT EXISTS orphaned_dataset_versions_to_delete (uuid UUID);
                           TRUNCATE TABLE orphaned_dataset_versions_to_delete;
-                          
+
                           INSERT INTO orphaned_dataset_versions_to_delete
                           SELECT uuid FROM dataset_versions
                            WHERE dataset_uuid IN (SELECT uuid FROM orphaned_datasets_to_delete);
-                          
+
                           -- Delete dependent records of dataset_versions
                           DELETE FROM column_lineage
                            WHERE output_dataset_version_uuid IN (SELECT uuid FROM orphaned_dataset_versions_to_delete);
-                          
+
                           DELETE FROM column_lineage
                            WHERE input_dataset_version_uuid IN (SELECT uuid FROM orphaned_dataset_versions_to_delete);
-                          
+
                           DELETE FROM dataset_facets
                            WHERE dataset_version_uuid IN (SELECT uuid FROM orphaned_dataset_versions_to_delete);
-                          
+
                           DELETE FROM dataset_versions_field_mapping
                            WHERE dataset_version_uuid IN (SELECT uuid FROM orphaned_dataset_versions_to_delete);
-                          
+
                           DELETE FROM runs_input_mapping
                            WHERE dataset_version_uuid IN (SELECT uuid FROM orphaned_dataset_versions_to_delete);
-                          
+
                           DELETE FROM stream_versions
                            WHERE dataset_version_uuid IN (SELECT uuid FROM orphaned_dataset_versions_to_delete);
-                          
+
                           -- Disable triggers for dataset_versions
                           ALTER TABLE dataset_versions DISABLE TRIGGER ALL;
-                          
+
                           -- Delete dataset_versions
                           DELETE FROM dataset_versions
                            WHERE uuid IN (SELECT uuid FROM orphaned_dataset_versions_to_delete);
-                          
+
                           -- Re-enable triggers
                           ALTER TABLE dataset_versions ENABLE TRIGGER ALL;
-                          
+
                           -- Disable triggers for datasets
                           ALTER TABLE datasets DISABLE TRIGGER ALL;
-                          
+
                           -- Finally delete the orphaned datasets themselves
                           DELETE FROM datasets
                            WHERE uuid IN (SELECT uuid FROM orphaned_datasets_to_delete);
-                          
+
                           -- Re-enable triggers
                           ALTER TABLE datasets ENABLE TRIGGER ALL;
-                          
+
                           rows_deleted_total := rows_deleted_total + rows_deleted;
-                          
+
                           -- Sleep briefly to reduce load on the database
                           PERFORM pg_sleep(0.1);
                         END LOOP;
-                        
+
                         DROP TABLE IF EXISTS orphaned_datasets_to_delete;
                         DROP TABLE IF EXISTS orphaned_dataset_fields_to_delete;
                         DROP TABLE IF EXISTS orphaned_dataset_versions_to_delete;
@@ -888,8 +884,8 @@ public final class DbRetention {
   }
 
   /**
-   * Apply retention policy on orphaned {@code dataset versions}.
-   * Deletes dataset versions that are not referenced by any run as input.
+   * Apply retention policy on orphaned {@code dataset versions}. Deletes dataset versions that are
+   * not referenced by any run as input.
    */
   private static void retentionOnOrphanedDatasetVersions(
       @NonNull final Jdbi jdbi, final int numberOfRowsPerBatch) {
@@ -912,7 +908,7 @@ public final class DbRetention {
                           -- Create temp table with batch of orphaned dataset_versions to delete
                           CREATE TEMPORARY TABLE IF NOT EXISTS orphaned_dv_to_delete (uuid UUID);
                           TRUNCATE TABLE orphaned_dv_to_delete;
-                          
+
                           INSERT INTO orphaned_dv_to_delete
                           SELECT dv.uuid
                             FROM dataset_versions AS dv
@@ -928,47 +924,47 @@ public final class DbRetention {
                            )
                            LIMIT rows_per_batch
                              FOR UPDATE OF dv SKIP LOCKED;
-                          
+
                           GET DIAGNOSTICS rows_deleted = ROW_COUNT;
                           EXIT WHEN rows_deleted = 0;
-                          
+
                           -- Manually delete dependent records to avoid CASCADE overhead
-                          
+
                           -- Delete from column_lineage (both input and output references)
                           DELETE FROM column_lineage
                            WHERE output_dataset_version_uuid IN (SELECT uuid FROM orphaned_dv_to_delete);
-                          
+
                           DELETE FROM column_lineage
                            WHERE input_dataset_version_uuid IN (SELECT uuid FROM orphaned_dv_to_delete);
-                          
+
                           -- Delete from dataset_facets
                           DELETE FROM dataset_facets
                            WHERE dataset_version_uuid IN (SELECT uuid FROM orphaned_dv_to_delete);
-                          
+
                           -- Delete from dataset_versions_field_mapping
                           DELETE FROM dataset_versions_field_mapping
                            WHERE dataset_version_uuid IN (SELECT uuid FROM orphaned_dv_to_delete);
-                          
+
                           -- Delete from stream_versions
                           DELETE FROM stream_versions
                            WHERE dataset_version_uuid IN (SELECT uuid FROM orphaned_dv_to_delete);
-                          
+
                           -- Disable triggers on dataset_versions
                           ALTER TABLE dataset_versions DISABLE TRIGGER ALL;
-                          
+
                           -- Finally delete the orphaned dataset_versions themselves
                           DELETE FROM dataset_versions
                            WHERE uuid IN (SELECT uuid FROM orphaned_dv_to_delete);
-                          
+
                           -- Re-enable triggers
                           ALTER TABLE dataset_versions ENABLE TRIGGER ALL;
-                          
+
                           rows_deleted_total := rows_deleted_total + rows_deleted;
-                          
+
                           -- Sleep briefly to reduce load on the database
                           PERFORM pg_sleep(0.1);
                         END LOOP;
-                        
+
                         DROP TABLE IF EXISTS orphaned_dv_to_delete;
                         RETURN rows_deleted_total;
                       END;
@@ -1065,12 +1061,12 @@ public final class DbRetention {
   }
 
   /**
-   * Returns {@code sql} with excluded namespaces replaced.
-   * Generates SQL-safe quoted list like: 'local', 'test'
+   * Returns {@code sql} with excluded namespaces replaced. Generates SQL-safe quoted list like:
+   * 'local', 'test'
    */
   private static String getExcludedNamespacesForSql() {
     if (NAMESPACES_EXCLUDED_FROM_KEEP_AT_LEAST_ONE.length == 0) {
-      return "''";  // Empty string will never match
+      return "''"; // Empty string will never match
     }
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < NAMESPACES_EXCLUDED_FROM_KEEP_AT_LEAST_ONE.length; i++) {
@@ -1080,9 +1076,7 @@ public final class DbRetention {
     return sb.toString();
   }
 
-  /**
-   * Returns {@code sql} with parameters replaced including excluded namespaces.
-   */
+  /** Returns {@code sql} with parameters replaced including excluded namespaces. */
   private static String sqlWithExclusions(
       @NonNull final String sqlTemplate, final int numberOfRowsPerBatch, final int retentionDays) {
     return checkNotBlank(sqlTemplate)

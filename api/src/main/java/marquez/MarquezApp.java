@@ -51,6 +51,9 @@ import org.jdbi.v3.jackson2.Jackson2Config;
 import org.jdbi.v3.jackson2.Jackson2Plugin;
 import org.jdbi.v3.postgres.PostgresPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
+import org.neo4j.driver.AuthTokens;
+import org.neo4j.driver.Driver;
+import org.neo4j.driver.GraphDatabase;
 
 @Slf4j
 public final class MarquezApp extends Application<MarquezConfig> {
@@ -137,10 +140,16 @@ public final class MarquezApp extends Application<MarquezConfig> {
       env.jersey().register(new TracingContainerResponseFilter());
     }
 
+    final Driver neo4jDriver =
+        GraphDatabase.driver(
+            config.getNeo4j().getUri(),
+            AuthTokens.basic(config.getNeo4j().getUsername(), config.getNeo4j().getPassword()));
+
     final Jdbi jdbi = newJdbi(config, env, source);
     final MarquezContext marquezContext =
         MarquezContext.builder()
             .jdbi(jdbi)
+            .neo4j(neo4jDriver)
             .searchConfig(config.getSearchConfig())
             .tags(config.getTags())
             .build();

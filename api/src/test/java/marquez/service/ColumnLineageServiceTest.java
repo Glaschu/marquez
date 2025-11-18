@@ -35,6 +35,7 @@ import marquez.db.OpenLineageDao;
 import marquez.db.models.ColumnLineageNodeData;
 import marquez.db.models.InputFieldNodeData;
 import marquez.db.models.UpdateLineageRow;
+import marquez.db.repository.PostgresColumnLineageRepository;
 import marquez.jdbi.MarquezJdbiExternalPostgresExtension;
 import marquez.service.models.ColumnLineageInputField;
 import marquez.service.models.Dataset;
@@ -69,7 +70,7 @@ public class ColumnLineageServiceTest {
     openLineageDao = jdbi.onDemand(OpenLineageDao.class);
     fieldDao = jdbi.onDemand(DatasetFieldDao.class);
     datasetDao = jdbi.onDemand(DatasetDao.class);
-    lineageService = new ColumnLineageService(dao, fieldDao);
+    lineageService = new ColumnLineageService(new PostgresColumnLineageRepository(dao), fieldDao);
     jobFacet = JobFacet.builder().build();
   }
 

@@ -155,17 +155,16 @@ public class OpenLineageServiceIntegrationTest {
     this.jdbi = jdbi;
     openLineageDao = jdbi.onDemand(OpenLineageDao.class);
     datasetVersionDao = jdbi.onDemand(DatasetVersionDao.class);
-    jobDao = jdbi.onDemand(JobDao.class);
     jobVersionDao = jdbi.onDemand(JobVersionDao.class);
     runService = mock(RunService.class);
-    jobService = new JobService(jobDao, runService);
+    Neo4jService neo4jService = mock(Neo4jService.class);
     runInputListener = ArgumentCaptor.forClass(JobInputUpdate.class);
     doNothing().when(runService).notify(runInputListener.capture());
     runOutputListener = ArgumentCaptor.forClass(JobOutputUpdate.class);
     doNothing().when(runService).notify(runOutputListener.capture());
     runTransitionListener = ArgumentCaptor.forClass(RunTransition.class);
     doNothing().when(runService).notify(runTransitionListener.capture());
-    lineageService = new OpenLineageService(openLineageDao, runService);
+    lineageService = new OpenLineageService(openLineageDao, runService, neo4jService);
     datasetDao = jdbi.onDemand(DatasetDao.class);
 
     NamespaceRow namespace =

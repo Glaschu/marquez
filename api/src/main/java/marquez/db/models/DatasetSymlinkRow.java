@@ -23,7 +23,7 @@ public class DatasetSymlinkRow {
   @NonNull String name;
   @NonNull UUID namespaceUuid;
   @Nullable String type;
-  @NonNull boolean isPrimary;
+  boolean isPrimary;
   @Getter @NonNull private final Instant createdAt;
   @Getter @NonNull private final Instant updatedAt;
 

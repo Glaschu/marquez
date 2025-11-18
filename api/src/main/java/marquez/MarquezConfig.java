@@ -34,6 +34,10 @@ public class MarquezConfig extends Configuration {
   private final DataSourceFactory dataSourceFactory = new DataSourceFactory();
 
   @Getter
+  @JsonProperty("neo4j")
+  private final Neo4jConfig neo4j = new Neo4jConfig();
+
+  @Getter
   @JsonProperty("flyway")
   private final FlywayFactory flywayFactory = new FlywayFactory();
 

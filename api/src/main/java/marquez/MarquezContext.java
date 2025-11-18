@@ -43,6 +43,8 @@ import marquez.db.SearchDao;
 import marquez.db.SourceDao;
 import marquez.db.StatsDao;
 import marquez.db.TagDao;
+import marquez.db.repository.LineageRepository;
+import marquez.db.repository.Neo4jLineageRepository;
 import marquez.graphql.GraphqlSchemaBuilder;
 import marquez.graphql.MarquezGraphqlServletBuilder;
 import marquez.search.SearchConfig;
@@ -53,6 +55,7 @@ import marquez.service.DatasetVersionService;
 import marquez.service.JobService;
 import marquez.service.LineageService;
 import marquez.service.NamespaceService;
+import marquez.service.Neo4jService;
 import marquez.service.OpenLineageService;
 import marquez.service.RunService;
 import marquez.service.RunTransitionListener;
@@ -63,9 +66,12 @@ import marquez.service.StatsService;
 import marquez.service.TagService;
 import marquez.service.models.Tag;
 import org.jdbi.v3.core.Jdbi;
+import org.neo4j.driver.Driver;
 
 @Getter
 public final class MarquezContext {
+  @Getter private final Jdbi jdbi;
+  @Getter private final Driver neo4j;
   @Getter private final NamespaceDao namespaceDao;
   @Getter private final SourceDao sourceDao;
   @Getter private final DatasetDao datasetDao;
@@ -97,6 +103,7 @@ public final class MarquezContext {
   @Getter private final ColumnLineageService columnLineageService;
   @Getter private final SearchService searchService;
   @Getter private final StatsService statsService;
+  @Getter private final Neo4jService neo4jService;
   @Getter private final NamespaceResource namespaceResource;
   @Getter private final SourceResource sourceResource;
   @Getter private final DatasetResource datasetResource;
@@ -115,6 +122,7 @@ public final class MarquezContext {
 
   private MarquezContext(
       @NonNull final Jdbi jdbi,
+      @NonNull final Driver neo4j,
       @NonNull final SearchConfig searchConfig,
       @NonNull final ImmutableSet<Tag> tags,
       List<RunTransitionListener> runTransitionListeners) {
@@ -122,6 +130,8 @@ public final class MarquezContext {
       runTransitionListeners = new ArrayList<>();
     }
     this.searchConfig = searchConfig;
+    this.jdbi = jdbi;
+    this.neo4j = neo4j;
 
     final BaseDao baseDao = jdbi.onDemand(NamespaceDao.class);
     this.namespaceDao = jdbi.onDemand(NamespaceDao.class);
@@ -152,9 +162,11 @@ public final class MarquezContext {
     this.jobService = new JobService(baseDao, runService);
     this.tagService = new TagService(baseDao);
     this.tagService.init(tags);
-    this.openLineageService = new OpenLineageService(baseDao, runService);
+    this.neo4jService = new Neo4jService(neo4j);
+    this.openLineageService = new OpenLineageService(baseDao, runService, neo4jService);
     this.lineageService = new LineageService(lineageDao, jobDao, runDao);
-    this.columnLineageService = new ColumnLineageService(columnLineageDao, datasetFieldDao);
+    LineageRepository lineageRepository = new Neo4jLineageRepository(neo4j);
+    this.columnLineageService = new ColumnLineageService(lineageRepository, datasetFieldDao);
     this.searchService = new SearchService(searchConfig);
     this.statsService = new StatsService(statsDao);
     this.jdbiException = new JdbiExceptionExceptionMapper();
@@ -174,6 +186,7 @@ public final class MarquezContext {
             .datasetFieldService(new DatasetFieldService(baseDao))
             .datasetVersionService(new DatasetVersionService(baseDao))
             .statsService(statsService)
+            .neo4jService(neo4jService)
             .build();
     this.namespaceResource = new NamespaceResource(serviceFactory);
     this.sourceResource = new SourceResource(serviceFactory);
@@ -212,6 +225,7 @@ public final class MarquezContext {
   public static class Builder {
 
     private Jdbi jdbi;
+    private Driver neo4j;
     private SearchConfig searchConfig;
     private ImmutableSet<Tag> tags;
     private List<RunTransitionListener> runTransitionListeners;
@@ -223,6 +237,11 @@ public final class MarquezContext {
 
     public Builder jdbi(@NonNull Jdbi jdbi) {
       this.jdbi = jdbi;
+      return this;
+    }
+
+    public Builder neo4j(@NonNull Driver neo4j) {
+      this.neo4j = neo4j;
       return this;
     }
 
@@ -247,7 +266,7 @@ public final class MarquezContext {
     }
 
     public MarquezContext build() {
-      return new MarquezContext(jdbi, searchConfig, tags, runTransitionListeners);
+      return new MarquezContext(jdbi, neo4j, searchConfig, tags, runTransitionListeners);
     }
   }
 }

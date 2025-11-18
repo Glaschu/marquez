@@ -1008,7 +1008,8 @@ public interface OpenLineageDao extends BaseDao {
           upsertColumnLineage(runUuid, ds, now, datasetFields, datasetVersionRow, daos);
     }
 
-    return new DatasetRecord(datasetRow, datasetVersionRow, datasetNamespace, columnLineageRows);
+    return new DatasetRecord(
+        datasetRow, datasetVersionRow, datasetNamespace, columnLineageRows, datasetFields);
   }
 
   private List<ColumnLineageRow> upsertColumnLineage(

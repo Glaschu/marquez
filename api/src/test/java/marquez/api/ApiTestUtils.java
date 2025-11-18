@@ -15,6 +15,7 @@ import marquez.service.DatasetVersionService;
 import marquez.service.JobService;
 import marquez.service.LineageService;
 import marquez.service.NamespaceService;
+import marquez.service.Neo4jService;
 import marquez.service.OpenLineageService;
 import marquez.service.RunService;
 import marquez.service.SearchService;
@@ -63,6 +64,8 @@ public class ApiTestUtils {
             (SearchService) mocks.getOrDefault(SearchService.class, (mock(SearchService.class))))
         .statsService(
             (StatsService) mocks.getOrDefault(StatsService.class, (mock(StatsService.class))))
+        .neo4jService(
+            (Neo4jService) mocks.getOrDefault(Neo4jService.class, (mock(Neo4jService.class))))
         .build();
   }
 }
