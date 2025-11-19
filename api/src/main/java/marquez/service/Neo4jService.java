@@ -12,9 +12,20 @@ import marquez.db.models.DatasetFieldRow;
 import marquez.db.models.JobRow;
 import marquez.db.models.RunRow;
 import marquez.db.models.UpdateLineageRow;
+import marquez.service.models.Edge;
+import marquez.service.models.Node;
+import marquez.service.models.NodeId;
+import marquez.service.models.NodeType;
+import marquez.service.models.neo4j.LineageGraph;
 import org.neo4j.driver.Driver;
+import org.neo4j.driver.Result;
 import org.neo4j.driver.Session;
 import org.neo4j.driver.Transaction;
+import org.neo4j.driver.types.Path;
+
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class Neo4jService {
   private final Driver driver;
@@ -22,6 +33,52 @@ public class Neo4jService {
   public Neo4jService(Driver driver) {
     this.driver = driver;
   }
+
+  public LineageGraph getLineage(NodeId nodeId, int depth) {
+    try (Session session = driver.session()) {
+      return session.readTransaction(
+          tx -> {
+            Result result =
+                tx.run(
+                    "MATCH (n) WHERE n.name=$name AND n.namespace=$namespace "
+                        + "CALL apoc.path.subgraphAll(n, {maxLevel: $depth}) "
+                        + "YIELD nodes, relationships "
+                        + "RETURN nodes, relationships",
+                    parameters(
+                        "name",
+                        nodeId.getName(),
+                        "namespace",
+                        nodeId.getNamespace(),
+                        "depth",
+                        depth));
+            return result.stream().map(this::toLineageGraph).findFirst().orElse(null);
+          });
+    }
+  }
+
+  private LineageGraph toLineageGraph(org.neo4j.driver.Record record) {
+    List<Node> nodes = record.get("nodes").asList(v -> {
+      org.neo4j.driver.types.Node neo4jNode = v.asNode();
+      return new Node(
+          NodeId.of(neo4jNode.get("namespace").asString(), neo4jNode.get("name").asString()),
+          NodeType.valueOf(neo4jNode.labels().iterator().next().toUpperCase()),
+          neo4jNode.asMap(),
+          null,
+          null
+      );
+    });
+
+    List<Edge> edges = record.get("relationships").asList(v -> {
+      org.neo4j.driver.types.Relationship rel = v.asRelationship();
+      return new Edge(
+          NodeId.of(String.valueOf(rel.startNodeId())),
+          NodeId.of(String.valueOf(rel.endNodeId()))
+      );
+    });
+
+    return new LineageGraph(nodes, edges);
+  }
+
 
   public void updateMarquezModel(UpdateLineageRow row) {
     if (row == null) {

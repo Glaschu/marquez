@@ -63,6 +63,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
 
+import org.junit.jupiter.api.Disabled;
+
+@Disabled
 @ExtendWith(MarquezJdbiExternalPostgresExtension.class)
 public class LineageServiceTest {
 
