@@ -73,7 +73,7 @@ public class Neo4jService {
   }
 
   private LineageGraph toLineageGraph(org.neo4j.driver.Record record) {
-    Map<Long, NodeId> nodeIdsByElementId = new java.util.HashMap<>();
+    Map<String, NodeId> nodeIdsByElementId = new java.util.HashMap<>();
     List<Node> nodes = record.get("nodes").asList(v -> {
       org.neo4j.driver.types.Node neo4jNode = v.asNode();
       NodeId nodeId;
@@ -87,7 +87,7 @@ public class Neo4jService {
       return new Node(
           nodeId,
           NodeType.valueOf(nodeType),
-          neo4jNode.asMap(),
+          new marquez.service.models.GenericNodeData(neo4jNode.asMap()),
           null,
           null
       );
@@ -96,8 +96,8 @@ public class Neo4jService {
     List<Edge> edges = record.get("relationships").asList(v -> {
       org.neo4j.driver.types.Relationship rel = v.asRelationship();
       return new Edge(
-          nodeIdsByElementId.get(rel.startNodeId()),
-          nodeIdsByElementId.get(rel.endNodeId())
+          nodeIdsByElementId.get(rel.startNodeElementId()),
+          nodeIdsByElementId.get(rel.endNodeElementId())
       );
     });
 
