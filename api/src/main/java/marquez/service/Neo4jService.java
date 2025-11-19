@@ -7,6 +7,11 @@ package marquez.service;
 
 import static org.neo4j.driver.Values.parameters;
 
+import marquez.common.models.DatasetId;
+import marquez.common.models.DatasetName;
+import marquez.common.models.JobId;
+import marquez.common.models.JobName;
+import marquez.common.models.NamespaceName;
 import marquez.db.models.ColumnLineageRow;
 import marquez.db.models.DatasetFieldRow;
 import marquez.db.models.JobRow;
@@ -24,6 +29,8 @@ import org.neo4j.driver.Transaction;
 import org.neo4j.driver.types.Path;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -38,6 +45,15 @@ public class Neo4jService {
     try (Session session = driver.session()) {
       return session.readTransaction(
           tx -> {
+            String namespace;
+            String name;
+            if (nodeId.isJobType()) {
+              namespace = nodeId.asJobId().getNamespace().getValue();
+              name = nodeId.asJobId().getName().getValue();
+            } else {
+              namespace = nodeId.asDatasetId().getNamespace().getValue();
+              name = nodeId.asDatasetId().getName().getValue();
+            }
             Result result =
                 tx.run(
                     "MATCH (n) WHERE n.name=$name AND n.namespace=$namespace "
@@ -46,9 +62,9 @@ public class Neo4jService {
                         + "RETURN nodes, relationships",
                     parameters(
                         "name",
-                        nodeId.getName(),
+                        name,
                         "namespace",
-                        nodeId.getNamespace(),
+                        namespace,
                         "depth",
                         depth));
             return result.stream().map(this::toLineageGraph).findFirst().orElse(null);
@@ -57,11 +73,20 @@ public class Neo4jService {
   }
 
   private LineageGraph toLineageGraph(org.neo4j.driver.Record record) {
+    Map<Long, NodeId> nodeIdsByElementId = new java.util.HashMap<>();
     List<Node> nodes = record.get("nodes").asList(v -> {
       org.neo4j.driver.types.Node neo4jNode = v.asNode();
+      NodeId nodeId;
+      String nodeType = neo4jNode.labels().iterator().next().toUpperCase();
+      if (nodeType.equals("JOB")) {
+        nodeId = NodeId.of(new JobId(NamespaceName.of(neo4jNode.get("namespace").asString()), JobName.of(neo4jNode.get("name").asString())));
+      } else {
+        nodeId = NodeId.of(new DatasetId(NamespaceName.of(neo4jNode.get("namespace").asString()), DatasetName.of(neo4jNode.get("name").asString())));
+      }
+      nodeIdsByElementId.put(neo4jNode.elementId(), nodeId);
       return new Node(
-          NodeId.of(neo4jNode.get("namespace").asString(), neo4jNode.get("name").asString()),
-          NodeType.valueOf(neo4jNode.labels().iterator().next().toUpperCase()),
+          nodeId,
+          NodeType.valueOf(nodeType),
           neo4jNode.asMap(),
           null,
           null
@@ -71,8 +96,8 @@ public class Neo4jService {
     List<Edge> edges = record.get("relationships").asList(v -> {
       org.neo4j.driver.types.Relationship rel = v.asRelationship();
       return new Edge(
-          NodeId.of(String.valueOf(rel.startNodeId())),
-          NodeId.of(String.valueOf(rel.endNodeId()))
+          nodeIdsByElementId.get(rel.startNodeId()),
+          nodeIdsByElementId.get(rel.endNodeId())
       );
     });
 
