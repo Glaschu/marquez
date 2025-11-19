@@ -34,6 +34,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import marquez.service.models.NodeData;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 public class Neo4jService {
   private final Driver driver;
 
@@ -56,52 +62,54 @@ public class Neo4jService {
             }
             Result result =
                 tx.run(
-                    "MATCH (n) WHERE n.name=$name AND n.namespace=$namespace "
-                        + "CALL apoc.path.subgraphAll(n, {maxLevel: $depth}) "
-                        + "YIELD nodes, relationships "
-                        + "RETURN nodes, relationships",
+                    "MATCH path = (n)-[*.." + depth + "]-(m) " +
+                    "WHERE n.name=$name AND n.namespace=$namespace " +
+                    "RETURN path",
                     parameters(
                         "name",
                         name,
                         "namespace",
-                        namespace,
-                        "depth",
-                        depth));
-            return result.stream().map(this::toLineageGraph).findFirst().orElse(null);
+                        namespace));
+            return toLineageGraph(result);
           });
     }
   }
 
-  private LineageGraph toLineageGraph(org.neo4j.driver.Record record) {
+  private LineageGraph toLineageGraph(org.neo4j.driver.Result result) {
     Map<String, NodeId> nodeIdsByElementId = new java.util.HashMap<>();
-    List<Node> nodes = record.get("nodes").asList(v -> {
-      org.neo4j.driver.types.Node neo4jNode = v.asNode();
-      NodeId nodeId;
-      String nodeType = neo4jNode.labels().iterator().next().toUpperCase();
-      if (nodeType.equals("JOB")) {
-        nodeId = NodeId.of(new JobId(NamespaceName.of(neo4jNode.get("namespace").asString()), JobName.of(neo4jNode.get("name").asString())));
-      } else {
-        nodeId = NodeId.of(new DatasetId(NamespaceName.of(neo4jNode.get("namespace").asString()), DatasetName.of(neo4jNode.get("name").asString())));
-      }
-      nodeIdsByElementId.put(neo4jNode.elementId(), nodeId);
-      return new Node(
-          nodeId,
-          NodeType.valueOf(nodeType),
-          new marquez.service.models.GenericNodeData(neo4jNode.asMap()),
-          null,
-          null
-      );
+    Map<String, Node> nodesByElementId = new java.util.HashMap<>();
+    List<Edge> edges = new ArrayList<>();
+
+    result.stream().forEach(record -> {
+        Path path = record.get("path").asPath();
+        path.nodes().forEach(neo4jNode -> {
+            if (!nodesByElementId.containsKey(neo4jNode.elementId())) {
+                NodeId nodeId;
+                String nodeType = neo4jNode.labels().iterator().next().toUpperCase();
+                if (nodeType.equals("JOB")) {
+                    nodeId = NodeId.of(new JobId(NamespaceName.of(neo4jNode.get("namespace").asString()), JobName.of(neo4jNode.get("name").asString())));
+                } else {
+                    nodeId = NodeId.of(new DatasetId(NamespaceName.of(neo4jNode.get("namespace").asString()), DatasetName.of(neo4jNode.get("name").asString())));
+                }
+                nodeIdsByElementId.put(neo4jNode.elementId(), nodeId);
+                nodesByElementId.put(neo4jNode.elementId(), new Node(
+                    nodeId,
+                    NodeType.valueOf(nodeType),
+                    new marquez.service.models.GenericNodeData(neo4jNode.asMap()),
+                    null,
+                    null
+                ));
+            }
+        });
+        path.relationships().forEach(rel -> {
+            edges.add(new Edge(
+                nodeIdsByElementId.get(rel.startNodeElementId()),
+                nodeIdsByElementId.get(rel.endNodeElementId())
+            ));
+        });
     });
 
-    List<Edge> edges = record.get("relationships").asList(v -> {
-      org.neo4j.driver.types.Relationship rel = v.asRelationship();
-      return new Edge(
-          nodeIdsByElementId.get(rel.startNodeElementId()),
-          nodeIdsByElementId.get(rel.endNodeElementId())
-      );
-    });
-
-    return new LineageGraph(nodes, edges);
+    return new LineageGraph(new ArrayList<>(nodesByElementId.values()), edges);
   }
 
 
