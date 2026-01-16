@@ -3,7 +3,7 @@
 
 import { Box, Button } from '@mui/material'
 import { Dataset } from '../../types/api'
-import { IState } from '../../store/reducers'
+import { RootState } from '../../store/store'
 import { LineageDataset } from '../../types/lineage'
 import { fileSize } from '../../helpers'
 import { saveAs } from 'file-saver'

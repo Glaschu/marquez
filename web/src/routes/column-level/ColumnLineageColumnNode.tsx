@@ -1,6 +1,6 @@
 import { ColumnLineageColumnNodeData } from './nodes'
 import { ColumnLineageGraph } from '../../types/api'
-import { IState } from '../../store/reducers'
+import { RootState } from '../../store/store'
 import { PositionedNode } from '../../components/graph'
 import { grey } from '@mui/material/colors'
 import { truncateText } from '../../helpers/text'
@@ -18,7 +18,7 @@ export const encodeQueryString = (namespace: string, dataset: string, column: st
 }
 
 const ColumnLineageColumnNode = ({ node }: ColumnLineageColumnNodeProps) => {
-  const columnLineage = useSelector((state: IState) => state.columnLineage.columnLineage)
+  const columnLineage = useSelector((state: RootState) => state.columnLineage.columnLineage)
   const [searchParams, setSearchParams] = useSearchParams()
   const [shine, setShine] = React.useState(false)
   return (

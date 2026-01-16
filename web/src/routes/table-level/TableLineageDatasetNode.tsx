@@ -1,7 +1,7 @@
 import { Dataset, Field } from '../../types/api'
 import { Divider } from '@mui/material'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { IState } from '../../store/reducers'
+import { RootState } from '../../store/store'
 import { LineageDataset } from '../../types/lineage'
 import { PositionedNode } from '../../components/graph'
 import { THEME_EXTRA, theme } from '../../helpers/theme'

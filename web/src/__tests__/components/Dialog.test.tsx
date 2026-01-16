@@ -1,20 +1,14 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import * as actionTypes from '../../store/actionCreators/actionTypes'
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import Dialog from '../../components/Dialog'
+import { dialogToggle } from '../../store/slices/displaySlice'
 
 describe('Dialog Component', () => {
-  const ignoreWarning = () => {}
+  const ignoreWarning = () => { }
 
-  const dialogToggle = (field: string) => ({
-    type: actionTypes.DIALOG_TOGGLE,
-    payload: {
-      field: 'Description of dialog...',
-    },
-  })
 
   const mockProps = {
     dialogIsOpen: true,

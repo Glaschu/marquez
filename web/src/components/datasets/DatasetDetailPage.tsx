@@ -15,19 +15,15 @@ import {
 import { CalendarIcon } from '@mui/x-date-pickers'
 import { CircularProgress } from '@mui/material'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { IState } from '../../store/reducers'
 import { LineageDataset } from '../../types/lineage'
 import { MqInfo } from '../core/info/MqInfo'
+import { RootState } from '../../store/store'
 import { alpha } from '@mui/material/styles'
 import { datasetFacetsQualityAssertions, datasetFacetsStatus } from '../../helpers/nodes'
-import {
-  dialogToggle,
-  resetDataset,
-  resetDatasetVersions,
-  setTabIndex,
-} from '../../store/actionCreators'
+import { dialogToggle } from '../../store/slices/displaySlice'
 import { faDatabase } from '@fortawesome/free-solid-svg-icons'
 import { formatUpdatedAt } from '../../helpers'
+import { setTabIndex } from '../../store/slices/lineageSlice'
 import { truncateText } from '../../helpers/text'
 import { useDataset, useDeleteDataset } from '../../queries/datasets'
 import { useDispatch, useSelector } from 'react-redux'
@@ -67,9 +63,8 @@ const DatasetDetailPage: React.FC<DatasetDetailPageProps> = ({ lineageDataset })
     lineageDataset.namespace,
     lineageDataset.name
   )
-  const dialogIsOpen = useSelector((state: IState) => state.display.dialogIsOpen)
-  const tabIndex = useSelector((state: IState) => state.lineage.tabIndex)
-  const deletedDatasetName = useSelector((state: IState) => state.datasets.deletedDatasetName)
+  const dialogIsOpen = useSelector((state: RootState) => state.display.dialogIsOpen)
+  const tabIndex = useSelector((state: RootState) => state.lineage.tabIndex)
   const navigate = useNavigate()
   const { t } = useTranslation()
   const theme = createTheme(useTheme())
@@ -79,18 +74,10 @@ const DatasetDetailPage: React.FC<DatasetDetailPageProps> = ({ lineageDataset })
   // unmounting
   useEffect(
     () => () => {
-      dispatch(resetDataset())
-      dispatch(resetDatasetVersions())
+      dispatch(setTabIndex(0))
     },
     [dispatch]
   )
-
-  // if the dataset is deleted then redirect to datasets end point
-  useEffect(() => {
-    if (deletedDatasetName) {
-      navigate('/datasets')
-    }
-  }, [deletedDatasetName, navigate])
 
   const handleChange = (_: ChangeEvent, newValue: number) => {
     dispatch(setTabIndex(newValue))
@@ -175,8 +162,12 @@ const DatasetDetailPage: React.FC<DatasetDetailPageProps> = ({ lineageDataset })
                   deleteDatasetMutation.mutate({
                     namespace: lineageDataset.namespace,
                     datasetName: lineageDataset.name,
+                  }, {
+                    onSuccess: () => {
+                      navigate('/datasets')
+                      dispatch(dialogToggle(''))
+                    }
                   })
-                  dispatch(dialogToggle(''))
                 }}
               />
             </Box>
@@ -224,9 +215,8 @@ const DatasetDetailPage: React.FC<DatasetDetailPageProps> = ({ lineageDataset })
                   >
                     <Box>
                       <MqStatus
-                        label={`${
-                          assertions.filter((assertion) => assertion.success).length
-                        } Passing`.toUpperCase()}
+                        label={`${assertions.filter((assertion) => assertion.success).length
+                          } Passing`.toUpperCase()}
                         color={theme.palette.primary.main}
                       />
                     </Box>
@@ -241,9 +231,8 @@ const DatasetDetailPage: React.FC<DatasetDetailPageProps> = ({ lineageDataset })
                   >
                     <Box>
                       <MqStatus
-                        label={`${
-                          assertions.filter((assertion) => !assertion.success).length
-                        } Failing`.toUpperCase()}
+                        label={`${assertions.filter((assertion) => !assertion.success).length
+                          } Failing`.toUpperCase()}
                         color={theme.palette.error.main}
                       />
                     </Box>

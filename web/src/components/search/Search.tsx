@@ -3,7 +3,7 @@
 
 import { Box, Chip } from '@mui/material'
 import { DRAWER_WIDTH, HEADER_HEIGHT, theme } from '../../helpers/theme'
-import { IState } from '../../store/reducers'
+import { RootState } from '../../store/store'
 import { MqInputBase } from '../core/input-base/MqInputBase'
 import { REACT_APP_ADVANCED_SEARCH } from '../../globals'
 import { useEffect, useRef, useState } from 'react'

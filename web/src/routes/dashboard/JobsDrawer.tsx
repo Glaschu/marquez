@@ -1,5 +1,5 @@
 import { Box } from '@mui/system'
-import { IState } from '../../store/reducers'
+import { RootState } from '../../store/store'
 import { Job } from '../../types/api'
 import { theme } from '../../helpers/theme'
 import { useJobs } from '../../queries/jobs'

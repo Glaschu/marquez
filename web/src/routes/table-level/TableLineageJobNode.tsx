@@ -1,6 +1,6 @@
 import { Divider } from '@mui/material'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { IState } from '../../store/reducers'
+import { RootState } from '../../store/store'
 import { LineageGraph } from '../../types/api'
 import { LineageJob } from '../../types/lineage'
 import { PositionedNode } from '../../components/graph'
@@ -25,7 +25,7 @@ interface TableLineageJobNodeProps {
 const ICON_SIZE = 12
 
 const TableLineageJobNode = ({ node }: TableLineageJobNodeProps) => {
-  const lineage = useSelector((state: IState) => state.lineage.lineage)
+  const lineage = useSelector((state: RootState) => state.lineage.lineage)
   const navigate = useNavigate()
   const { name, namespace } = useParams()
   const isSelected = name === node.data.job.name && namespace === node.data.job.namespace

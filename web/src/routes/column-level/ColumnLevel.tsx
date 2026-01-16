@@ -3,7 +3,7 @@ import { ColumnLevelNodeData, ColumnLevelNodeKinds, columnLevelNodeRenderer } fr
 import { Drawer } from '@mui/material'
 import { Graph, ZoomPanControls } from '../../components/graph'
 import { HEADER_HEIGHT, theme } from '../../helpers/theme'
-import { IState } from '../../store/reducers'
+import { RootState } from '../../store/store'
 import { ZoomControls } from './ZoomControls'
 import { createElkNodes } from './layout'
 import { useCallbackRef } from '../../helpers/hooks'

@@ -1,18 +1,18 @@
 // Copyright 2018-2024 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import { IState } from '../store/reducers'
+import { RootState } from '../store/store'
 import { Snackbar, SnackbarCloseReason } from '@mui/material'
 import { SyntheticEvent } from 'react'
-import { dialogToggle } from '../store/actionCreators'
+import { dialogToggle } from '../store/slices/displaySlice'
 import { useDispatch, useSelector } from 'react-redux'
 import CloseIcon from '@mui/icons-material/Close'
 import IconButton from '@mui/material/IconButton'
 
 const Toast = () => {
-  const error = useSelector((state: IState) => state.display.error)
-  const success = useSelector((state: IState) => state.display.success)
-  const isOpen = useSelector((state: IState) => state.display.dialogIsOpen)
+  const error = useSelector((state: RootState) => state.display.error)
+  const success = useSelector((state: RootState) => state.display.success)
+  const isOpen = useSelector((state: RootState) => state.display.dialogIsOpen)
   const dispatch = useDispatch()
   const handleClose = (_: SyntheticEvent | Event, reason?: SnackbarCloseReason) => {
     if (reason === 'clickaway') {

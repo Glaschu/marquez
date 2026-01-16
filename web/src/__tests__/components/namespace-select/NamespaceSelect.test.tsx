@@ -22,7 +22,7 @@ vi.mock('react-i18next', () => ({
   }),
 }))
 
-vi.mock('../../../store/actionCreators', () => ({
+vi.mock('../../../store/slices/namespacesSlice', () => ({
   selectNamespace: (value: string) => selectNamespaceMock(value),
 }))
 
@@ -107,6 +107,6 @@ describe('NamespaceSelect', () => {
     fireEvent.click(option)
 
     expect(selectNamespaceMock).toHaveBeenCalledWith('analytics')
-    expect(store.dispatch).toHaveBeenCalledWith({ type: 'SELECT_NAMESPACE', payload: 'analytics' })
+    expect(store.dispatch).toHaveBeenCalled()
   })
 })

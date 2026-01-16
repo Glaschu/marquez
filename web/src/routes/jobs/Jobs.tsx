@@ -12,9 +12,9 @@ import {
   TableRow,
 } from '@mui/material'
 import { HEADER_HEIGHT } from '../../helpers/theme'
-import { IState } from '../../store/reducers'
 import { Job } from '../../types/api'
 import { MqScreenLoad } from '../../components/core/screen-load/MqScreenLoad'
+import { RootState } from '../../store/store'
 import { encodeNode, runStateColor } from '../../helpers/nodes'
 import Refresh from '@mui/icons-material/Refresh'
 
@@ -46,7 +46,7 @@ const Jobs = () => {
   const defaultState = {
     page: 0,
   }
-  const selectedNamespace = useSelector((state: IState) => state.namespaces.selectedNamespace)
+  const selectedNamespace = useSelector((state: RootState) => state.namespaces.selectedNamespace)
   const [state, setState] = useState<JobsState>(defaultState)
 
   const {

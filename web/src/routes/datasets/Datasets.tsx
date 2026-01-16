@@ -14,7 +14,7 @@ import {
 } from '@mui/material'
 import { Dataset } from '../../types/api'
 import { HEADER_HEIGHT } from '../../helpers/theme'
-import { IState } from '../../store/reducers'
+import { RootState } from '../../store/store'
 import { MqScreenLoad } from '../../components/core/screen-load/MqScreenLoad'
 import {
   datasetFacetsQualityAssertions,
@@ -49,7 +49,7 @@ const PAGE_SIZE = 20
 const DATASET_HEADER_HEIGHT = 64
 
 const Datasets: React.FC = () => {
-  const selectedNamespace = useSelector((state: IState) => state.namespaces.selectedNamespace)
+  const selectedNamespace = useSelector((state: RootState) => state.namespaces.selectedNamespace)
   const [state, setState] = React.useState<DatasetsState>({ page: 0 })
   const {
     data: datasetsData,

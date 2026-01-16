@@ -14,8 +14,6 @@ import * as useJobsHook from '../../../queries/jobs'
 
 // Mocks
 const {
-  resetJobsMock,
-  resetRunsMock,
   setTabIndexMock,
   dialogToggleMock,
   deleteJobMock,
@@ -27,10 +25,8 @@ const {
   setSearchParamsMock,
 } = vi.hoisted(() => {
   return {
-    resetJobsMock: vi.fn(() => ({ type: 'RESET_JOBS' })),
-    resetRunsMock: vi.fn(() => ({ type: 'RESET_RUNS' })),
-    setTabIndexMock: vi.fn((index: number) => ({ type: 'SET_TAB_INDEX', index })),
-    dialogToggleMock: vi.fn((field: string) => ({ type: 'DIALOG_TOGGLE', field })),
+    setTabIndexMock: vi.fn((index: number) => ({ type: 'SET_TAB_INDEX', payload: index })),
+    dialogToggleMock: vi.fn((field: string) => ({ type: 'DIALOG_TOGGLE', payload: field })),
     deleteJobMock: vi.fn(), // Hook mutation result
     formatUpdatedAtMock: vi.fn((value: string) => `formatted(${value})`),
     runStateColorMock: vi.fn((state: string) => `color(${state})`),
@@ -50,11 +46,12 @@ vi.mock('react-router-dom', async () => {
   }
 })
 
-vi.mock('../../../store/actionCreators', () => ({
-  resetJobs: () => resetJobsMock(),
-  resetRuns: () => resetRunsMock(),
-  setTabIndex: (...args: any[]) => setTabIndexMock(...args),
+vi.mock('../../../store/slices/displaySlice', () => ({
   dialogToggle: (...args: any[]) => dialogToggleMock(...args),
+}))
+
+vi.mock('../../../store/slices/lineageSlice', () => ({
+  setTabIndex: (...args: any[]) => setTabIndexMock(...args),
 }))
 
 vi.mock('../../../helpers', () => ({
@@ -273,7 +270,10 @@ describe('JobDetailPage', () => {
 
     const confirmButton = screen.getByTestId('dialog-confirm')
     fireEvent.click(confirmButton)
-    expect(deleteJobMock).toHaveBeenCalledWith({ jobName: 'ExampleJob', namespace: 'analytics' })
+    expect(deleteJobMock).toHaveBeenCalledWith(
+      { jobName: 'ExampleJob', namespace: 'analytics' },
+      expect.objectContaining({ onSuccess: expect.any(Function) })
+    )
 
     const closeIcon = screen.queryByTestId('CloseIcon') // MUI CloseIcon likely has this test ID if rendered, or we can check what MUI stub renders
     if (closeIcon) {
@@ -284,8 +284,6 @@ describe('JobDetailPage', () => {
     expect(screen.getByTestId('run-info')).toHaveTextContent('run-0')
 
     unmount()
-    expect(resetJobsMock).toHaveBeenCalled()
-    expect(resetRunsMock).toHaveBeenCalled()
     expect(setTabIndexMock).toHaveBeenCalledWith(0)
   })
 
@@ -311,12 +309,24 @@ describe('JobDetailPage', () => {
       namespace: 'analytics',
     }
 
+    // Setup render with tab index 1 to check history tab
     renderJobDetailPage(job, false, {
-      jobs: { deletedJobName: 'HistoryJob' },
       lineage: { tabIndex: 1 }
     })
-
-    expect(navigateMock).toHaveBeenCalledWith('/')
     expect(screen.getByTestId('runs')).toHaveTextContent('analytics/HistoryJob')
+
+    // Now test navigation on delete
+    // Trigger the delete flow
+    const deleteButton = screen.getByRole('button', { name: 'jobs.dialog_delete' })
+    fireEvent.click(deleteButton)
+    fireEvent.click(screen.getByTestId('dialog-confirm'))
+
+    // Check mutation call and trigger onSuccess
+    const mutationCall = deleteJobMock.mock.calls[0]
+    expect(mutationCall[0]).toEqual({ jobName: 'HistoryJob', namespace: 'analytics' })
+    expect(mutationCall[1]).toHaveProperty('onSuccess')
+
+    mutationCall[1].onSuccess()
+    expect(navigateMock).toHaveBeenCalledWith('/')
   })
 })

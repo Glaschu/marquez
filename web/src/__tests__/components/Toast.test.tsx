@@ -45,7 +45,7 @@ describe('Toast Component', () => {
       dialogIsOpen: false,
     }
     renderWithStore(state)
-    
+
     const snackbar = screen.queryByRole('presentation')
     expect(snackbar).not.toBeInTheDocument()
   })
@@ -57,7 +57,7 @@ describe('Toast Component', () => {
       dialogIsOpen: true,
     }
     renderWithStore(state)
-    
+
     expect(screen.getByText('An error occurred')).toBeInTheDocument()
   })
 
@@ -68,7 +68,7 @@ describe('Toast Component', () => {
       dialogIsOpen: true,
     }
     renderWithStore(state)
-    
+
     expect(screen.getByText('Operation successful')).toBeInTheDocument()
   })
 
@@ -79,7 +79,7 @@ describe('Toast Component', () => {
       dialogIsOpen: true,
     }
     renderWithStore(state)
-    
+
     expect(screen.getByText('Error message')).toBeInTheDocument()
     expect(screen.queryByText('Success message')).not.toBeInTheDocument()
   })
@@ -91,7 +91,7 @@ describe('Toast Component', () => {
       dialogIsOpen: true,
     }
     renderWithStore(state)
-    
+
     const closeButton = screen.getByRole('button', { name: /close/i })
     expect(closeButton).toBeInTheDocument()
   })
@@ -103,13 +103,13 @@ describe('Toast Component', () => {
       dialogIsOpen: true,
     }
     renderWithStore(state)
-    
+
     const closeButton = screen.getByRole('button', { name: /close/i })
     fireEvent.click(closeButton)
-    
+
     expect(mockDispatch).toHaveBeenCalledWith({
-      type: 'DIALOG_TOGGLE',
-      payload: { field: 'error' },
+      type: 'display/dialogToggle',
+      payload: 'error',
     })
   })
 
@@ -120,7 +120,7 @@ describe('Toast Component', () => {
       dialogIsOpen: true,
     }
     const { container } = renderWithStore(state)
-    
+
     // Simulate clickaway by calling onClose with 'clickaway' reason
     const snackbar = container.querySelector('.MuiSnackbar-root')
     if (snackbar) {
@@ -129,7 +129,7 @@ describe('Toast Component', () => {
       // Since we can't easily simulate clickaway in tests, we verify the component renders
       expect(backdrop).toBeInTheDocument()
     }
-    
+
     // Verify dispatch was not called
     expect(mockDispatch).not.toHaveBeenCalled()
   })
@@ -141,7 +141,7 @@ describe('Toast Component', () => {
       dialogIsOpen: true,
     }
     const { container } = renderWithStore(state)
-    
+
     const snackbar = container.querySelector('.MuiSnackbar-root')
     expect(snackbar).toHaveClass('MuiSnackbar-anchorOriginBottomRight')
   })
@@ -153,7 +153,7 @@ describe('Toast Component', () => {
       dialogIsOpen: true,
     }
     renderWithStore(state)
-    
+
     // The Snackbar component is rendered with autoHideDuration prop
     // We can verify the component renders correctly
     expect(screen.getByText('Test error')).toBeInTheDocument()
@@ -166,7 +166,7 @@ describe('Toast Component', () => {
       dialogIsOpen: true,
     }
     renderWithStore(state)
-    
+
     const closeButton = screen.getByRole('button', { name: /close/i })
     expect(closeButton).toHaveClass('MuiIconButton-root')
   })
@@ -178,7 +178,7 @@ describe('Toast Component', () => {
       dialogIsOpen: true,
     }
     const { container } = renderWithStore(state)
-    
+
     const closeButton = screen.getByRole('button', { name: /close/i })
     const icon = closeButton.querySelector('svg')
     expect(icon).toBeInTheDocument()
@@ -191,7 +191,7 @@ describe('Toast Component', () => {
       dialogIsOpen: true,
     }
     renderWithStore(state)
-    
+
     // Should render with empty message
     const snackbar = screen.getByRole('presentation')
     expect(snackbar).toBeInTheDocument()

@@ -8,18 +8,15 @@ import { LocalizationProvider } from '@mui/x-date-pickers'
 import { MqScreenLoad } from './core/screen-load/MqScreenLoad'
 import { NotFound } from '../routes/not-found/NotFound'
 import { Provider } from 'react-redux'
-import { ReduxRouter, createRouterMiddleware } from '@lagunovsky/redux-react-router'
+import { ReduxRouter } from '@lagunovsky/redux-react-router'
 import { Route, Routes } from 'react-router-dom'
 import { StyledEngineProvider, ThemeProvider } from '@mui/material/styles'
-import { applyMiddleware, createStore } from 'redux'
-import { composeWithDevTools } from '@redux-devtools/extension'
-import { createBrowserHistory } from 'history'
+
 import { theme } from '../helpers/theme'
 import Header from './header/Header'
 import React, { ReactElement, Suspense, lazy } from 'react'
 import Sidenav from './sidenav/Sidenav'
 import Toast from './Toast'
-import createRootReducer from '../store/reducers'
 
 const ColumnLevel = lazy(() => import('../routes/column-level/ColumnLevel'))
 const Dashboard = lazy(() => import('../routes/dashboard/Dashboard'))
@@ -28,13 +25,7 @@ const Events = lazy(() => import('../routes/events/Events'))
 const Jobs = lazy(() => import('../routes/jobs/Jobs'))
 const TableLevel = lazy(() => import('../routes/table-level/TableLevel'))
 
-const history = createBrowserHistory()
-const historyMiddleware = createRouterMiddleware(history)
-
-const store = createStore(
-  createRootReducer(history),
-  composeWithDevTools(applyMiddleware(historyMiddleware))
-)
+import { history, default as store } from '../store/store'
 
 const TITLE = 'Marquez'
 

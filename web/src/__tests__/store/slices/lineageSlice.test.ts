@@ -2,16 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import reducer from '../../store/reducers/lineage'
-import {
-  SET_SELECTED_NODE,
-  SET_BOTTOM_BAR_HEIGHT,
-  SET_TAB_INDEX,
-  SET_LINEAGE_GRAPH_DEPTH,
-  SET_SHOW_FULL_GRAPH,
-  RESET_LINEAGE,
-} from '../../store/actionCreators/actionTypes'
-import { HEADER_HEIGHT } from '../../helpers/theme'
+import reducer, {
+  setSelectedNode,
+  setBottomBarHeight,
+  setTabIndex,
+  setLineageGraphDepth,
+  setShowFullGraph,
+  resetLineage,
+} from '../../../store/slices/lineageSlice'
+import { HEADER_HEIGHT } from '../../../helpers/theme'
 
 const unknown = { type: 'UNKNOWN' } as any
 
@@ -38,13 +37,13 @@ describe('lineage reducer', () => {
 
   it('should handle SET_SELECTED_NODE and reset tab index when needed', () => {
     const baseState = reducer(undefined, unknown)
-    const state = reducer(baseState, { type: SET_SELECTED_NODE, payload: 'node-1' } as any)
+    const state = reducer(baseState, setSelectedNode('node-1'))
     expect(state.selectedNode).toBe('node-1')
     expect(state.tabIndex).toBe(0)
 
     const tabState = reducer(
       { ...state, tabIndex: 1 } as any,
-      { type: SET_SELECTED_NODE, payload: 'node-2' } as any
+      setSelectedNode('node-2')
     )
     expect(tabState.selectedNode).toBe('node-2')
     expect(tabState.tabIndex).toBe(1)
@@ -53,28 +52,28 @@ describe('lineage reducer', () => {
   it('should clamp bottom bar height', () => {
     const baseState = reducer(undefined, unknown)
     const maxHeight = window.innerHeight - HEADER_HEIGHT - 8
-    const state = reducer(baseState, { type: SET_BOTTOM_BAR_HEIGHT, payload: maxHeight + 100 } as any)
+    const state = reducer(baseState, setBottomBarHeight(maxHeight + 100))
     expect(state.bottomBarHeight).toBe(maxHeight)
 
-    const minState = reducer(baseState, { type: SET_BOTTOM_BAR_HEIGHT, payload: 0 } as any)
+    const minState = reducer(baseState, setBottomBarHeight(0))
     expect(minState.bottomBarHeight).toBeGreaterThanOrEqual(2)
   })
 
   it('should update tab index', () => {
     const baseState = reducer(undefined, unknown)
-    const state = reducer(baseState, { type: SET_TAB_INDEX, payload: 2 } as any)
+    const state = reducer(baseState, setTabIndex(2))
     expect(state.tabIndex).toBe(2)
   })
 
   it('should update lineage graph depth', () => {
     const baseState = reducer(undefined, unknown)
-    const state = reducer(baseState, { type: SET_LINEAGE_GRAPH_DEPTH, payload: 12 } as any)
+    const state = reducer(baseState, setLineageGraphDepth(12))
     expect(state.depth).toBe(12)
   })
 
   it('should toggle showFullGraph', () => {
     const baseState = reducer(undefined, unknown)
-    const state = reducer(baseState, { type: SET_SHOW_FULL_GRAPH, payload: false } as any)
+    const state = reducer(baseState, setShowFullGraph(false))
     expect(state.showFullGraph).toBe(false)
   })
 
@@ -84,7 +83,7 @@ describe('lineage reducer', () => {
       selectedNode: 'some-node',
     } as any
 
-    const state = reducer(modifiedState, { type: RESET_LINEAGE } as any)
+    const state = reducer(modifiedState, resetLineage())
     expect(state.selectedNode).toBe(null)
   })
 })

@@ -8,7 +8,7 @@ import {
   TextField,
 } from '@mui/material'
 import { Box, createTheme } from '@mui/material'
-import { IState } from '../../store/reducers'
+import { RootState } from '../../store/store'
 import { Tag } from '../../types/api'
 import {
   useAddDatasetFieldTag,

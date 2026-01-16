@@ -4,7 +4,7 @@
 import { GroupedSearch } from '../../../types/api'
 import { faCog, faDatabase, faSort } from '@fortawesome/free-solid-svg-icons'
 import { parseSearchGroup } from '../../../helpers/nodes'
-import { setSelectedNode } from '../../../store/actionCreators'
+import { setSelectedNode } from '../../../store/slices/lineageSlice'
 import { theme } from '../../../helpers/theme'
 import { useDispatch } from 'react-redux'
 import { useSearch } from '../../../queries/search'
@@ -158,7 +158,9 @@ const BaseSearch = ({ search, onIsLoading }: BaseSearchProps) => {
               // is a list of group members
             } else if (result.length) {
               return (
-                <Box key={(result[0] as GroupedSearch).group + (result[0] as GroupedSearch).namespace}>
+                <Box
+                  key={(result[0] as GroupedSearch).group + (result[0] as GroupedSearch).namespace}
+                >
                   {(result as GroupedSearch[]).map((listItem: GroupedSearch) => {
                     return (
                       <React.Fragment key={listItem.name}>

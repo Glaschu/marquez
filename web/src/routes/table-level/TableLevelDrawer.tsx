@@ -1,5 +1,5 @@
 import { Box } from '@mui/system'
-import { IState } from '../../store/reducers'
+import { RootState } from '../../store/store'
 import { LineageDataset, LineageJob } from '../../types/lineage'
 import { LineageGraph } from '../../types/api'
 import { useSearchParams } from 'react-router-dom'

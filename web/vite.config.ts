@@ -11,6 +11,9 @@ export default defineConfig({
     }),
     process.env.ANALYZE === 'true' && visualizer(),
   ],
+  optimizeDeps: {
+    include: ['@emotion/react', '@emotion/styled', '@mui/material/Tooltip'],
+  },
   resolve: {
     extensions: ['.tsx', '.ts', '.js', '.json'],
     alias: {

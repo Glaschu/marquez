@@ -17,15 +17,16 @@ import {
   Title,
 } from '@mui/icons-material'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { IState } from '../../store/reducers'
 import { LineageJob } from '../../types/lineage'
 import { MqInfo } from '../core/info/MqInfo'
+import { RootState } from '../../store/store'
 import { Run } from '../../types/api'
 import { alpha, createTheme } from '@mui/material/styles'
-import { dialogToggle, resetJobs, resetRuns, setTabIndex } from '../../store/actionCreators'
+import { dialogToggle } from '../../store/slices/displaySlice'
 import { faCog } from '@fortawesome/free-solid-svg-icons/faCog'
 import { formatUpdatedAt } from '../../helpers'
 import { runStateColor } from '../../helpers/nodes'
+import { setTabIndex } from '../../store/slices/lineageSlice'
 import { stopWatchDuration } from '../../helpers/time'
 import { truncateText } from '../../helpers/text'
 import { useDispatch, useSelector } from 'react-redux'
@@ -50,9 +51,8 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ lineageJob }) => {
   const dispatch = useDispatch()
   const deleteJobMutation = useDeleteJob()
   const { data: job, isLoading: isJobLoading } = useJob(lineageJob.namespace, lineageJob.name)
-  const dialogIsOpen = useSelector((state: IState) => state.display.dialogIsOpen)
-  const deletedJobName = useSelector((state: IState) => state.jobs.deletedJobName)
-  const tabIndex = useSelector((state: IState) => state.lineage.tabIndex)
+  const dialogIsOpen = useSelector((state: RootState) => state.display.dialogIsOpen)
+  const tabIndex = useSelector((state: RootState) => state.lineage.tabIndex)
   const theme = createTheme(useTheme())
   const navigate = useNavigate()
   const [, setSearchParams] = useSearchParams()
@@ -63,17 +63,9 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ lineageJob }) => {
 
   const { t } = useTranslation()
 
-  useEffect(() => {
-    if (deletedJobName) {
-      navigate('/')
-    }
-  }, [deletedJobName, navigate])
-
   // unmounting
   useEffect(() => {
     return () => {
-      dispatch(resetJobs())
-      dispatch(resetRuns())
       dispatch(setTabIndex(0))
     }
   }, [dispatch])
@@ -162,8 +154,12 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ lineageJob }) => {
                 dialogToggle={(field) => dispatch(dialogToggle(field))}
                 title={t('jobs.dialog_confirmation_title')}
                 ignoreWarning={() => {
-                  deleteJobMutation.mutate({ jobName: job.name, namespace: job.namespace })
-                  dispatch(dialogToggle(''))
+                  deleteJobMutation.mutate({ jobName: job.name, namespace: job.namespace }, {
+                    onSuccess: () => {
+                      navigate('/')
+                      dispatch(dialogToggle(''))
+                    }
+                  })
                 }}
               />
             </Box>

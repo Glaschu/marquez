@@ -11,7 +11,7 @@ import {
 import { ColumnLineageGraph, Dataset } from '../../types/api'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Fragment, useEffect } from 'react'
-import { IState } from '../../store/reducers'
+import { RootState } from '../../store/store'
 import { faDatabase } from '@fortawesome/free-solid-svg-icons'
 import { theme } from '../../helpers/theme'
 import { useDataset } from '../../queries/datasets'
@@ -32,7 +32,7 @@ const ColumnLevelDrawer = () => {
   const namespace = searchParams.get('namespace') || ''
 
   const { data: dataset, isLoading: isDatasetLoading } = useDataset(namespace, datasetName)
-  const columnLineage = useSelector((state: IState) => state.columnLineage.columnLineage)
+  const columnLineage = useSelector((state: RootState) => state.columnLineage.columnLineage)
 
   if (!columnLineage) {
     return null

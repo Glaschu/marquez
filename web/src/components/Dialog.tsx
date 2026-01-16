@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createTheme } from '@mui/material/styles'
-import { dialogToggle } from '../store/actionCreators'
+
 import { useTheme } from '@emotion/react'
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
@@ -14,7 +14,7 @@ import React, { FunctionComponent } from 'react'
 
 interface IProps {
   dialogIsOpen: boolean
-  dialogToggle: typeof dialogToggle
+  dialogToggle: (field: string) => void
   ignoreWarning: () => void
   editWarningField?: string
   title?: string

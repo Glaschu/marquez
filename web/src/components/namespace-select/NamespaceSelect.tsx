@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Box, FormControl, MenuItem, Select } from '@mui/material'
-import { IState } from '../../store/reducers'
 import { MqInputBase } from '../core/input-base/MqInputBase'
 import { Namespace } from '../../types/api'
-import { selectNamespace } from '../../store/actionCreators'
+import { RootState } from '../../store/store'
+import { selectNamespace } from '../../store/slices/namespacesSlice'
 import { theme } from '../../helpers/theme'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNamespaces } from '../../queries/namespaces'
@@ -18,7 +18,7 @@ const NamespaceSelect = () => {
   // Redux hooks
   const { data: namespacesData } = useNamespaces()
   const namespaces: Namespace[] = namespacesData?.namespaces || []
-  const selectedNamespace = useSelector((state: IState) => state.namespaces.selectedNamespace)
+  const selectedNamespace = useSelector((state: RootState) => state.namespaces.selectedNamespace)
   const dispatch = useDispatch()
 
   const [open, setOpen] = useState(false)

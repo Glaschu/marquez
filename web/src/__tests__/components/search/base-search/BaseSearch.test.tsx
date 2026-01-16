@@ -164,11 +164,10 @@ describe('BaseSearch Component', () => {
     const listItems = screen.getAllByTestId('search-list-item')
     fireEvent.click(listItems[0])
 
-    expect(mockDispatch).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: expect.stringContaining('SET_SELECTED_NODE'),
-      })
-    )
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'lineage/setSelectedNode',
+      payload: 'node1',
+    })
   })
 
   it('handles empty search results gracefully', () => {
