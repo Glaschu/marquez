@@ -194,3 +194,7 @@ If you discover a vulnerability in the project, please open an issue and attach 
 ----
 SPDX-License-Identifier: Apache-2.0
 Copyright 2018-2024 contributors to the Marquez project.
+ Phase 3: State Management (Redux -> RTK)
+ Install @reduxjs/toolkit
+ Refactor root reducer
+ Convert legacy reducers to Slices

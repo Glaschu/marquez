@@ -38,9 +38,9 @@ const renderActionBar = (
 ) => {
   const theme = createTheme()
   const fetchLineage = vi.fn()
-  const setDepth = vi.fn(overrides.setDepth ?? (() => {}))
-  const setIsCompact = vi.fn(overrides.setIsCompact ?? (() => {}))
-  const setIsFull = vi.fn(overrides.setIsFull ?? (() => {}))
+  const setDepth = vi.fn(overrides.setDepth ?? (() => { }))
+  const setIsCompact = vi.fn(overrides.setIsCompact ?? (() => { }))
+  const setIsFull = vi.fn(overrides.setIsFull ?? (() => { }))
   const locationRef: { current: Location | null } = { current: null }
 
   const ui = render(
@@ -54,7 +54,7 @@ const renderActionBar = (
                 <LocationSpy onChange={(location) => (locationRef.current = location)} />
                 <ActionBar
                   nodeType={nodeType}
-                  fetchLineage={fetchLineage as any}
+                  refresh={fetchLineage as any}
                   depth={depth}
                   setDepth={setDepth}
                   isCompact={overrides.isCompact ?? false}
@@ -79,7 +79,7 @@ describe('ActionBar', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
 
-    expect(fetchLineage).toHaveBeenCalledWith('JOB', 'finance', 'daily-job', 2)
+    expect(fetchLineage).toHaveBeenCalled()
   })
 
   it('updates the depth and search params when the depth input changes', () => {

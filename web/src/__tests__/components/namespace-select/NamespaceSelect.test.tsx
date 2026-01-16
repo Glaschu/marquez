@@ -6,9 +6,12 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import NamespaceSelect from '../../../components/namespace-select/NamespaceSelect'
 import React from 'react'
 import { createStore } from 'redux'
-import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { fireEvent, screen } from '@testing-library/react'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { renderWithProviders } from '../../../helpers/testUtils'
+import * as useNamespacesHook from '../../../queries/namespaces'
 
+// Mock action creator
 const { selectNamespaceMock } = vi.hoisted(() => ({
   selectNamespaceMock: vi.fn((value: string) => ({ type: 'SELECT_NAMESPACE', payload: value })),
 }))
@@ -23,54 +26,82 @@ vi.mock('../../../store/actionCreators', () => ({
   selectNamespace: (value: string) => selectNamespaceMock(value),
 }))
 
-const createMockStore = (selectedNamespace: string | null, namespaces: string[] = []) => {
-  const state = {
-    namespaces: {
-      result: namespaces.map((name) => ({ name })),
-      selectedNamespace,
-    },
+describe('NamespaceSelect', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  // We need a store because component selects 'selectedNamespace' from Redux state
+  const createMockStore = (selectedNamespace: string | null) => {
+    const state = {
+      namespaces: {
+        selectedNamespace,
+      },
+    }
+    const store = createStore(() => state)
+    store.dispatch = vi.fn()
+    return store
   }
 
-  const store = createStore(() => state)
-  store.dispatch = vi.fn()
-  return store
-}
+  const renderComponent = (selectedNamespace: string | null = null, namespacesList: string[] = []) => {
+    const store = createMockStore(selectedNamespace)
+    const theme = createTheme()
 
-const renderComponent = (store: ReturnType<typeof createMockStore>) => {
-  const theme = createTheme()
+    vi.spyOn(useNamespacesHook, 'useNamespaces').mockReturnValue({
+      data: { namespaces: namespacesList.map((name) => ({ name })) },
+      isLoading: false,
+      isPending: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    } as any)
 
-  return render(
-    <Provider store={store}>
+    return renderWithProviders(
       <ThemeProvider theme={theme}>
         <NamespaceSelect />
-      </ThemeProvider>
-    </Provider>
-  )
-}
+      </ThemeProvider>,
+      { store }
+    )
+  }
 
-describe('NamespaceSelect', () => {
   it('does not render when no namespace is selected', () => {
-    const store = createMockStore(null, ['default'])
-    const { container } = renderComponent(store)
-
+    const { container } = renderComponent(null, ['default'])
     expect(container.firstChild).toBeNull()
   })
 
   it('renders the prompt and selected namespace', () => {
-    const store = createMockStore('default', ['default'])
-    renderComponent(store)
+    renderComponent('default', ['default'])
 
     expect(screen.getByText('Namespace')).toBeTruthy()
-    expect(screen.getByRole('combobox')).toHaveTextContent('default')
+    // Select component structure is complex; check for value presence
+    // Material UI select puts val in hidden input or displayed div.
+    // 'default' should be visible.
+    expect(screen.getByText('default')).toBeTruthy()
   })
 
   it('dispatches selectNamespace when a different namespace is chosen', () => {
-    const store = createMockStore('default', ['default', 'analytics'])
-    renderComponent(store)
+    const store = createMockStore('default')
+    const theme = createTheme()
 
-    const selectControl = screen.getByRole('combobox')
+    vi.spyOn(useNamespacesHook, 'useNamespaces').mockReturnValue({
+      data: { namespaces: [{ name: 'default' }, { name: 'analytics' }] },
+      isLoading: false,
+      isPending: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    } as any)
 
-    fireEvent.click(selectControl)
+    renderWithProviders(
+      <ThemeProvider theme={theme}>
+        <NamespaceSelect />
+      </ThemeProvider>,
+      { store }
+    )
+
+    // Open select
+    const trigger = screen.getByRole('combobox') // might need adjustment for MUI select trigger
+    fireEvent.click(trigger) // MUI Select uses mouseDown to open menu
 
     const option = screen.getByRole('option', { name: 'analytics' })
     fireEvent.click(option)

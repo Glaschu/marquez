@@ -1,7 +1,7 @@
 // Copyright 2018-2024 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import { Info as InfoIcon } from '@mui/icons-material'
+import InfoIcon from '@mui/icons-material/Info'
 import { MqInfo } from '../../../../components/core/info/MqInfo'
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'

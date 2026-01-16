@@ -10,36 +10,29 @@ import {
 } from '@mui/material'
 import { ColumnLineageGraph, Dataset } from '../../types/api'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Fragment, useEffect } from 'react'
 import { IState } from '../../store/reducers'
-import { useDispatch, useSelector } from 'react-redux'
 import { faDatabase } from '@fortawesome/free-solid-svg-icons'
-import { fetchDataset } from '../../store/actionCreators'
 import { theme } from '../../helpers/theme'
+import { useDataset } from '../../queries/datasets'
 import { useSearchParams } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import { useTranslation } from 'react-i18next'
 import CloseIcon from '@mui/icons-material/Close'
 import IconButton from '@mui/material/IconButton'
 import MqJsonView from '../../components/core/json-view/MqJsonView'
 import MqText from '../../components/core/text/MqText'
-import { Fragment, useEffect } from 'react'
 
 const WIDTH = 600
 
 const ColumnLevelDrawer = () => {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
-  const dataset = useSelector((state: IState) => state.dataset.result)
-  const isDatasetLoading = useSelector((state: IState) => state.dataset.isLoading)
-  const columnLineage = useSelector((state: IState) => state.columnLineage.columnLineage)
-  const dispatch = useDispatch()
+  const datasetName = searchParams.get('dataset') || ''
+  const namespace = searchParams.get('namespace') || ''
 
-  useEffect(() => {
-    const datasetParam = searchParams.get('dataset')
-    const namespace = searchParams.get('namespace')
-    if (datasetParam && namespace) {
-      dispatch(fetchDataset(namespace, datasetParam))
-    }
-  }, [searchParams, dispatch])
+  const { data: dataset, isLoading: isDatasetLoading } = useDataset(namespace, datasetName)
+  const columnLineage = useSelector((state: IState) => state.columnLineage.columnLineage)
 
   if (!columnLineage) {
     return null

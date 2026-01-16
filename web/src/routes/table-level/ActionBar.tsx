@@ -1,7 +1,8 @@
-import { ArrowBackIosRounded, Refresh } from '@mui/icons-material'
 import { Divider, FormControlLabel, Switch, TextField } from '@mui/material'
 import { HEADER_HEIGHT, theme } from '../../helpers/theme'
-import { fetchLineage } from '../../store/actionCreators'
+import ArrowBackIosRounded from '@mui/icons-material/ArrowBackIosRounded'
+import Refresh from '@mui/icons-material/Refresh'
+
 import { truncateText } from '../../helpers/text'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Box from '@mui/material/Box'
@@ -12,7 +13,7 @@ import React from 'react'
 
 interface ActionBarProps {
   nodeType: 'DATASET' | 'JOB'
-  fetchLineage: typeof fetchLineage
+  refresh: () => void
   depth: number
   setDepth: (depth: number) => void
   isCompact: boolean
@@ -23,7 +24,7 @@ interface ActionBarProps {
 
 export const ActionBar = ({
   nodeType,
-  fetchLineage,
+  refresh,
   depth,
   setDepth,
   isCompact,
@@ -87,7 +88,7 @@ export const ActionBar = ({
             size={'small'}
             onClick={() => {
               if (namespace && name) {
-                fetchLineage(nodeType, namespace, name, depth)
+                refresh()
               }
             }}
           >

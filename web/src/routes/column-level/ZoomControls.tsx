@@ -1,9 +1,12 @@
-import { CenterFocusStrong, CropFree, ZoomIn, ZoomOut } from '@mui/icons-material'
 import { theme } from '../../helpers/theme'
 import Box from '@mui/material/Box'
+import CenterFocusStrong from '@mui/icons-material/CenterFocusStrong'
+import CropFree from '@mui/icons-material/CropFree'
 import IconButton from '@mui/material/IconButton'
 import MQTooltip from '../../components/core/tooltip/MQTooltip'
 import React from 'react'
+import ZoomIn from '@mui/icons-material/ZoomIn'
+import ZoomOut from '@mui/icons-material/ZoomOut'
 
 interface ZoomControlsProps {
   handleScaleZoom: (inOrOut: 'in' | 'out') => void

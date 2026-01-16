@@ -1,7 +1,7 @@
 import React from 'react'
 
-import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
 
 import { Node } from '../Node/Node'
 import type { NodeRenderer, PositionedEdge, PositionedNode } from '../types'
@@ -87,9 +87,7 @@ describe('Node component', () => {
       data: { label: 'skip' },
     }
 
-    const { container } = render(
-      <Node node={node} nodeRenderers={new Map()} edges={[]} />
-    )
+    const { container } = render(<Node node={node} nodeRenderers={new Map()} edges={[]} />)
 
     expect(container.querySelector('g')?.textContent).toBe('')
   })

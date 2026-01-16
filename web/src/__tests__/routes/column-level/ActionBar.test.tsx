@@ -27,7 +27,7 @@ const renderActionBar = (
   overrides: { depth?: number; setDepth?: (depth: number) => void } = {}
 ) => {
   const fetchColumnLineage = vi.fn()
-  const setDepth = vi.fn(overrides.setDepth ?? (() => {}))
+  const setDepth = vi.fn(overrides.setDepth ?? (() => { }))
   const locationRef: { current: Location | null } = { current: null }
   const theme = createTheme()
 
@@ -40,7 +40,7 @@ const renderActionBar = (
             element={
               <>
                 <LocationSpy onChange={(location) => (locationRef.current = location)} />
-                <ActionBar fetchColumnLineage={fetchColumnLineage} depth={overrides.depth ?? 2} setDepth={setDepth} />
+                <ActionBar refresh={fetchColumnLineage} depth={overrides.depth ?? 2} setDepth={setDepth} />
               </>
             }
           />
@@ -53,7 +53,7 @@ const renderActionBar = (
             element={
               <>
                 <LocationSpy onChange={(location) => (locationRef.current = location)} />
-                <ActionBar fetchColumnLineage={fetchColumnLineage} depth={overrides.depth ?? 2} setDepth={setDepth} />
+                <ActionBar refresh={fetchColumnLineage} depth={overrides.depth ?? 2} setDepth={setDepth} />
               </>
             }
           />
@@ -70,12 +70,12 @@ describe('column-level/ActionBar', () => {
     vi.clearAllMocks()
   })
 
-  it('invokes fetchColumnLineage with the current params when refresh is clicked', () => {
+  it('invokes fetchColumnLineage as refresh when refresh is clicked', () => {
     const { fetchColumnLineage } = renderActionBar('/column-level/analytics/users?depth=3')
 
     fireEvent.click(screen.getByRole('button', { name: /refresh/i }))
 
-    expect(fetchColumnLineage).toHaveBeenCalledWith('DATASET', 'analytics', 'users', 2)
+    expect(fetchColumnLineage).toHaveBeenCalled()
   })
 
   it('updates depth, writes query string, and casts invalid values to zero', () => {

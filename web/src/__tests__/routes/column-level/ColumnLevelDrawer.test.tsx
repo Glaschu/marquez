@@ -2,21 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { MemoryRouter, Route, Routes, useLocation, type Location } from 'react-router-dom'
-import { Provider } from 'react-redux'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createStore } from 'redux'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import ColumnLevelDrawer from '../../../routes/column-level/ColumnLevelDrawer'
 import React from 'react'
 import type { ColumnLineageGraph, Dataset } from '../../../types/api'
+import { renderWithProviders } from '../../../helpers/testUtils'
+import * as useDatasetHook from '../../../queries/datasets'
 
+// Mocks
 const { fetchDatasetMock, jsonViewMock } = vi.hoisted(() => ({
-  fetchDatasetMock: vi.fn((namespace: string, datasetName: string) => ({
-    type: 'FETCH_DATASET',
-    namespace,
-    datasetName,
-  })),
+  fetchDatasetMock: vi.fn(),
   jsonViewMock: vi.fn((props: { data: unknown }) => props),
 }))
 
@@ -37,15 +34,11 @@ vi.mock('../../../components/core/text/MqText', () => ({
   default: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 }))
 
+// We still mock actionCreators to avoid import errors or side effects, 
+// but we expect fetchDataset NOT to be dispatched if hook is used.
 vi.mock('../../../store/actionCreators', async () => {
-  const actual = await vi.importActual<typeof import('../../../store/actionCreators')>(
-    '../../../store/actionCreators'
-  )
-
   return {
-    ...actual,
-    fetchDataset: (...args: Parameters<typeof actual.fetchDataset>) =>
-      fetchDatasetMock(...(args as Parameters<typeof fetchDatasetMock>)),
+    fetchDataset: vi.fn(),
   }
 })
 
@@ -65,63 +58,68 @@ const renderDrawer = (
   },
   initialEntry: string = '/column-level/analytics/users?dataset=users&namespace=analytics'
 ) => {
-  const store = createStore(() => ({
-    columnLineage: { columnLineage: state.columnLineage },
-    dataset: { result: state.dataset, isLoading: state.isDatasetLoading },
-  }))
-  store.dispatch = vi.fn()
   const theme = createTheme()
   const locationRef: { current: Location | null } = { current: null }
+  const mockRefetch = vi.fn()
 
-  const ui = render(
-    <Provider store={store}>
-      <ThemeProvider theme={theme}>
-        <MemoryRouter initialEntries={[initialEntry]}>
-          <Routes>
-            <Route
-              path='/column-level/:namespace/:name'
-              element={
-                <>
-                  <LocationSpy onChange={(location) => (locationRef.current = location)} />
-                  <ColumnLevelDrawer />
-                </>
-              }
-            />
-          </Routes>
-        </MemoryRouter>
-      </ThemeProvider>
-    </Provider>
+  vi.spyOn(useDatasetHook, 'useDataset').mockReturnValue({
+    data: state.dataset,
+    isLoading: state.isDatasetLoading,
+    isPending: state.isDatasetLoading,
+    isError: false,
+    error: null,
+    refetch: mockRefetch
+  } as any)
+
+  const ui = renderWithProviders(
+    <ThemeProvider theme={theme}>
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <Routes>
+          <Route
+            path='/column-level/:namespace/:name'
+            element={
+              <>
+                <LocationSpy onChange={(location) => (locationRef.current = location)} />
+                <ColumnLevelDrawer />
+              </>
+            }
+          />
+        </Routes>
+      </MemoryRouter>
+    </ThemeProvider>,
+    {
+      initialState: {
+        columnLineage: { columnLineage: state.columnLineage }
+      }
+    }
   )
 
-  return { store, locationRef, ...ui }
+  return { locationRef, ...ui }
 }
 
-beforeEach(() => {
-  fetchDatasetMock.mockClear()
-  jsonViewMock.mockClear()
-})
-
 describe('ColumnLevelDrawer', () => {
+  beforeEach(() => {
+    fetchDatasetMock.mockClear()
+    jsonViewMock.mockClear()
+    vi.restoreAllMocks()
+  })
+
   it('returns null when column lineage is unavailable', () => {
-    const { store } = renderDrawer(
+    // If column lineage is null, component might return null.
+    renderDrawer(
       { columnLineage: null, dataset: null, isDatasetLoading: false },
       '/column-level/analytics/users'
     )
-    expect(store.dispatch).not.toHaveBeenCalled()
+
     expect(screen.queryByTestId('json-view')).toBeNull()
     expect(screen.queryByRole('button')).toBeNull()
   })
 
-  it('dispatches fetchDataset when dataset search params are present', () => {
+  it('renders progress bar when dataset are loading', () => {
     const columnLineage = { graph: [] } as unknown as ColumnLineageGraph
-    const { store } = renderDrawer({ columnLineage, dataset: null, isDatasetLoading: true })
+    renderDrawer({ columnLineage, dataset: null, isDatasetLoading: true })
 
-    expect(fetchDatasetMock).toHaveBeenCalledWith('analytics', 'users')
-    expect(store.dispatch).toHaveBeenCalledWith({
-      type: 'FETCH_DATASET',
-      namespace: 'analytics',
-      datasetName: 'users',
-    })
+    expect(useDatasetHook.useDataset).toHaveBeenCalled()
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
   })
 

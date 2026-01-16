@@ -3,23 +3,23 @@ import 'reactflow/dist/style.css'
 import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import useSize from '@react-hook/size'
 
+import { zoomIdentity } from 'd3-zoom'
 import Box from '@mui/system/Box'
 import LinearProgress from '@mui/material/LinearProgress'
 import ReactFlow, {
-  Background as ReactFlowBackground,
   BackgroundVariant,
   ConnectionMode,
   Edge as FlowEdge,
   EdgeProps as FlowEdgeProps,
-  Handle,
   Node as FlowNode,
   NodeProps as FlowNodeProps,
+  Handle,
   Position,
+  Background as ReactFlowBackground,
   ReactFlowProvider,
   useReactFlow,
   useStore,
 } from 'reactflow'
-import { zoomIdentity } from 'd3-zoom'
 
 import {
   DEFAULT_MAX_SCALE,
@@ -31,14 +31,7 @@ import { Edge as EdgeComponent } from './Edge'
 import { MiniMap, MiniMapPlacement } from './ZoomPanSvg/MiniMap'
 import { Node as NodeComponent } from './Node'
 import { useLayout } from './layout/useLayout'
-import type {
-  Direction,
-  Edge,
-  Node,
-  NodeRenderer,
-  PositionedEdge,
-  PositionedNode,
-} from './types'
+import type { Direction, Edge, Node, NodeRenderer, PositionedEdge, PositionedNode } from './types'
 
 const MINIMAP_SCALE = 1 / 8
 
@@ -255,39 +248,39 @@ const GraphCanvas = <K, D>({
       const isContainer = Boolean(node.children?.length)
 
       return {
-      id: node.id,
-      type: 'graphNode',
-      position: {
-        x: relativePosition.x,
-        y: relativePosition.y,
-      },
-      positionAbsolute: {
-        x: absolutePosition.x,
-        y: absolutePosition.y,
-      },
-      sourcePosition: Position.Right,
-      targetPosition: Position.Left,
-      width: node.width,
-      height: node.height,
-      data: {
-        positionedNode: node as PositionedNode<any, any>,
-        nodeRenderers: nodeRenderers as Map<any, NodeRenderer<any, any>>,
-      },
-      draggable: false,
-      selectable: false,
-      deletable: false,
-      connectable: false,
-      parentNode: parentId,
-      extent: parentId ? 'parent' : undefined,
-        zIndex: isContainer ? -1 : 1,
-      style: {
+        id: node.id,
+        type: 'graphNode',
+        position: {
+          x: relativePosition.x,
+          y: relativePosition.y,
+        },
+        positionAbsolute: {
+          x: absolutePosition.x,
+          y: absolutePosition.y,
+        },
+        sourcePosition: Position.Right,
+        targetPosition: Position.Left,
         width: node.width,
         height: node.height,
-        background: 'transparent',
-        border: 'none',
-        padding: 0,
-        pointerEvents: 'auto',
-      },
+        data: {
+          positionedNode: node as PositionedNode<any, any>,
+          nodeRenderers: nodeRenderers as Map<any, NodeRenderer<any, any>>,
+        },
+        draggable: false,
+        selectable: false,
+        deletable: false,
+        connectable: false,
+        parentNode: parentId,
+        extent: parentId ? 'parent' : undefined,
+        zIndex: isContainer ? -1 : 1,
+        style: {
+          width: node.width,
+          height: node.height,
+          background: 'transparent',
+          border: 'none',
+          padding: 0,
+          pointerEvents: 'auto',
+        },
       }
     })
   }, [flattened, nodeRenderers])
@@ -344,18 +337,10 @@ const GraphCanvas = <K, D>({
     })
 
     return () => cancelAnimationFrame(frame)
-  }, [
-    reactFlowInstance,
-    positionedNodes,
-    containerPadding,
-    isReady,
-    contentWidth,
-    contentHeight,
-  ])
+  }, [reactFlowInstance, positionedNodes, containerPadding, isReady, contentWidth, contentHeight])
   const handleViewportInteraction = useCallback(() => {
     shouldAutoFitRef.current = false
   }, [])
-
 
   useEffect(() => {
     if (!setZoomPanControls || !isReady) return
@@ -532,11 +517,7 @@ const GraphCanvas = <K, D>({
           style={{ width: '100%', height: '100%' }}
         >
           {!hideDotGrid && (
-            <ReactFlowBackground
-              color={dotGridColor}
-              variant={BackgroundVariant.Dots}
-              gap={16}
-            />
+            <ReactFlowBackground color={dotGridColor} variant={BackgroundVariant.Dots} gap={16} />
           )}
         </ReactFlow>
       )}
@@ -547,12 +528,7 @@ const GraphCanvas = <K, D>({
         </Box>
       )}
       {shouldShowEmptyState && (
-        <Box
-          position='absolute'
-          top='50%'
-          left='50%'
-          sx={{ transform: 'translate(-50%, -50%)' }}
-        >
+        <Box position='absolute' top='50%' left='50%' sx={{ transform: 'translate(-50%, -50%)' }}>
           {emptyMessage}
         </Box>
       )}

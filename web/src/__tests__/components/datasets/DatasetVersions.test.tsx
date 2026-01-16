@@ -2,12 +2,30 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Dataset } from '../../../types/api'
-import { Provider } from 'react-redux'
-import { createStore } from 'redux'
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { renderWithProviders } from '../../../helpers/testUtils'
 import DatasetVersions from '../../../components/datasets/DatasetVersions'
 import React from 'react'
+
+// Hoist the mock function so it can be referenced in vi.mock factory
+const { useDatasetVersionsMock } = vi.hoisted(() => {
+  return { useDatasetVersionsMock: vi.fn() }
+})
+
+// Mock the hook module using the hoisted mock
+vi.mock('../../../queries/datasets', () => ({
+  useDatasetVersions: useDatasetVersionsMock,
+  useAddDatasetTag: vi.fn(),
+  useDeleteDatasetTag: vi.fn(),
+  useAddDatasetFieldTag: vi.fn(),
+  useDeleteDatasetFieldTag: vi.fn(),
+}))
+
+// Mock DatasetTags to prevent import issues
+vi.mock('../../../components/datasets/DatasetTags', () => ({
+  __esModule: true,
+  default: () => <div data-testid="mock-dataset-tags">Tags</div>
+}))
 
 // Mock i18next
 vi.mock('react-i18next', () => ({
@@ -16,10 +34,16 @@ vi.mock('react-i18next', () => ({
   }),
 }))
 
-// Mock fetchDatasetVersions action
-vi.mock('../../../store/actionCreators', () => ({
-  fetchDatasetVersions: vi.fn(() => ({ type: 'FETCH_DATASET_VERSIONS' })),
-}))
+// Mock MqText with dynamic React import to avoid hoisting ReferenceError
+vi.mock('../../../components/core/text/MqText', async () => {
+  const React = await import('react')
+  return {
+    __esModule: true,
+    default: React.forwardRef(({ children }: { children: React.ReactNode }, ref) => (
+      <span ref={ref as any}>{children}</span>
+    )),
+  }
+})
 
 describe('DatasetVersions Component', () => {
   const mockDataset: Dataset = {
@@ -33,32 +57,24 @@ describe('DatasetVersions Component', () => {
     fields: [],
   } as any
 
-  const createMockStore = (versions: any[] = [], isLoading = false, totalCount = 0) => {
-    return createStore(() => ({
-      datasetVersions: {
-        result: {
-          versions: versions,
-          totalCount: totalCount,
-        },
-        isLoading,
-        init: true,
-      },
-    }))
-  }
+  const renderDatasetVersions = (versions: any[] = [], isLoading = false, totalCount = 0) => {
+    useDatasetVersionsMock.mockReturnValue({
+      data: { versions, totalCount },
+      isLoading,
+      isPending: isLoading,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    })
 
-  const renderWithStore = (store: any) => {
-    return render(
-      <Provider store={store}>
-        <DatasetVersions dataset={mockDataset} />
-      </Provider>
+    return renderWithProviders(
+      <DatasetVersions dataset={mockDataset} />
     )
   }
 
-  it('should render without crashing with empty versions', () => {
-    const store = createMockStore([])
-    const { container } = renderWithStore(store)
-    // Component returns null for empty versions
-    expect(container).toBeTruthy()
+  it('should render nothing with empty versions', () => {
+    const { container } = renderDatasetVersions([])
+    expect(container.firstChild).toBeNull()
   })
 
   it('should render with versions data', () => {
@@ -68,12 +84,17 @@ describe('DatasetVersions Component', () => {
         createdAt: '2023-01-01T00:00:00Z',
         fields: [],
         facets: {},
+        createdByRun: { id: 'run-1' }
       },
     ]
-    const store = createMockStore(mockVersions, false, 1)
-    renderWithStore(store)
+    const { getByText } = renderDatasetVersions(mockVersions, false, 1)
 
-    // Component should render with data
-    expect(true).toBe(true)
+    // Check for version ID substring or other text
+    expect(getByText('v1...')).toBeTruthy()
+  })
+
+  it('should show loading spinner', () => {
+    const { getByRole } = renderDatasetVersions([], true)
+    expect(getByRole('progressbar')).toBeTruthy()
   })
 })

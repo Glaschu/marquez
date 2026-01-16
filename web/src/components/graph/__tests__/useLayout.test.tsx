@@ -1,7 +1,7 @@
 import React from 'react'
 
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, waitFor } from '@testing-library/react'
-import { beforeAll, beforeEach, afterAll, describe, expect, it, vi } from 'vitest'
 
 import { useLayout } from '../layout/useLayout'
 import type { Edge, Node } from '../types'
@@ -159,10 +159,10 @@ describe('useLayout hook', () => {
     expect(getLayoutOptions).toHaveBeenCalledTimes(2)
     expect(final?.isRendering).toBe(false)
     expect(final?.layout?.width).toBe(400)
-  expect(layoutInputs[0].layoutOptions['elk.direction']).toBe('RIGHT')
+    expect(layoutInputs[0].layoutOptions['elk.direction']).toBe('RIGHT')
     const rootNode = final?.layout?.nodes.find((node) => node.id === 'root-node')
     expect(rootNode?.bottomLeftCorner).toEqual({ x: 10, y: 20 })
-  expect(rootNode?.children?.[0].bottomLeftCorner).toEqual({ x: 15, y: 25 })
+    expect(rootNode?.children?.[0].bottomLeftCorner).toEqual({ x: 15, y: 25 })
     const edge = final?.layout?.edges[0]
     expect(edge?.startPoint).toEqual({ x: 1, y: 2 })
     expect(edge?.bendPoints?.[0]).toEqual({ x: 3, y: 4 })
@@ -250,8 +250,8 @@ describe('useLayout hook', () => {
       />
     )
 
-  await waitFor(() => expect(updates.at(-1)?.error).toBe(error))
-  expect(updates.at(-1)?.layout).toEqual({ nodes: [], edges: [], height: 0, width: 0 })
+    await waitFor(() => expect(updates.at(-1)?.error).toBe(error))
+    expect(updates.at(-1)?.layout).toEqual({ nodes: [], edges: [], height: 0, width: 0 })
     expect(updates.at(-1)?.isRendering).toBe(false)
   })
 })

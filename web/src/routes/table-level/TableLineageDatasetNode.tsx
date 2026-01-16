@@ -1,25 +1,24 @@
-import { ChevronLeft } from '@mui/icons-material'
 import { Dataset, Field } from '../../types/api'
+import { Divider } from '@mui/material'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { IState } from '../../store/reducers'
 import { LineageDataset } from '../../types/lineage'
 import { PositionedNode } from '../../components/graph'
 import { THEME_EXTRA, theme } from '../../helpers/theme'
 import { TableLineageDatasetNodeData } from './nodes'
-import { useDispatch, useSelector } from 'react-redux'
-import { Divider } from '@mui/material'
 import { datasetFacetsQualityAssertions, datasetFacetsStatus } from '../../helpers/nodes'
 import { faDatabase } from '@fortawesome/free-solid-svg-icons/faDatabase'
-import { fetchDataset, resetDataset } from '../../store/actionCreators'
 import { formatUpdatedAt } from '../../helpers'
 import { truncateText, truncateTextFront } from '../../helpers/text'
+import { useDataset } from '../../queries/datasets'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useState } from 'react'
 import Box from '@mui/system/Box'
+import ChevronLeft from '@mui/icons-material/ChevronLeft'
 import IconButton from '@mui/material/IconButton'
 import MQTooltip from '../../components/core/tooltip/MQTooltip'
 import MqStatus from '../../components/core/status/MqStatus'
 import MqText from '../../components/core/text/MqText'
-import { useCallback } from 'react'
 
 interface TableLineageDatasetNodeProps {
   node: PositionedNode<'DATASET', TableLineageDatasetNodeData>
@@ -29,15 +28,19 @@ const ICON_SIZE = 12
 const COMPACT_HEIGHT = 24
 
 const TableLineageDatasetNode = ({ node }: TableLineageDatasetNodeProps) => {
-  const dispatch = useDispatch()
-  const dataset = useSelector((state: IState) => state.dataset.result)
   const isCompact = node.height === COMPACT_HEIGHT
-
   const navigate = useNavigate()
   const { name, namespace } = useParams()
   const isSelected = name === node.data.dataset.name && namespace === node.data.dataset.namespace
   const [searchParams, setSearchParams] = useSearchParams()
   const isCollapsed = searchParams.get('collapsedNodes')?.split(',').includes(node.id)
+
+  const [isTooltipOpen, setIsTooltipOpen] = useState(false)
+  const { data: dataset } = useDataset(
+    node.data.dataset.namespace,
+    node.data.dataset.name,
+    isTooltipOpen
+  )
 
   const handleClick = () => {
     navigate(
@@ -46,14 +49,6 @@ const TableLineageDatasetNode = ({ node }: TableLineageDatasetNodeProps) => {
       )}?tableLevelNode=${encodeURIComponent(node.id)}`
     )
   }
-
-  const handleFetchDataset = useCallback(() => {
-    return dispatch(fetchDataset(node.data.dataset.namespace, node.data.dataset.name))
-  }, [dispatch, node.data.dataset.namespace, node.data.dataset.name])
-
-  const handleResetDataset = useCallback(() => {
-    dispatch(resetDataset())
-  }, [dispatch])
 
   const addToToolTip = (lineageDataset: LineageDataset, dataset?: Dataset | null) => {
     return (
@@ -185,8 +180,8 @@ const TableLineageDatasetNode = ({ node }: TableLineageDatasetNodeProps) => {
         </MQTooltip>
       </foreignObject>
       <MQTooltip
-        onOpen={handleFetchDataset}
-        onClose={handleResetDataset}
+        onOpen={() => setIsTooltipOpen(true)}
+        onClose={() => setIsTooltipOpen(false)}
         placement={'right-start'}
         title={addToToolTip(node.data.dataset, dataset)}
       >

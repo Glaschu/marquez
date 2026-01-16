@@ -2,16 +2,18 @@ import { Box } from '@mui/system'
 import { IState } from '../../store/reducers'
 import { LineageDataset, LineageJob } from '../../types/lineage'
 import { LineageGraph } from '../../types/api'
-import { useSelector } from 'react-redux'
 import { useSearchParams } from 'react-router-dom'
 import DatasetDetailPage from '../../components/datasets/DatasetDetailPage'
 import JobDetailPage from '../../components/jobs/JobDetailPage'
 
 const WIDTH = 800
 
-const TableLevelDrawer = () => {
+interface TableLevelDrawerProps {
+  lineageGraph: LineageGraph
+}
+
+const TableLevelDrawer = ({ lineageGraph }: TableLevelDrawerProps) => {
   const [searchParams] = useSearchParams()
-  const lineageGraph = useSelector((state: IState) => state.lineage.lineage)
 
   const node = lineageGraph.graph.find(
     (node) => node.id === searchParams.get('tableLevelNode') || ''

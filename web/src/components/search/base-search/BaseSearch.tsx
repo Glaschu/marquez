@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { GroupedSearch } from '../../../types/api'
-import { IState } from '../../../store/reducers'
-import { useDispatch, useSelector } from 'react-redux'
 import { faCog, faDatabase, faSort } from '@fortawesome/free-solid-svg-icons'
-import { fetchSearch, setSelectedNode } from '../../../store/actionCreators'
 import { parseSearchGroup } from '../../../helpers/nodes'
+import { setSelectedNode } from '../../../store/actionCreators'
 import { theme } from '../../../helpers/theme'
+import { useDispatch } from 'react-redux'
+import { useSearch } from '../../../queries/search'
 import { useTranslation } from 'react-i18next'
 import Box from '@mui/system/Box'
 import MqChipGroup from '../../core/chip/MqChipGroup'
@@ -17,6 +17,7 @@ import SearchListItem from '../SearchListItem'
 
 interface BaseSearchProps {
   search: string
+  onIsLoading?: (isLoading: boolean) => void
 }
 
 const INITIAL_SEARCH_FILTER = [
@@ -58,36 +59,33 @@ const INITIAL_SEARCH_SORT_FILTER = [
   },
 ]
 
-const BaseSearch = ({ search }: BaseSearchProps) => {
+const BaseSearch = ({ search, onIsLoading }: BaseSearchProps) => {
   const dispatch = useDispatch()
-  const searchResults =
-    useSelector((state: IState) => state.search.data.results) ?? new Map<string, GroupedSearch[]>()
-  const isSearching = useSelector((state: IState) => state.search.isLoading)
-  const isSearchingInit = useSelector((state: IState) => state.search.init)
   const [filter, setFilter] = useState('All')
   const [sort, setSort] = useState('UPDATE_AT')
+
+  const {
+    data,
+    isLoading: isSearching,
+    isSuccess,
+  } = useSearch(search, filter.toUpperCase(), sort.toUpperCase())
+  const searchResults = data?.results || new Map<string, GroupedSearch[]>()
+
+  useEffect(() => {
+    if (onIsLoading) {
+      onIsLoading(isSearching)
+    }
+  }, [isSearching, onIsLoading])
 
   const { t } = useTranslation()
 
   const onSelectFilter = (label: string) => {
     setFilter(label)
-    dispatch(fetchSearch(search, label.toUpperCase(), sort.toUpperCase()))
   }
 
   const onSelectSortFilter = (label: string) => {
     setSort(label)
-    dispatch(fetchSearch(search, filter.toUpperCase(), label.toUpperCase()))
   }
-
-  const searchApi = (q: string, filter = 'ALL', sort = 'NAME') => {
-    dispatch(fetchSearch(q, filter, sort))
-  }
-
-  useEffect(() => {
-    if (search.length > 0) {
-      searchApi(search, filter, sort)
-    }
-  }, [dispatch, search, filter, sort])
 
   return (
     <>
@@ -121,13 +119,11 @@ const BaseSearch = ({ search }: BaseSearchProps) => {
       >
         {searchResults.size === 0 && (
           <Box m={2} display={'flex'} alignItems={'center'} justifyContent={'center'}>
-            <MqText>
-              {isSearching || !isSearchingInit ? t('search.status') : t('search.none')}
-            </MqText>
+            <MqText>{isSearching || !isSuccess ? t('search.status') : t('search.none')}</MqText>
           </Box>
         )}
-        {[...searchResults].map((resultsWithGroups, index) => {
-          return resultsWithGroups.map((result) => {
+        {[...searchResults].map((resultsWithGroups) => {
+          return resultsWithGroups.map((result: string | GroupedSearch[]) => {
             if (typeof result === 'string') {
               // is group
               if (result.length > 0) {
@@ -162,8 +158,8 @@ const BaseSearch = ({ search }: BaseSearchProps) => {
               // is a list of group members
             } else if (result.length) {
               return (
-                <Box key={result[0].group + index}>
-                  {result.map((listItem) => {
+                <Box key={(result[0] as GroupedSearch).group + (result[0] as GroupedSearch).namespace}>
+                  {(result as GroupedSearch[]).map((listItem: GroupedSearch) => {
                     return (
                       <React.Fragment key={listItem.name}>
                         <SearchListItem

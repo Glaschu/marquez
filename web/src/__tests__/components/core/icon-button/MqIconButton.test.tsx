@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { BrowserRouter } from 'react-router-dom'
-import { Home } from '@mui/icons-material'
+import Home from '@mui/icons-material/Home'
 import { type ReactElement } from 'react'
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'

@@ -1,5 +1,4 @@
 import { Box } from '@mui/system'
-import { Code, Computer, RunCircleOutlined, Source } from '@mui/icons-material'
 import { List, ListItem } from '@mui/material'
 import {
   Timeline,
@@ -11,8 +10,12 @@ import {
   timelineItemClasses,
 } from '@mui/lab'
 import { theme } from '../../helpers/theme'
+import Code from '@mui/icons-material/Code'
+import Computer from '@mui/icons-material/Computer'
 import MqText from '../../components/core/text/MqText'
 import React from 'react'
+import RunCircleOutlined from '@mui/icons-material/RunCircleOutlined'
+import Source from '@mui/icons-material/Source'
 const WIDTH = 400
 
 const TimelineDrawer = () => {

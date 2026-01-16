@@ -19,7 +19,7 @@ import { FormControl, MenuItem, Select } from '@mui/material'
 import { MqInputNoIcon } from '../core/input-base/MqInputBase'
 import { useTheme } from '@emotion/react'
 
-import { Dashboard } from '@mui/icons-material'
+import Dashboard from '@mui/icons-material/Dashboard'
 import iconSearchArrow from '../../img/iconSearchArrow.svg'
 import marquez_logo from './marquez-icon-white-solid.svg'
 

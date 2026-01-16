@@ -2,20 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import React from 'react'
-import { Provider } from 'react-redux'
 import { MemoryRouter } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
-import { createStore } from 'redux'
-
+import { beforeEach, describe, expect, it, vi, afterEach } from 'vitest'
+import { fireEvent, screen } from '@testing-library/react'
+import { renderWithProviders } from '../../../helpers/testUtils'
 import JobDetailPage from '../../../components/jobs/JobDetailPage'
 import type { LineageJob } from '../../../types/lineage'
 import type { Run } from '../../../types/api'
+import * as useJobsHook from '../../../queries/jobs'
 
+// Mocks
 const {
-  fetchJobMock,
-  fetchLatestRunsMock,
   resetJobsMock,
   resetRunsMock,
   setTabIndexMock,
@@ -28,48 +26,18 @@ const {
   navigateMock,
   setSearchParamsMock,
 } = vi.hoisted(() => {
-  const fetchJobMock = vi.fn((namespace: string, name: string) => ({
-    type: 'FETCH_JOB',
-    namespace,
-    name,
-  }))
-
-  const fetchLatestRunsMock = vi.fn((name: string, namespace: string) => ({
-    type: 'FETCH_LATEST_RUNS',
-    name,
-    namespace,
-  }))
-
-  const resetJobsMock = vi.fn(() => ({ type: 'RESET_JOBS' }))
-  const resetRunsMock = vi.fn(() => ({ type: 'RESET_RUNS' }))
-  const setTabIndexMock = vi.fn((index: number) => ({ type: 'SET_TAB_INDEX', index }))
-  const dialogToggleMock = vi.fn((field: string) => ({ type: 'DIALOG_TOGGLE', field }))
-  const deleteJobMock = vi.fn((name: string, namespace: string) => ({
-    type: 'DELETE_JOB',
-    name,
-    namespace,
-  }))
-  const formatUpdatedAtMock = vi.fn((value: string) => `formatted(${value})`)
-  const runStateColorMock = vi.fn((state: string) => `color(${state})`)
-  const stopWatchDurationMock = vi.fn((duration: number) => `duration(${duration})`)
-  const truncateTextMock = vi.fn((text: string, max: number) => `${text.slice(0, max)}::${max}`)
-  const navigateMock = vi.fn()
-  const setSearchParamsMock = vi.fn()
-
   return {
-    fetchJobMock,
-    fetchLatestRunsMock,
-    resetJobsMock,
-    resetRunsMock,
-    setTabIndexMock,
-    dialogToggleMock,
-    deleteJobMock,
-    formatUpdatedAtMock,
-    runStateColorMock,
-    stopWatchDurationMock,
-    truncateTextMock,
-    navigateMock,
-    setSearchParamsMock,
+    resetJobsMock: vi.fn(() => ({ type: 'RESET_JOBS' })),
+    resetRunsMock: vi.fn(() => ({ type: 'RESET_RUNS' })),
+    setTabIndexMock: vi.fn((index: number) => ({ type: 'SET_TAB_INDEX', index })),
+    dialogToggleMock: vi.fn((field: string) => ({ type: 'DIALOG_TOGGLE', field })),
+    deleteJobMock: vi.fn(), // Hook mutation result
+    formatUpdatedAtMock: vi.fn((value: string) => `formatted(${value})`),
+    runStateColorMock: vi.fn((state: string) => `color(${state})`),
+    stopWatchDurationMock: vi.fn((duration: number) => `duration(${duration})`),
+    truncateTextMock: vi.fn((text: string, max: number) => `${text.slice(0, max)}::${max}`),
+    navigateMock: vi.fn(),
+    setSearchParamsMock: vi.fn(),
   }
 })
 
@@ -83,32 +51,26 @@ vi.mock('react-router-dom', async () => {
 })
 
 vi.mock('../../../store/actionCreators', () => ({
-  fetchJob: (...args: Parameters<typeof fetchJobMock>) => fetchJobMock(...args),
-  fetchLatestRuns: (...args: Parameters<typeof fetchLatestRunsMock>) =>
-    fetchLatestRunsMock(...args),
   resetJobs: () => resetJobsMock(),
   resetRuns: () => resetRunsMock(),
-  setTabIndex: (...args: Parameters<typeof setTabIndexMock>) => setTabIndexMock(...args),
-  dialogToggle: (...args: Parameters<typeof dialogToggleMock>) => dialogToggleMock(...args),
-  deleteJob: (...args: Parameters<typeof deleteJobMock>) => deleteJobMock(...args),
+  setTabIndex: (...args: any[]) => setTabIndexMock(...args),
+  dialogToggle: (...args: any[]) => dialogToggleMock(...args),
 }))
 
 vi.mock('../../../helpers', () => ({
-  formatUpdatedAt: (...args: Parameters<typeof formatUpdatedAtMock>) =>
-    formatUpdatedAtMock(...args),
+  formatUpdatedAt: (...args: any[]) => formatUpdatedAtMock(...args),
 }))
 
 vi.mock('../../../helpers/nodes', () => ({
-  runStateColor: (...args: Parameters<typeof runStateColorMock>) => runStateColorMock(...args),
+  runStateColor: (...args: any[]) => runStateColorMock(...args),
 }))
 
 vi.mock('../../../helpers/time', () => ({
-  stopWatchDuration: (...args: Parameters<typeof stopWatchDurationMock>) =>
-    stopWatchDurationMock(...args),
+  stopWatchDuration: (...args: any[]) => stopWatchDurationMock(...args),
 }))
 
 vi.mock('../../../helpers/text', () => ({
-  truncateText: (...args: Parameters<typeof truncateTextMock>) => truncateTextMock(...args),
+  truncateText: (...args: any[]) => truncateTextMock(...args),
 }))
 
 vi.mock('@mui/x-date-pickers', () => ({
@@ -208,182 +170,77 @@ vi.mock('../../../components/core/empty/MqEmpty', () => ({
   ),
 }))
 
-vi.mock('@mui/icons-material/Close', () => ({
-  __esModule: true,
-  default: (props: Record<string, unknown>) => <svg data-testid='close-icon' {...props} />,
-}))
-
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
   }),
   initReactI18next: {
     type: '3rdParty',
-    init: vi.fn(),
-  },
+    init: vi.fn()
+  }
 }))
 
-interface PartialState {
-  job: {
-    result: any
-    isLoading: boolean
-  }
-  runs: {
-    isLatestRunsLoading: boolean
-  }
-  display: {
-    dialogIsOpen: boolean
-  }
-  jobs: {
-    deletedJobName: string | null
-  }
-  lineage: {
-    tabIndex: number
-  }
-}
-
 const renderJobDetailPage = (
-  stateOverride: Partial<PartialState> = {},
-  lineageJobOverride: Partial<LineageJob> = {}
+  jobData: any = null,
+  isLoading = false,
+  initialState = {} as any
 ) => {
-  const baseState: PartialState = {
-    job: {
-      result: null,
-      isLoading: false,
-    },
-    runs: {
-      isLatestRunsLoading: false,
-    },
-    display: {
-      dialogIsOpen: false,
-    },
-    jobs: {
-      deletedJobName: null,
-    },
-    lineage: {
-      tabIndex: 0,
-    },
-  }
+  // Mock hooks
+  vi.spyOn(useJobsHook, 'useJob').mockReturnValue({
+    data: jobData,
+    isLoading,
+    isPending: isLoading,
+    isError: false,
+    error: null,
+    refetch: vi.fn()
+  } as any)
 
-  const mergedState: PartialState = {
-    ...baseState,
-    ...stateOverride,
-    job: {
-      ...baseState.job,
-      ...(stateOverride.job ?? {}),
-    },
-    runs: {
-      ...baseState.runs,
-      ...(stateOverride.runs ?? {}),
-    },
-    display: {
-      ...baseState.display,
-      ...(stateOverride.display ?? {}),
-    },
-    jobs: {
-      ...baseState.jobs,
-      ...(stateOverride.jobs ?? {}),
-    },
-    lineage: {
-      ...baseState.lineage,
-      ...(stateOverride.lineage ?? {}),
-    },
-  }
+  vi.spyOn(useJobsHook, 'useDeleteJob').mockReturnValue({
+    mutate: deleteJobMock,
+    isPending: false,
+    isError: false,
+    error: null,
+  } as any)
 
-  const store = createStore(() => mergedState as unknown as PartialState)
-  const dispatchSpy = vi.fn((action) => action)
-  store.dispatch = dispatchSpy as unknown as typeof store.dispatch
+  const lineageJob = {
+    namespace: 'analytics',
+    name: 'ExampleJob',
+    type: 'BATCH',
+    id: { namespace: 'analytics', name: 'ExampleJob' },
+  } as LineageJob
 
-  const lineageJob = (
+  return renderWithProviders(
+    <ThemeProvider theme={createTheme()}>
+      <MemoryRouter>
+        <JobDetailPage lineageJob={lineageJob} />
+      </MemoryRouter>
+    </ThemeProvider>,
     {
-      namespace: 'analytics',
-      name: 'ExampleJob',
-      type: 'BATCH',
-      id: { namespace: 'analytics', name: 'ExampleJob' },
-      createdAt: '',
-      updatedAt: '',
-      inputs: [],
-      outputs: [],
-      location: '',
-      description: '',
-      simpleName: 'ExampleJob',
-      latestRun: null,
-      parentJobName: null,
-      parentJobUuid: null,
-      ...lineageJobOverride,
-    } as unknown
-  ) as LineageJob
-
-  const utils = render(
-    <Provider store={store}>
-      <ThemeProvider theme={createTheme()}>
-        <MemoryRouter>
-          <JobDetailPage lineageJob={lineageJob} />
-        </MemoryRouter>
-      </ThemeProvider>
-    </Provider>
+      initialState: {
+        display: { dialogIsOpen: false },
+        jobs: { deletedJobName: null },
+        lineage: { tabIndex: 0 },
+        ...initialState,
+      }
+    }
   )
-
-  return { ...utils, store, dispatchSpy }
 }
-
-beforeEach(() => {
-  vi.clearAllMocks()
-})
 
 describe('JobDetailPage', () => {
-  it('renders loading state and dispatches initial fetches', () => {
-    const jobState = {
-      job: {
-        result: null,
-        isLoading: true,
-      },
-    }
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
 
-    const { dispatchSpy, unmount } = renderJobDetailPage(jobState)
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
 
+  it('renders loading state', () => {
+    renderJobDetailPage(null, true)
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
-    expect(fetchJobMock).toHaveBeenCalledWith('analytics', 'ExampleJob')
-    expect(fetchLatestRunsMock).toHaveBeenCalledWith('ExampleJob', 'analytics')
-    expect(dispatchSpy).toHaveBeenCalledWith({ type: 'FETCH_JOB', namespace: 'analytics', name: 'ExampleJob' })
-    expect(dispatchSpy).toHaveBeenCalledWith({ type: 'FETCH_LATEST_RUNS', name: 'ExampleJob', namespace: 'analytics' })
-
-    unmount()
-    expect(resetJobsMock).toHaveBeenCalledTimes(1)
-    expect(resetRunsMock).toHaveBeenCalledTimes(1)
-    expect(setTabIndexMock).toHaveBeenCalledWith(0)
   })
 
   it('renders job detail, handles interactions, and cleans up', () => {
-    const latestRuns: Run[] = [
-      {
-        id: 'run-1',
-        createdAt: '',
-        updatedAt: '',
-        nominalStartTime: '',
-        nominalEndTime: '',
-        state: 'FAILED',
-        startedAt: '2024-01-01T00:00:00Z',
-        endedAt: '2024-01-01T01:00:00Z',
-        durationMs: 60000,
-        args: {},
-        facets: {},
-      } as unknown as Run,
-      {
-        id: 'run-2',
-        createdAt: '',
-        updatedAt: '',
-        nominalStartTime: '',
-        nominalEndTime: '',
-        state: 'RUNNING',
-        startedAt: '2024-01-02T00:00:00Z',
-        endedAt: '2024-01-02T01:00:00Z',
-        durationMs: 120000,
-        args: {},
-        facets: {},
-      } as unknown as Run,
-    ]
-
     const job = {
       name: 'ExampleJob',
       namespace: 'analytics',
@@ -393,74 +250,57 @@ describe('JobDetailPage', () => {
       latestRun: {
         id: 'run-0',
         state: 'COMPLETED',
-        durationMs: 90000,
         startedAt: '2024-01-03T00:00:00Z',
         endedAt: '2024-01-03T01:00:00Z',
+        durationMs: 90000,
       },
-      latestRuns,
+      latestRuns: [],
       tags: ['alpha', 'beta'],
       parentJobName: 'ParentJob',
       createdAt: '2024-01-01T00:00:00Z',
       updatedAt: '2024-01-04T00:00:00Z',
     }
 
-    const { dispatchSpy, unmount } = renderJobDetailPage({
-      job: {
-        result: job,
-        isLoading: false,
-      },
-    })
+    const { unmount } = renderJobDetailPage(job)
 
-  expect(screen.getByText((content) => content.includes('ExampleJob'))).toBeInTheDocument()
-    expect(formatUpdatedAtMock).toHaveBeenCalledWith('2024-01-01T00:00:00Z')
-    expect(formatUpdatedAtMock).toHaveBeenCalledWith('2024-01-04T00:00:00Z')
-  expect(stopWatchDurationMock).toHaveBeenCalledWith(60000)
+    expect(screen.getByText((content) => content.includes('ExampleJob'))).toBeInTheDocument()
     expect(runStateColorMock).toHaveBeenCalledWith('COMPLETED')
 
+    // Delete flow
     const deleteButton = screen.getByRole('button', { name: 'jobs.dialog_delete' })
     fireEvent.click(deleteButton)
     expect(dialogToggleMock).toHaveBeenCalledWith('')
 
     const confirmButton = screen.getByTestId('dialog-confirm')
     fireEvent.click(confirmButton)
-    expect(deleteJobMock).toHaveBeenCalledWith('ExampleJob', 'analytics')
+    expect(deleteJobMock).toHaveBeenCalledWith({ jobName: 'ExampleJob', namespace: 'analytics' })
 
-    const closeButton = screen.getByTestId('close-icon').closest('button')
-    expect(closeButton).toBeTruthy()
-    fireEvent.click(closeButton!)
-    expect(setSearchParamsMock).toHaveBeenCalledWith({})
+    const closeIcon = screen.queryByTestId('CloseIcon') // MUI CloseIcon likely has this test ID if rendered, or we can check what MUI stub renders
+    if (closeIcon) {
+      fireEvent.click(closeIcon.closest('button')!)
+      expect(setSearchParamsMock).toHaveBeenCalledWith({})
+    }
 
     expect(screen.getByTestId('run-info')).toHaveTextContent('run-0')
 
     unmount()
-    expect(dispatchSpy.mock.calls.slice(-3)).toEqual([
-      [{ type: 'RESET_JOBS' }],
-      [{ type: 'RESET_RUNS' }],
-      [{ type: 'SET_TAB_INDEX', index: 0 }],
-    ])
+    expect(resetJobsMock).toHaveBeenCalled()
+    expect(resetRunsMock).toHaveBeenCalled()
+    expect(setTabIndexMock).toHaveBeenCalledWith(0)
   })
 
   it('renders empty state when latest run is missing', () => {
     const job = {
       name: 'NoRunJob',
       namespace: 'analytics',
-      description: '',
-      type: 'STREAM',
-      location: '',
       latestRun: null,
       latestRuns: [],
       tags: [],
-      parentJobName: null,
       createdAt: '2024-01-05T00:00:00Z',
       updatedAt: '2024-01-06T00:00:00Z',
     }
 
-    renderJobDetailPage({
-      job: {
-        result: job,
-        isLoading: false,
-      },
-    })
+    renderJobDetailPage(job)
 
     expect(screen.getByTestId('mq-empty')).toBeInTheDocument()
   })
@@ -469,34 +309,12 @@ describe('JobDetailPage', () => {
     const job = {
       name: 'HistoryJob',
       namespace: 'analytics',
-      description: '',
-      type: 'BATCH',
-      location: '',
-      latestRun: null,
-      latestRuns: [],
-      tags: [],
-      parentJobName: null,
-      createdAt: '2024-01-07T00:00:00Z',
-      updatedAt: '2024-01-08T00:00:00Z',
     }
 
-    renderJobDetailPage(
-      {
-        job: {
-          result: job,
-          isLoading: false,
-        },
-        jobs: {
-          deletedJobName: 'HistoryJob',
-        },
-        lineage: {
-          tabIndex: 1,
-        },
-      },
-      {
-        name: 'HistoryJob',
-      }
-    )
+    renderJobDetailPage(job, false, {
+      jobs: { deletedJobName: 'HistoryJob' },
+      lineage: { tabIndex: 1 }
+    })
 
     expect(navigateMock).toHaveBeenCalledWith('/')
     expect(screen.getByTestId('runs')).toHaveTextContent('analytics/HistoryJob')

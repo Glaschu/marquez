@@ -4,16 +4,20 @@
 import { Box, FormControl, MenuItem, Select } from '@mui/material'
 import { IState } from '../../store/reducers'
 import { MqInputBase } from '../core/input-base/MqInputBase'
+import { Namespace } from '../../types/api'
 import { selectNamespace } from '../../store/actionCreators'
 import { theme } from '../../helpers/theme'
 import { useDispatch, useSelector } from 'react-redux'
+import { useNamespaces } from '../../queries/namespaces'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import MqText from '../core/text/MqText'
 
 const NamespaceSelect = () => {
   // Redux hooks
-  const namespaces = useSelector((state: IState) => state.namespaces.result)
+  // Redux hooks
+  const { data: namespacesData } = useNamespaces()
+  const namespaces: Namespace[] = namespacesData?.namespaces || []
   const selectedNamespace = useSelector((state: IState) => state.namespaces.selectedNamespace)
   const dispatch = useDispatch()
 

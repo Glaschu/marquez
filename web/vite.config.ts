@@ -1,12 +1,16 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { visualizer } from 'rollup-plugin-visualizer'
 import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react({
-    jsxRuntime: 'automatic',
-  })],
+  plugins: [
+    react({
+      jsxRuntime: 'automatic',
+    }),
+    process.env.ANALYZE === 'true' && visualizer(),
+  ],
   resolve: {
     extensions: ['.tsx', '.ts', '.js', '.json'],
     alias: {
@@ -30,6 +34,15 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'mui-vendor': ['@mui/material', '@mui/icons-material', '@mui/x-date-pickers', '@mui/x-charts'],
+          'vis-vendor': ['d3-selection', 'd3-transition', 'd3-zoom', 'reactflow', 'elkjs'],
+        },
+      },
+    },
   },
   define: {
     __API_URL__: JSON.stringify('/api/v1'),

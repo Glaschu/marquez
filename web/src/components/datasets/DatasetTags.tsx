@@ -11,13 +11,13 @@ import { Box, createTheme } from '@mui/material'
 import { IState } from '../../store/reducers'
 import { Tag } from '../../types/api'
 import {
-  addDatasetFieldTag,
-  addDatasetTag,
-  addTags,
-  deleteDatasetFieldTag,
-  deleteDatasetTag,
-} from '../../store/actionCreators'
-import { useDispatch, useSelector } from 'react-redux'
+  useAddDatasetFieldTag,
+  useAddDatasetTag,
+  useDeleteDatasetFieldTag,
+  useDeleteDatasetTag,
+} from '../../queries/datasets'
+import { useAddTags, useTags } from '../../queries/tags'
+import { useSelector } from 'react-redux'
 import { useState } from 'react'
 import { useTheme } from '@emotion/react'
 import Button from '@mui/material/Button'
@@ -41,7 +41,11 @@ interface DatasetTagsProps {
 
 const DatasetTags = (props: DatasetTagsProps) => {
   const { namespace, datasetName, datasetTags, datasetField } = props
-  const dispatch = useDispatch()
+  const addDatasetTagMutation = useAddDatasetTag()
+  const deleteDatasetTagMutation = useDeleteDatasetTag()
+  const addDatasetFieldTagMutation = useAddDatasetFieldTag()
+  const deleteDatasetFieldTagMutation = useDeleteDatasetFieldTag()
+  const addTagsMutation = useAddTags()
 
   const [listTag, setListTag] = useState('')
   const [openTagDesc, setOpenTagDesc] = useState(false)
@@ -61,8 +65,8 @@ const DatasetTags = (props: DatasetTagsProps) => {
     setTagDescription('')
   }
 
-  const handleTagDescChange = (_event: any, value: string) => {
-    const selectedTagData = tagData.find((tag) => tag.name === value)
+  const handleTagDescChange = (_event: React.SyntheticEvent, value: string) => {
+    const selectedTagData = tagData.find((tag: Tag) => tag.name === value)
     setListTag(value)
     setTagDescription(selectedTagData ? selectedTagData.description : '')
   }
@@ -71,9 +75,8 @@ const DatasetTags = (props: DatasetTagsProps) => {
     setTagDescription(event.target.value)
   }
 
-  const tagData = useSelector((state: IState) =>
-    state.tags.tags.sort((a, b) => a.name.localeCompare(b.name))
-  )
+  const { data: tags = [] } = useTags()
+  const tagData = tags.sort((a: Tag, b: Tag) => a.name.localeCompare(b.name))
 
   const handleTagChange = (
     _event: React.SyntheticEvent,
@@ -83,18 +86,32 @@ const DatasetTags = (props: DatasetTagsProps) => {
   ) => {
     if (details && _reason === 'removeOption') {
       const newTag = details.option
-      const newSelectedTags = selectedTags.filter((tag) => newTag !== tag)
+      const newSelectedTags = selectedTags.filter((tag: string) => newTag !== tag)
       setSelectedTags(newSelectedTags)
-      datasetField
-        ? dispatch(deleteDatasetFieldTag(namespace, datasetName, newTag, datasetField))
-        : dispatch(deleteDatasetTag(namespace, datasetName, newTag))
+      if (datasetField) {
+        deleteDatasetFieldTagMutation.mutate({
+          namespace,
+          datasetName,
+          field: datasetField,
+          tag: newTag,
+        })
+      } else {
+        deleteDatasetTagMutation.mutate({ namespace, datasetName, tag: newTag })
+      }
     } else if (details && !selectedTags.includes(details.option)) {
       const newTag = details.option
       const newSelectedTags = [...selectedTags, newTag]
       setSelectedTags(newSelectedTags)
-      datasetField
-        ? dispatch(addDatasetFieldTag(namespace, datasetName, newTag, datasetField))
-        : dispatch(addDatasetTag(namespace, datasetName, newTag))
+      if (datasetField) {
+        addDatasetFieldTagMutation.mutate({
+          namespace,
+          datasetName,
+          field: datasetField,
+          tag: newTag,
+        })
+      } else {
+        addDatasetTagMutation.mutate({ namespace, datasetName, tag: newTag })
+      }
     }
   }
 
@@ -103,13 +120,20 @@ const DatasetTags = (props: DatasetTagsProps) => {
 
     setSelectedTags(newSelectedTags)
 
-    datasetField
-      ? dispatch(deleteDatasetFieldTag(namespace, datasetName, deletedTag, datasetField))
-      : dispatch(deleteDatasetTag(namespace, datasetName, deletedTag))
+    if (datasetField) {
+      deleteDatasetFieldTagMutation.mutate({
+        namespace,
+        datasetName,
+        field: datasetField,
+        tag: deletedTag,
+      })
+    } else {
+      deleteDatasetTagMutation.mutate({ namespace, datasetName, tag: deletedTag })
+    }
   }
 
   const addTag = () => {
-    dispatch(addTags(listTag, tagDescription))
+    addTagsMutation.mutate({ tag: listTag, description: tagDescription })
     setSnackbarOpen(true)
     setOpenTagDesc(false)
     setListTag('')
@@ -176,7 +200,7 @@ const DatasetTags = (props: DatasetTagsProps) => {
           value={selectedTags}
           onChange={handleTagChange}
           renderTags={(value: string[]) => formatTags(value, tagData)}
-          renderOption={(props, option, { selected }) => (
+          renderOption={(props, option: string, { selected }) => (
             <li {...props}>
               <Checkbox
                 icon={<CheckBoxOutlineBlankIcon fontSize='small' />}
@@ -187,7 +211,7 @@ const DatasetTags = (props: DatasetTagsProps) => {
               <div>
                 <MQText bold>{option}</MQText>
                 <MQText subdued overflowHidden>
-                  {tagData.find((tagItem) => tagItem.name === option)?.description || ''}
+                  {tagData.find((tagItem: Tag) => tagItem.name === option)?.description || ''}
                 </MQText>
               </div>
             </li>

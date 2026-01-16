@@ -5,16 +5,14 @@ import { Box, Button } from '@mui/material'
 import { Dataset } from '../../types/api'
 import { IState } from '../../store/reducers'
 import { LineageDataset } from '../../types/lineage'
-import { useDispatch, useSelector } from 'react-redux'
-import { fetchDataset, resetDataset } from '../../store/actionCreators'
 import { fileSize } from '../../helpers'
 import { saveAs } from 'file-saver'
+import { useDataset } from '../../queries/datasets'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import MqEmpty from '../core/empty/MqEmpty'
 import MqJsonView from '../../components/core/json-view/MqJsonView'
 import MqText from '../core/text/MqText'
-import { useEffect } from 'react'
 
 interface DatasetColumnLineageProps {
   lineageDataset: LineageDataset
@@ -24,22 +22,7 @@ const DatasetColumnLineage = (props: DatasetColumnLineageProps) => {
   const { t } = useTranslation()
   const { lineageDataset } = props
   const { name, namespace } = useParams()
-  const dataset = useSelector((state: IState) => state.dataset.result)
-  const dispatch = useDispatch()
-
-  useEffect(() => {
-    if (namespace && name) {
-      dispatch(fetchDataset(namespace, name))
-    }
-  }, [name, namespace, dispatch])
-
-  // unmounting
-  useEffect(
-    () => () => {
-      dispatch(resetDataset())
-    },
-    [dispatch]
-  )
+  const { data: dataset } = useDataset(namespace || '', name || '')
 
   const handleDownloadPayload = (data: object) => {
     const title = `${lineageDataset.name}-${lineageDataset.namespace}-columnLineage`

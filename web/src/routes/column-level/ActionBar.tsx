@@ -1,7 +1,8 @@
-import { ArrowBackIosRounded, Refresh } from '@mui/icons-material'
 import { Divider, TextField } from '@mui/material'
 import { HEADER_HEIGHT, theme } from '../../helpers/theme'
-import { fetchColumnLineage } from '../../store/actionCreators'
+import ArrowBackIosRounded from '@mui/icons-material/ArrowBackIosRounded'
+import Refresh from '@mui/icons-material/Refresh'
+
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import IconButton from '@mui/material/IconButton'
@@ -10,12 +11,12 @@ import MqText from '../../components/core/text/MqText'
 import React from 'react'
 
 interface ActionBarProps {
-  fetchColumnLineage: typeof fetchColumnLineage
+  refresh: () => void
   depth: number
   setDepth: (depth: number) => void
 }
 
-export const ActionBar = ({ fetchColumnLineage, depth, setDepth }: ActionBarProps) => {
+export const ActionBar = ({ refresh, depth, setDepth }: ActionBarProps) => {
   const { namespace, name } = useParams()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -66,7 +67,7 @@ export const ActionBar = ({ fetchColumnLineage, depth, setDepth }: ActionBarProp
             size={'small'}
             onClick={() => {
               if (namespace && name) {
-                fetchColumnLineage('DATASET', namespace, name, depth)
+                refresh()
               }
             }}
           >

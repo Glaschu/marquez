@@ -1,10 +1,10 @@
 import React from 'react'
 
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
-import { beforeAll, beforeEach, afterAll, describe, expect, it, vi } from 'vitest'
 
-import { MiniMapPlacement } from '../ZoomPanSvg/MiniMap'
 import { Graph } from '../Graph'
+import { MiniMapPlacement } from '../ZoomPanSvg/MiniMap'
 import type { Edge, NodeRenderer, PositionedEdge, PositionedNode } from '../types'
 
 vi.mock('reactflow/dist/style.css', () => ({}))
@@ -26,7 +26,9 @@ vi.mock('reactflow', () => {
     latestReactFlowProps = props
     return (
       <div data-testid='reactflow'>
-        <div data-testid='reactflow-props'>{JSON.stringify({ nodes: props.nodes, edges: props.edges })}</div>
+        <div data-testid='reactflow-props'>
+          {JSON.stringify({ nodes: props.nodes, edges: props.edges })}
+        </div>
         {props.children}
       </div>
     )
@@ -41,7 +43,9 @@ vi.mock('reactflow', () => {
     default: ReactFlow,
     ReactFlow,
     Background: ({ children, ...props }: any) => (
-      <div data-testid='reactflow-background' data-props={JSON.stringify(props)}>{children}</div>
+      <div data-testid='reactflow-background' data-props={JSON.stringify(props)}>
+        {children}
+      </div>
     ),
     BackgroundVariant: { Dots: 'dots' },
     ConnectionMode: { Loose: 'loose' },
@@ -49,7 +53,9 @@ vi.mock('reactflow', () => {
     Handle,
     Node: (props: any) => <div {...props} />, // type placeholder
     Position: { Left: 'left', Right: 'right' },
-    ReactFlowProvider: ({ children }: any) => <div data-testid='reactflow-provider'>{children}</div>,
+    ReactFlowProvider: ({ children }: any) => (
+      <div data-testid='reactflow-provider'>{children}</div>
+    ),
     useReactFlow: () => ({
       fitView,
       fitBounds,
@@ -229,11 +235,11 @@ describe('Graph', () => {
     const firstEdge = latestReactFlowProps.edges[0]
     expect(firstEdge.data.positionedEdge.startPoint).toEqual({ x: 15, y: 30 })
     expect(firstEdge.data.positionedEdge.endPoint).toEqual({ x: 25, y: 40 })
-  expect(firstEdge.animated).toBe(true)
+    expect(firstEdge.animated).toBe(true)
 
-  expect(screen.getByTestId('reactflow')).toBeInTheDocument()
-  expect(typeof latestReactFlowProps.nodeTypes.graphNode).toBe('function')
-  expect(typeof latestReactFlowProps.edgeTypes.graphEdge).toBe('function')
+    expect(screen.getByTestId('reactflow')).toBeInTheDocument()
+    expect(typeof latestReactFlowProps.nodeTypes.graphNode).toBe('function')
+    expect(typeof latestReactFlowProps.edgeTypes.graphEdge).toBe('function')
 
     latestReactFlowProps.onMove?.()
 

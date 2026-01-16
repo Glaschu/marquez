@@ -1,379 +1,269 @@
 // Copyright 2018-2025 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import React from 'react'
-import { Provider } from 'react-redux'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { MemoryRouter } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
-import { createStore } from 'redux'
-
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { renderWithProviders } from '../../../helpers/testUtils'
 import DatasetTags from '../../../components/datasets/DatasetTags'
+import React from 'react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import * as useDatasetsHook from '../../../queries/datasets'
+import * as useTagsHook from '../../../queries/tags'
 
-const {
-  addDatasetTagMock,
-  deleteDatasetTagMock,
-  addDatasetFieldTagMock,
-  deleteDatasetFieldTagMock,
-  addTagsMock,
-} = vi.hoisted(() => {
-  const addDatasetTagMock = vi.fn((namespace: string, dataset: string, tag: string) => ({
-    type: 'ADD_DATASET_TAG',
-    namespace,
-    dataset,
-    tag,
-  }))
-  const deleteDatasetTagMock = vi.fn((namespace: string, dataset: string, tag: string) => ({
-    type: 'DELETE_DATASET_TAG',
-    namespace,
-    dataset,
-    tag,
-  }))
-  const addDatasetFieldTagMock = vi.fn(
-    (namespace: string, dataset: string, tag: string, field: string) => ({
-      type: 'ADD_DATASET_FIELD_TAG',
-      namespace,
-      dataset,
-      tag,
-      field,
-    })
-  )
-  const deleteDatasetFieldTagMock = vi.fn(
-    (namespace: string, dataset: string, tag: string, field: string) => ({
-      type: 'DELETE_DATASET_FIELD_TAG',
-      namespace,
-      dataset,
-      tag,
-      field,
-    })
-  )
-  const addTagsMock = vi.fn((tag: string, description: string) => ({
-    type: 'ADD_TAG',
-    tag,
-    description,
-  }))
-
+// Mock Tooltip
+// Mock Tooltip
+vi.mock('../../../components/core/tooltip/MQTooltip', () => {
+  const React = require('react')
   return {
-    addDatasetTagMock,
-    deleteDatasetTagMock,
-    addDatasetFieldTagMock,
-    deleteDatasetFieldTagMock,
-    addTagsMock,
+    __esModule: true,
+    default: React.forwardRef(({ title, children }: { title: string; children: React.ReactElement }, ref: any) => (
+      <span ref={ref} aria-label={typeof title === 'string' ? title : undefined}>{children}</span>
+    )),
   }
 })
 
-vi.mock('../../../store/actionCreators', () => ({
-  addDatasetTag: (...args: Parameters<typeof addDatasetTagMock>) => addDatasetTagMock(...args),
-  deleteDatasetTag: (...args: Parameters<typeof deleteDatasetTagMock>) =>
-    deleteDatasetTagMock(...args),
-  addDatasetFieldTag: (...args: Parameters<typeof addDatasetFieldTagMock>) =>
-    addDatasetFieldTagMock(...args),
-  deleteDatasetFieldTag: (...args: Parameters<typeof deleteDatasetFieldTagMock>) =>
-    deleteDatasetFieldTagMock(...args),
-  addTags: (...args: Parameters<typeof addTagsMock>) => addTagsMock(...args),
-}))
-
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
-  initReactI18next: {
-    type: '3rdParty',
-    init: vi.fn(),
-  },
-}))
-
-vi.mock('../../../components/core/text/MqText', () => ({
-  __esModule: true,
-  default: ({ children, bold, subdued }: { children: React.ReactNode; bold?: boolean; subdued?: boolean }) => (
-    <span data-bold={bold} data-subdued={subdued}>{children}</span>
-  ),
-}))
-
-vi.mock('../../../components/core/tooltip/MQTooltip', () => ({
-  __esModule: true,
-  default: ({ title, children }: { title: React.ReactNode; children: React.ReactNode }) => (
-    <div data-testid={`tooltip-${String(title)}`}>{children}</div>
-  ),
-}))
-
-const muiStubs = vi.hoisted(() => {
+// Mock Autocomplete
+const { MockAutocomplete } = vi.hoisted(() => {
   const React = require('react') as typeof import('react')
-  const AutocompleteStub = ({
+
+  const Component = ({
     id,
     options,
+    multiple = false,
+    freeSolo = false,
     value,
     onChange,
-    renderTags,
     renderInput,
-    renderOption,
-    multiple,
+    renderTags,
   }: any) => {
-    const option =
-      options?.find((opt: string) => !(value ?? []).includes(opt)) ?? options?.[0] ?? 'new'
-    const params = {
-      id: id ?? 'autocomplete',
-      InputProps: {},
-      InputLabelProps: {},
-      disabled: false,
-      fullWidth: true,
+    const controlId = id ?? 'mock-autocomplete'
+
+    const handleFreeSoloChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const selected = event.target.value
+      onChange(event, selected, 'selectOption', { option: selected })
     }
-    const renderedTags = renderTags ? renderTags(value ?? []) : null
-    const renderedInput = renderInput ? renderInput(params) : null
-    if (renderOption && options?.length) {
-      renderOption({} as any, options[0], {
-        selected: value?.includes(options[0]),
-      })
+
+    const handleSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
+      const selected = event.target.value
+      if (!selected) {
+        return
+      }
+
+      if (multiple) {
+        const current = value as string[]
+        const isSelected = current.includes(selected)
+        const updated = isSelected
+          ? current.filter((tag: string) => tag !== selected)
+          : [...current, selected]
+        onChange(event, updated, isSelected ? 'removeOption' : 'selectOption', {
+          option: selected,
+        })
+      } else {
+        onChange(event, selected, 'selectOption', { option: selected })
+      }
+      event.target.value = ''
+    }
+
+    const handleRemove = (tag: string) => {
+      if (!multiple) {
+        return
+      }
+      const current = value as string[]
+      onChange({}, current.filter((item: string) => item !== tag), 'removeOption', { option: tag })
     }
 
     return (
-      <div data-testid={`autocomplete-${id ?? 'dialog'}`} data-multiple={multiple}>
-        <button
-          type='button'
-          data-testid={`add-option-${id ?? 'dialog'}`}
-          onClick={() =>
-            onChange?.({}, multiple ? [...(value ?? []), option] : option, 'selectOption', {
-              option,
-            })
-          }
-        >
-          add-option
-        </button>
-        {multiple && value && value.length > 0 && (
-          <button
-            type='button'
-            data-testid={`remove-option-${id ?? 'dialog'}`}
-            onClick={() =>
-              onChange?.({}, value.slice(0, value.length - 1), 'removeOption', {
-                option: value[value.length - 1],
-              })
-            }
-          >
-            remove-option
-          </button>
+      <div>
+        {renderInput?.({
+          id: controlId,
+          inputProps: {},
+          InputLabelProps: {},
+          InputProps: {},
+        })}
+        {freeSolo && (
+          <input data-testid={`${controlId}-free-input`} onChange={handleFreeSoloChange} value='' />
         )}
-        <div data-testid={`tags-${id ?? 'dialog'}`}>{renderedTags}</div>
-        <div data-testid={`input-${id ?? 'dialog'}`}>{renderedInput}</div>
+        <select data-testid={controlId} onChange={handleSelect} value=''>
+          <option value='' disabled>
+            select...
+          </option>
+          {options.map((option: string) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+        {multiple && renderTags && (
+          <div data-testid={`${id}-rendered-tags`}>{renderTags(value as string[], {})}</div>
+        )}
+        {multiple && (
+          <ul>
+            {(value as string[]).map((tag: string) => (
+              <li key={tag} data-testid={`tag-${tag}`}>
+                {tag}
+                <button type='button' data-testid={`remove-${tag}`} onClick={() => handleRemove(tag)}>
+                  remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     )
   }
 
-  const TextFieldStub = ({ id, placeholder, onChange, value, multiline }: any) => (
-    <div data-testid={`textfield-${id ?? placeholder ?? 'field'}`}>
-      {multiline ? (
-        <textarea
-          data-testid={`textarea-${id ?? 'field'}`}
-          value={value ?? ''}
-          onChange={(event) => onChange?.({ target: { value: event.currentTarget.value } })}
-        />
-      ) : (
-        <input
-          data-testid={`input-${id ?? 'field'}`}
-          placeholder={placeholder}
-          value={value ?? ''}
-          onChange={(event) => onChange?.({ target: { value: event.currentTarget.value } })}
-        />
-      )}
-    </div>
-  )
-
-  const CheckboxStub = ({ checked }: { checked?: boolean }) => (
-    <input data-testid='checkbox' type='checkbox' checked={checked} readOnly />
-  )
-
-  const ChipStub = React.forwardRef<HTMLDivElement, { label: string; onDelete?: () => void }>(
-    ({ label, onDelete }, ref) => (
-      <div ref={ref} data-testid={`chip-${label}`}>
-        <span>{label}</span>
-        <button type='button' onClick={onDelete} data-testid={`chip-delete-${label}`}>
-          delete
-        </button>
-      </div>
-    )
-  )
-  ChipStub.displayName = 'ChipStub'
-
-  const DialogStub = ({
-    open,
-    children,
-    onKeyDown,
-  }: {
-    open: boolean
-    children: React.ReactNode
-    onKeyDown?: (event: any) => void
-  }) => (
-    <div data-testid='dialog' data-open={open} onKeyDown={onKeyDown} tabIndex={0}>
-      {open ? children : null}
-    </div>
-  )
-
-  const DialogContentStub = ({ children }: { children: React.ReactNode }) => (
-    <div data-testid='dialog-content'>{children}</div>
-  )
-
-  const DialogActionsStub = ({ children }: { children: React.ReactNode }) => (
-    <div data-testid='dialog-actions'>{children}</div>
-  )
-
-  const SnackbarStub = ({
-    open,
-    onClose,
-    message,
-  }: {
-    open: boolean
-    onClose: () => void
-    message: string
-  }) => (
-    <div data-testid='snackbar' data-open={open}>
-      <span>{message}</span>
-      {open && (
-        <button type='button' data-testid='snackbar-close' onClick={onClose}>
-          close
-        </button>
-      )}
-    </div>
-  )
-
-  return {
-    AutocompleteStub,
-    TextFieldStub,
-    CheckboxStub,
-    ChipStub,
-    DialogStub,
-    DialogContentStub,
-    DialogActionsStub,
-    SnackbarStub,
-  }
+  return { MockAutocomplete: Component }
 })
-
-const {
-  AutocompleteStub,
-  TextFieldStub,
-  CheckboxStub,
-  ChipStub,
-  DialogStub,
-  DialogContentStub,
-  DialogActionsStub,
-  SnackbarStub,
-} = muiStubs
 
 vi.mock('@mui/material', async () => {
   const actual = await vi.importActual<typeof import('@mui/material')>('@mui/material')
   return {
     ...actual,
-    Autocomplete: muiStubs.AutocompleteStub,
-    TextField: muiStubs.TextFieldStub,
-    Checkbox: muiStubs.CheckboxStub,
+    Autocomplete: MockAutocomplete,
   }
 })
 
-vi.mock('@mui/material/Autocomplete', () => ({ __esModule: true, default: muiStubs.AutocompleteStub }))
-vi.mock('@mui/material/TextField', () => ({ __esModule: true, default: muiStubs.TextFieldStub }))
-vi.mock('@mui/material/Checkbox', () => ({ __esModule: true, default: muiStubs.CheckboxStub }))
-vi.mock('@mui/material/Chip', () => ({ __esModule: true, default: muiStubs.ChipStub }))
-vi.mock('@mui/material/Dialog', () => ({ __esModule: true, default: muiStubs.DialogStub }))
-vi.mock('@mui/material/DialogContent', () => ({ __esModule: true, default: muiStubs.DialogContentStub }))
-vi.mock('@mui/material/DialogActions', () => ({ __esModule: true, default: muiStubs.DialogActionsStub }))
-vi.mock('@mui/material/Snackbar', () => ({ __esModule: true, default: muiStubs.SnackbarStub }))
+vi.mock('@mui/material/Snackbar', () => ({
+  __esModule: true,
+  default: ({ open, message, onClose }: any) =>
+    open ? (
+      <div role='alert'>
+        {message}
+        <button
+          type='button'
+          data-testid='snackbar-close'
+          onClick={(event: React.MouseEvent<HTMLButtonElement>) => onClose?.(event, 'timeout')}
+        >
+          Close
+        </button>
+      </div>
+    ) : null,
+}))
 
-const renderDatasetTags = (
-  propsOverride: Partial<React.ComponentProps<typeof DatasetTags>> = {},
-  tagsState: Array<{ name: string; description: string }> = [
-    { name: 'beta', description: 'Beta tag' },
-    { name: 'alpha', description: 'Alpha tag' },
-    { name: 'gamma', description: 'Gamma tag' },
-  ]
-) => {
-  const baseProps: React.ComponentProps<typeof DatasetTags> = {
+const addDatasetTagMock = vi.fn()
+const deleteDatasetTagMock = vi.fn()
+const addDatasetFieldTagMock = vi.fn()
+const deleteDatasetFieldTagMock = vi.fn()
+const addTagsMock = vi.fn()
+
+const renderDatasetTags = (propsOverride = {}, tagsState = [
+  { name: 'beta', description: 'Beta tag' },
+  { name: 'alpha', description: 'Alpha tag' }
+]) => {
+  const theme = createTheme()
+
+  vi.spyOn(useTagsHook, 'useTags').mockReturnValue({
+    data: tagsState,
+    isLoading: false,
+    isPending: false,
+    isError: false,
+    error: null,
+    refetch: vi.fn(),
+  } as any)
+
+  vi.spyOn(useDatasetsHook, 'useAddDatasetTag').mockReturnValue({
+    mutate: addDatasetTagMock,
+    isPending: false,
+    isError: false,
+    error: null,
+  } as any)
+
+  vi.spyOn(useDatasetsHook, 'useDeleteDatasetTag').mockReturnValue({
+    mutate: deleteDatasetTagMock,
+    isPending: false,
+    isError: false,
+    error: null,
+  } as any)
+
+  vi.spyOn(useDatasetsHook, 'useAddDatasetFieldTag').mockReturnValue({
+    mutate: addDatasetFieldTagMock,
+    isPending: false,
+    isError: false,
+    error: null,
+  } as any)
+
+  vi.spyOn(useDatasetsHook, 'useDeleteDatasetFieldTag').mockReturnValue({
+    mutate: deleteDatasetFieldTagMock,
+    isPending: false,
+    isError: false,
+    error: null,
+  } as any)
+
+  vi.spyOn(useTagsHook, 'useAddTags').mockReturnValue({
+    mutate: addTagsMock,
+    isPending: false,
+    isError: false,
+    error: null,
+  } as any)
+
+  const defaultProps = {
     namespace: 'analytics',
     datasetName: 'orders',
     datasetTags: ['alpha'],
     datasetField: undefined,
   }
 
-  const store = createStore(() => ({
-    tags: {
-      tags: tagsState,
-    },
-  }))
-  const dispatchSpy = vi.fn((action) => action)
-  store.dispatch = dispatchSpy as unknown as typeof store.dispatch
-
-  const utils = render(
-    <Provider store={store}>
-      <ThemeProvider theme={createTheme()}>
-        <MemoryRouter>
-          <DatasetTags {...baseProps} {...propsOverride} />
-        </MemoryRouter>
-      </ThemeProvider>
-    </Provider>
+  return renderWithProviders(
+    <ThemeProvider theme={theme}>
+      <DatasetTags {...defaultProps} {...propsOverride} />
+    </ThemeProvider>
   )
-
-  return { ...utils, dispatchSpy }
 }
 
-beforeEach(() => {
-  addDatasetTagMock.mockClear()
-  deleteDatasetTagMock.mockClear()
-  addDatasetFieldTagMock.mockClear()
-  deleteDatasetFieldTagMock.mockClear()
-  addTagsMock.mockClear()
-})
-
 describe('DatasetTags', () => {
-  it('adds and removes dataset tags using global actions', () => {
-    renderDatasetTags()
-
-    fireEvent.click(screen.getByTestId('add-option-dataset-tags'))
-    expect(addDatasetTagMock).toHaveBeenCalledWith('analytics', 'orders', 'beta')
-
-    fireEvent.click(screen.getByTestId('remove-option-dataset-tags'))
-    expect(deleteDatasetTagMock).toHaveBeenNthCalledWith(1, 'analytics', 'orders', 'beta')
-
-    fireEvent.click(screen.getByTestId('chip-delete-alpha'))
-    expect(deleteDatasetTagMock).toHaveBeenNthCalledWith(2, 'analytics', 'orders', 'alpha')
-
-    expect(screen.getByTestId('tooltip-Edit a Tag')).toBeInTheDocument()
+  beforeEach(() => {
+    vi.clearAllMocks()
   })
 
-  it('opens dialog, edits descriptions, and submits new tags', () => {
+  it('adds and removes dataset tags', () => {
     renderDatasetTags()
 
-  fireEvent.click(screen.getByRole('button', { name: 'Edit Tag' }))
-    expect(screen.getByTestId('dialog')).toHaveAttribute('data-open', 'true')
+    // Add tag by selecting 'beta' from list (mocked select)
+    fireEvent.change(screen.getByTestId('dataset-tags'), { target: { value: 'beta' } })
+    expect(addDatasetTagMock).toHaveBeenCalledWith({ namespace: 'analytics', datasetName: 'orders', tag: 'beta' })
 
-    fireEvent.click(screen.getByTestId('add-option-dialog'))
+    // Remove tag 'alpha'
+    // My mock renders <ul> list for existing tags if passed
+    const removeBtn = screen.getByTestId('remove-alpha')
+    fireEvent.click(removeBtn)
+    expect(deleteDatasetTagMock).toHaveBeenCalledWith({ namespace: 'analytics', datasetName: 'orders', tag: 'alpha' })
+  })
 
-    const descriptionField = screen.getByTestId('textarea-tag-description') as HTMLTextAreaElement
-    expect(descriptionField.value).toBe('Alpha tag')
+  it('opens dialog, edits descriptions, and submits new tags', async () => {
+    renderDatasetTags()
 
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Tag' }))
+    const dialog = await screen.findByRole('dialog')
+
+    // Add new option in mocked autocomplete
+    // Add new option in mocked autocomplete - target specifically by default mock ID as component has no ID
+    const tagSelect = within(dialog).getByTestId('mock-autocomplete')
+    fireEvent.change(tagSelect, { target: { value: 'beta' } }) // Existing tag not currently selected
+
+    // Description
+    const descriptionField = dialog.querySelector<HTMLTextAreaElement>('#tag-description')!
     fireEvent.change(descriptionField, { target: { value: 'Updated description' } })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Submit' }))
-    expect(addTagsMock).toHaveBeenCalledWith('alpha', 'Updated description')
-    expect(screen.getByTestId('snackbar')).toHaveAttribute('data-open', 'true')
+    const submitButton = within(dialog).getByRole('button', { name: 'Submit' })
+    await waitFor(() => expect(submitButton).not.toBeDisabled())
+    fireEvent.click(submitButton)
 
-    fireEvent.click(screen.getByTestId('snackbar-close'))
-    expect(screen.getByTestId('snackbar')).toHaveAttribute('data-open', 'false')
-
-  fireEvent.click(screen.getByRole('button', { name: 'Edit Tag' }))
-    fireEvent.keyDown(screen.getByTestId('dialog'), { key: 'Escape' })
-    expect(screen.getByTestId('dialog')).toHaveAttribute('data-open', 'false')
+    await waitFor(() => expect(addTagsMock).toHaveBeenCalledWith({ tag: 'beta', description: 'Updated description' }))
   })
 
-  it('handles dataset field tags with field-specific actions', () => {
+  it('handles dataset field tags', () => {
     renderDatasetTags({ datasetField: 'country', datasetTags: ['beta'] })
 
-  expect(screen.queryByLabelText('Edit a Tag')).toBeNull()
+    // Tag 'beta' is pre-selected
+    expect(screen.getAllByText('beta').length).toBeGreaterThan(0)
 
-    fireEvent.click(screen.getByTestId('add-option-dataset-tags'))
-    expect(addDatasetFieldTagMock).toHaveBeenCalledWith('analytics', 'orders', 'alpha', 'country')
+    // Add 'alpha'
+    fireEvent.change(screen.getByTestId('dataset-tags'), { target: { value: 'alpha' } })
+    expect(addDatasetFieldTagMock).toHaveBeenCalledWith({ namespace: 'analytics', datasetName: 'orders', field: 'country', tag: 'alpha' })
 
-    fireEvent.click(screen.getByTestId('remove-option-dataset-tags'))
-    expect(deleteDatasetFieldTagMock).toHaveBeenNthCalledWith(1, 'analytics', 'orders', 'alpha', 'country')
-
-    fireEvent.click(screen.getByTestId('chip-delete-beta'))
-    expect(deleteDatasetFieldTagMock).toHaveBeenNthCalledWith(2, 'analytics', 'orders', 'beta', 'country')
+    // Remove 'beta'
+    const removeBtn = screen.getByTestId('remove-beta')
+    fireEvent.click(removeBtn)
+    expect(deleteDatasetFieldTagMock).toHaveBeenCalledWith({ namespace: 'analytics', datasetName: 'orders', field: 'country', tag: 'beta' })
   })
 })

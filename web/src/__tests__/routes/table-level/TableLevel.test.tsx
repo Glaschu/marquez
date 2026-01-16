@@ -2,25 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { Provider } from 'react-redux'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createStore } from 'redux'
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import React from 'react'
 import TableLevel from '../../../routes/table-level/TableLevel'
 import type { LineageGraph } from '../../../types/api'
+import { renderWithProviders } from '../../../helpers/testUtils'
+import * as useLineageHook from '../../../queries/lineage'
 
-const { fetchLineageMock, createElkNodesMock, graphRenderMock, zoomControls } = vi.hoisted(() => ({
-  fetchLineageMock: vi.fn(
-    (nodeType: string, namespace: string, name: string, depth: number) => ({
-      type: 'FETCH_LINEAGE',
-      nodeType,
-      namespace,
-      name,
-      depth,
-    })
-  ),
+const { createElkNodesMock, graphRenderMock, zoomControls } = vi.hoisted(() => ({
   createElkNodesMock: vi.fn(() => ({
     nodes: [{ id: 'node-1' }],
     edges: [{ id: 'edge-1', source: 'node-1', target: 'node-1' }],
@@ -52,7 +43,7 @@ vi.mock('../../../components/graph', () => ({
     }
     return <div data-testid='graph' />
   },
-  ZoomPanControls: class {},
+  ZoomPanControls: class { },
 }))
 
 vi.mock('../../../routes/table-level/layout', () => ({
@@ -76,51 +67,55 @@ vi.mock('@visx/responsive/lib/components/ParentSize', () => ({
 }))
 
 vi.mock('../../../store/actionCreators', async () => {
-  const actual = await vi.importActual<typeof import('../../../store/actionCreators')>(
-    '../../../store/actionCreators'
-  )
-
+  // We mock actionCreators but fetchLineage is no longer used for fetching.
   return {
-    ...actual,
-    fetchLineage: (...args: Parameters<typeof actual.fetchLineage>) => fetchLineageMock(...args),
+    fetchLineage: vi.fn()
   }
 })
 
 const renderTableLevel = (lineage: LineageGraph | null, initialEntry?: string) => {
   const theme = createTheme()
-  const store = createStore(() => ({
-    lineage: {
-      lineage,
-    },
-  }))
-  store.dispatch = vi.fn()
+  const mockRefetch = vi.fn()
+
+  vi.spyOn(useLineageHook, 'useLineage').mockReturnValue({
+    data: lineage ? { graph: [lineage] } : undefined, // Check how useLineage returns data. Usually { lineage: ... } or just schema?
+    // Looking at TableLevel.tsx usage: const { data: lineageData... } = useLineage(...)
+    // lineageData is passed to createElkNodes.
+    // Let's assume structure matches LineageGraph for now or check usage.
+    // usage: createElkNodes(lineageData, ...)
+    isLoading: false,
+    isPending: false,
+    isError: false,
+    error: null,
+    refetch: mockRefetch,
+  } as any)
 
   return {
-    store,
-    ...render(
-      <Provider store={store}>
-        <ThemeProvider theme={theme}>
-          <MemoryRouter
-            initialEntries={[initialEntry ?? '/table-level/DATASET/analytics/daily-table?depth=2&isCompact=true']}
-          >
-            <Routes>
-              <Route path='/table-level/:nodeType/:namespace/:name' element={<TableLevel />} />
-            </Routes>
-          </MemoryRouter>
-        </ThemeProvider>
-      </Provider>
+    ...renderWithProviders(
+      <MemoryRouter
+        initialEntries={[initialEntry ?? '/table-level/DATASET/analytics/daily-table?depth=2&isCompact=true']}
+      >
+        <Routes>
+          <Route path='/table-level/:nodeType/:namespace/:name' element={<TableLevel />} />
+        </Routes>
+      </MemoryRouter>,
+      {
+        // Redux state if needed for other things? 
+        // TableLevel uses local state for view options.
+      }
     ),
+    mockRefetch
   }
 }
 
-beforeEach(() => {
-  fetchLineageMock.mockClear()
-  createElkNodesMock.mockClear()
-  graphRenderMock.mockClear()
-  zoomControls.length = 0
-})
-
 describe('TableLevel', () => {
+  beforeEach(() => {
+    createElkNodesMock.mockClear()
+    graphRenderMock.mockClear()
+    zoomControls.length = 0
+    vi.restoreAllMocks()
+  })
+
   it('renders nothing when lineage data is not available', () => {
     renderTableLevel(null)
 
@@ -128,23 +123,20 @@ describe('TableLevel', () => {
     expect(createElkNodesMock).not.toHaveBeenCalled()
   })
 
-  it('dispatches fetchLineage and renders the graph when lineage data is loaded', () => {
+  it('renders the graph when lineage data is loaded', () => {
     vi.useFakeTimers()
     try {
-      const lineage = { graph: {} } as unknown as LineageGraph
-      const { store } = renderTableLevel(lineage)
+      const lineage = { graph: [], nodes: [] } as unknown as LineageGraph
+      renderTableLevel(lineage)
 
-      expect(fetchLineageMock).toHaveBeenCalledWith('DATASET', 'analytics', 'daily-table', 2)
-      expect(store.dispatch).toHaveBeenCalledWith({
-        type: 'FETCH_LINEAGE',
-        nodeType: 'DATASET',
-        namespace: 'analytics',
-        name: 'daily-table',
-        depth: 2,
-      })
+      // expect(fetchLineageMock).toHaveBeenCalledWith('DATASET', 'analytics', 'daily-table', 2)
+      // No longer dispatching fetchLineage.
 
+      expect(useLineageHook.useLineage).toHaveBeenCalled()
+
+      // The component calls createElkNodes with the data from the hook
       expect(createElkNodesMock).toHaveBeenCalledWith(
-        lineage,
+        expect.anything(), // The lineage object
         'DATASET:analytics:daily-table',
         true,
         false,

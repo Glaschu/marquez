@@ -1,13 +1,13 @@
 // Copyright 2018-2025 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import { Provider } from 'react-redux'
 import { Run } from '../../../types/api'
-import { createStore } from 'redux'
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { renderWithProviders } from '../../../helpers/testUtils'
+import { screen } from '@testing-library/react'
 import React from 'react'
 import RunInfo from '../../../components/jobs/RunInfo'
+import * as useFacetsHook from '../../../queries/facets'
 
 // Mock MqCode component
 vi.mock('../../../components/core/code/MqCode', () => ({
@@ -42,37 +42,31 @@ describe('RunInfo Component', () => {
     },
   } as any
 
-  const createMockStore = (jobFacets: any = {}) => {
-    return createStore(() => ({
-      facets: {
-        result: jobFacets,
-        isLoading: false,
-        init: true,
-      },
-    }))
-  }
+  const renderRunInfo = (run: Run = mockRun, jobFacets: any = {}) => {
+    vi.spyOn(useFacetsHook, 'useJobFacets').mockReturnValue({
+      data: jobFacets,
+      isLoading: false,
+      isPending: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    } as any)
 
-  const renderWithStore = (store: any, run: Run = mockRun) => {
-    return render(
-      <Provider store={store}>
-        <RunInfo run={run} />
-      </Provider>
-    )
+    return renderWithProviders(<RunInfo run={run} />)
   }
 
   it('should render without crashing', () => {
-    const store = createMockStore()
-    const { container } = renderWithStore(store)
+    const { container } = renderRunInfo()
     expect(container).toBeTruthy()
   })
 
   it('should render SQL code when sql facet exists', () => {
-    const store = createMockStore({
+    const jobFacets = {
       sql: {
         query: 'SELECT * FROM users',
       },
-    })
-    renderWithStore(store)
+    }
+    renderRunInfo(mockRun, jobFacets)
 
     const sqlCode = screen.getByTestId('code-sql')
     expect(sqlCode).toBeTruthy()
@@ -80,13 +74,13 @@ describe('RunInfo Component', () => {
   })
 
   it('should render source code when sourceCode facet exists', () => {
-    const store = createMockStore({
+    const jobFacets = {
       sourceCode: {
         sourceCode: 'def hello(): print("world")',
         language: 'python',
       },
-    })
-    renderWithStore(store)
+    }
+    renderRunInfo(mockRun, jobFacets)
 
     const pythonCode = screen.getByTestId('code-python')
     expect(pythonCode).toBeTruthy()
@@ -94,10 +88,10 @@ describe('RunInfo Component', () => {
   })
 
   it('should render JOB FACETS section when job facets exist', () => {
-    const store = createMockStore({
+    const jobFacets = {
       customFacet: { data: 'test' },
-    })
-    renderWithStore(store)
+    }
+    renderRunInfo(mockRun, jobFacets)
 
     expect(screen.getByText('JOB FACETS')).toBeTruthy()
     const jsonView = screen.getAllByTestId('json-view')[0]
@@ -105,8 +99,7 @@ describe('RunInfo Component', () => {
   })
 
   it('should render RUN FACETS section when run facets exist', () => {
-    const store = createMockStore()
-    renderWithStore(store)
+    renderRunInfo()
 
     expect(screen.getByText('RUN FACETS')).toBeTruthy()
     const jsonViews = screen.getAllByTestId('json-view')
@@ -115,22 +108,19 @@ describe('RunInfo Component', () => {
   })
 
   it('should not render JOB FACETS when no job facets', () => {
-    const store = createMockStore(null)
-    renderWithStore(store)
-
+    renderRunInfo(mockRun, null)
     expect(screen.queryByText('JOB FACETS')).toBeNull()
   })
 
   it('should not render RUN FACETS when no run facets', () => {
     const runWithoutFacets = { ...mockRun, facets: null } as any
-    const store = createMockStore()
-    renderWithStore(store, runWithoutFacets)
+    renderRunInfo(runWithoutFacets)
 
     expect(screen.queryByText('RUN FACETS')).toBeNull()
   })
 
   it('should render both SQL and source code facets', () => {
-    const store = createMockStore({
+    const jobFacets = {
       sql: {
         query: 'SELECT * FROM table',
       },
@@ -138,18 +128,19 @@ describe('RunInfo Component', () => {
         sourceCode: 'console.log("test")',
         language: 'javascript',
       },
-    })
-    renderWithStore(store)
+    }
+    renderRunInfo(mockRun, jobFacets)
 
     expect(screen.getByTestId('code-sql')).toBeTruthy()
     expect(screen.getByTestId('code-javascript')).toBeTruthy()
   })
 
   it('should handle empty job facets object', () => {
-    const store = createMockStore({})
-    const { container } = renderWithStore(store)
+    renderRunInfo(mockRun, {})
 
-    // Should still render JOB FACETS section with empty object
+    // Should still render JOB FACETS section with empty object if truthy?
+    // RunInfo checks: {jobFacets && ...}
+    // If jobFacets is {}, it is truthy.
     expect(screen.getByText('JOB FACETS')).toBeTruthy()
   })
 })

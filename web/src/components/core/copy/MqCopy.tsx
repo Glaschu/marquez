@@ -1,9 +1,9 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import { Check } from '@mui/icons-material'
 import { Snackbar } from '@mui/material'
 import { type SyntheticEvent, useState } from 'react'
+import Check from '@mui/icons-material/Check'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import IconButton from '@mui/material/IconButton'
 import MQTooltip from '../tooltip/MQTooltip'

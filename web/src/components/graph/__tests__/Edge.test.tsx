@@ -1,7 +1,7 @@
 import React from 'react'
 
-import { render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { render, screen, within } from '@testing-library/react'
 
 import { Edge } from '../Edge/Edge'
 import { EdgeLabel } from '../Edge/EdgeLabel'
@@ -77,9 +77,9 @@ describe('StraightEdge', () => {
     useMediaQueryMock.mockReturnValue(false)
     const { container } = render(<StraightEdge edge={edge} isMiniMap={false} />)
 
-  const lines = container.querySelectorAll('line')
-  expect(lines).toHaveLength(2)
-  const [baseLine, animatedLine] = Array.from(lines)
+    const lines = container.querySelectorAll('line')
+    expect(lines).toHaveLength(2)
+    const [baseLine, animatedLine] = Array.from(lines)
     expect(baseLine.getAttribute('x1')).toBe('0')
     expect(animatedLine.getAttribute('id')).toBe('a-b-animated')
 
@@ -153,6 +153,6 @@ describe('EdgeLabel', () => {
 
     const { container } = render(<EdgeLabel label={label} endPointY={10} />)
     const text = within(container).getByText('With Adjust')
-  expect(text.getAttribute('y')).toBe('35')
+    expect(text.getAttribute('y')).toBe('35')
   })
 })

@@ -14,16 +14,16 @@ import {
 } from '@mui/material'
 import { Event } from '../../types/api'
 import { HEADER_HEIGHT } from '../../helpers/theme'
-import { IState } from '../../store/reducers'
+
 import { MqScreenLoad } from '../../components/core/screen-load/MqScreenLoad'
-import { Refresh } from '@mui/icons-material'
-import { useDispatch, useSelector } from 'react-redux'
 import { eventTypeColor } from '../../helpers/nodes'
-import { fetchEvents, resetEvents } from '../../store/actionCreators'
+import Refresh from '@mui/icons-material/Refresh'
+
 import { fileSize, formatUpdatedAt } from '../../helpers'
 import { formatDateAPIQuery, formatDatePicker } from '../../helpers/time'
 import { saveAs } from 'file-saver'
 import { truncateText } from '../../helpers/text'
+import { useEvents } from '../../queries/events'
 import { useSearchParams } from 'react-router-dom'
 import { useTheme } from '@emotion/react'
 import { useTranslation } from 'react-i18next'
@@ -40,7 +40,6 @@ import MqStatus from '../../components/core/status/MqStatus'
 import MqText from '../../components/core/text/MqText'
 import React, { useEffect, useRef } from 'react'
 import dayjs from '../../helpers/dayjs'
-
 interface EventsState {
   events: Event[]
   rowExpanded: number | null
@@ -55,11 +54,6 @@ const PAGE_SIZE = 50
 const EVENTS_HEADER_HEIGHT = 64
 
 const Events = () => {
-  const events = useSelector((state: IState) => state.events?.result ?? [])
-  const totalCount = useSelector((state: IState) => state.events.totalCount)
-  const isEventsLoading = useSelector((state: IState) => state.events?.isLoading)
-  const isEventsInit = useSelector((state: IState) => state.events?.init)
-  const dispatch = useDispatch()
   const [searchParams, setSearchParams] = useSearchParams()
   const [state, setState] = React.useState<EventsState>({
     page: 0,
@@ -69,21 +63,16 @@ const Events = () => {
     dateTo: searchParams.get('dateTo') || formatDateAPIQuery(dayjs().endOf('day').toString()),
   })
 
-  const mounted = useRef<boolean>(false)
+  // Hook calls must be after state init
+  const {
+    data: eventsData,
+    isLoading: isEventsLoading,
+    refetch,
+  } = useEvents(state.dateFrom, state.dateTo, PAGE_SIZE, state.page * PAGE_SIZE)
 
-  useEffect(() => {
-    if (!mounted.current) {
-      dispatch(fetchEvents(state.dateFrom, state.dateTo, PAGE_SIZE, state.page * PAGE_SIZE))
-      mounted.current = true
-    }
-  }, [dispatch, state.dateFrom, state.dateTo, state.page])
-
-  useEffect(() => {
-    setState((prev) => ({
-      ...prev,
-      events,
-    }))
-  }, [events])
+  const events: Event[] = eventsData?.events || []
+  const totalCount = eventsData?.totalCount || 0
+  const isEventsInit = true
 
   useEffect(() => {
     if (!searchParams.get('dateFrom') && !searchParams.get('dateTo')) {
@@ -94,25 +83,9 @@ const Events = () => {
     }
   }, [])
 
-  useEffect(() => {
-    return () => {
-      // on unmount
-      dispatch(resetEvents())
-    }
-  }, [dispatch])
-
   const handleChangeDatepicker = (e: any, direction: 'from' | 'to') => {
     const isDirectionFrom = direction === 'from'
     const keyDate = isDirectionFrom ? 'dateFrom' : 'dateTo'
-
-    dispatch(
-      fetchEvents(
-        formatDateAPIQuery(isDirectionFrom ? e.toDate() : state.dateFrom),
-        formatDateAPIQuery(isDirectionFrom ? state.dateTo : e.toDate()),
-        PAGE_SIZE,
-        state.page * PAGE_SIZE
-      )
-    )
 
     const params: { [key: string]: string } = {}
     searchParams.forEach((value, key) => (params[key] = value))
@@ -128,14 +101,6 @@ const Events = () => {
   const handleClickPage = (direction: 'prev' | 'next') => {
     const directionPage = direction === 'next' ? state.page + 1 : state.page - 1
 
-    dispatch(
-      fetchEvents(
-        formatDateAPIQuery(state.dateFrom),
-        formatDateAPIQuery(state.dateTo),
-        PAGE_SIZE,
-        directionPage * PAGE_SIZE
-      )
-    )
     // reset page scroll
     window.scrollTo(0, 0)
     setState((prev) => ({ ...prev, page: directionPage, rowExpanded: null }))
@@ -148,10 +113,7 @@ const Events = () => {
   }
 
   const refresh = () => {
-    const dateFrom =
-      searchParams.get('dateFrom') || formatDateAPIQuery(dayjs().startOf('day').toString())
-    const dateTo = searchParams.get('dateTo') || formatDateAPIQuery(dayjs().endOf('day').toString())
-    dispatch(fetchEvents(dateFrom, dateTo, PAGE_SIZE, state.page * PAGE_SIZE))
+    refetch()
   }
 
   const { t } = useTranslation()
@@ -215,7 +177,7 @@ const Events = () => {
             </Box>
             {isEventsLoading && <CircularProgress size={16} />}
           </Box>
-          {state.events?.length === 0 ? (
+          {events.length === 0 ? (
             <Box p={2}>
               <MqEmpty title={t('events_route.empty_title')}>
                 <>
@@ -260,7 +222,7 @@ const Events = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {state.events.map((event, key: number) => {
+                  {events.map((event, key: number) => {
                     return (
                       <React.Fragment key={key}>
                         <TableRow

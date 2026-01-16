@@ -4,7 +4,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import reducer from '../../store/reducers/lineage'
 import {
-  FETCH_LINEAGE_SUCCESS,
   SET_SELECTED_NODE,
   SET_BOTTOM_BAR_HEIGHT,
   SET_TAB_INDEX,
@@ -31,17 +30,10 @@ describe('lineage reducer', () => {
   it('should return the initial state for unknown actions', () => {
     const initialState = reducer(undefined, unknown)
     expect(initialState).toMatchObject({
-      lineage: { graph: [] },
       selectedNode: null,
       tabIndex: 0,
       showFullGraph: true,
     })
-  })
-
-  it('should handle FETCH_LINEAGE_SUCCESS', () => {
-    const lineageGraph = { graph: [{ id: 'node-1' }] }
-    const state = reducer(undefined, { type: FETCH_LINEAGE_SUCCESS, payload: lineageGraph } as any)
-    expect(state.lineage).toEqual(lineageGraph)
   })
 
   it('should handle SET_SELECTED_NODE and reset tab index when needed', () => {
@@ -86,12 +78,13 @@ describe('lineage reducer', () => {
     expect(state.showFullGraph).toBe(false)
   })
 
-  it('should reset lineage graph on RESET_LINEAGE', () => {
-    const modifiedState = reducer(undefined, {
-      type: FETCH_LINEAGE_SUCCESS,
-      payload: { graph: [{ id: 'node' }] },
-    } as any)
+  it('should reset state on RESET_LINEAGE', () => {
+    const modifiedState = {
+      ...reducer(undefined, unknown),
+      selectedNode: 'some-node',
+    } as any
+
     const state = reducer(modifiedState, { type: RESET_LINEAGE } as any)
-    expect(state.lineage).toEqual({ graph: [] })
+    expect(state.selectedNode).toBe(null)
   })
 })

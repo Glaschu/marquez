@@ -1,18 +1,10 @@
-// Copyright 2018-2023 contributors to the Marquez project
-// SPDX-License-Identifier: Apache-2.0
 import { Box } from '@mui/material'
-import { IState } from '../../store/reducers'
 import { Run } from '../../types/api'
-import { fetchJobFacets, resetFacets } from '../../store/actionCreators'
-import { useDispatch, useSelector } from 'react-redux'
+import { useJobFacets } from '../../queries/facets'
 import MqCode from '../core/code/MqCode'
 import MqJsonView from '../core/json-view/MqJsonView'
 import MqText from '../core/text/MqText'
-import React, { useEffect } from 'react'
-
-interface JobFacets {
-  [key: string]: object
-}
+import React from 'react'
 
 export interface SqlFacet {
   query: string
@@ -30,20 +22,8 @@ type RunInfoProps = {
 }
 
 const RunInfo = ({ run }: RunInfoProps) => {
-  const jobFacets = useSelector((state: IState) => state.facets.result)
-  const dispatch = useDispatch()
-
-  useEffect(() => {
-    dispatch(fetchJobFacets(run.id))
-  }, [dispatch, run.id])
-
-  // unmounting
-  useEffect(
-    () => () => {
-      dispatch(resetFacets())
-    },
-    [dispatch]
-  )
+  const { data: jobFacetsData } = useJobFacets(run.id)
+  const jobFacets = jobFacetsData as any
 
   return (
     <Box>

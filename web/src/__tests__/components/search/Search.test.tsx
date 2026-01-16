@@ -11,14 +11,20 @@ import Search from '../../../components/search/Search'
 
 // Mock the child components
 vi.mock('../../../components/search/base-search/BaseSearch', () => ({
-  default: ({ search }: { search: string }) => (
-    <div data-testid='base-search'>BaseSearch: {search}</div>
+  default: ({ search, onIsLoading }: { search: string, onIsLoading: (l: boolean) => void }) => (
+    <div data-testid='base-search'>
+      BaseSearch: {search}
+      <button data-testid='trigger-loading' onClick={() => onIsLoading(true)}>Trigger Loading</button>
+    </div>
   ),
 }))
 
 vi.mock('../../../components/search/open-search/OpenSearch', () => ({
-  default: ({ search }: { search: string }) => (
-    <div data-testid='open-search'>OpenSearch: {search}</div>
+  default: ({ search, onIsLoading }: { search: string, onIsLoading: (l: boolean) => void }) => (
+    <div data-testid='open-search'>
+      OpenSearch: {search}
+      <button data-testid='trigger-loading-open' onClick={() => onIsLoading(true)}>Trigger Loading Open</button>
+    </div>
   ),
 }))
 
@@ -93,21 +99,14 @@ describe('Search Component', () => {
     expect(screen.getByText('⌘K')).toBeInTheDocument()
   })
 
-  it('shows loading indicator when searching', () => {
-    const state = {
-      openSearchJobs: { isLoading: true },
-      openSearchDatasets: { isLoading: false },
-    }
-    const { container } = renderSearch(false, state)
-    expect(container.querySelector('.MuiCircularProgress-root')).toBeInTheDocument()
-  })
+  it('shows loading indicator when child component triggers loading', () => {
+    const { container } = renderSearch()
+    const input = screen.getByRole('textbox')
+    fireEvent.change(input, { target: { value: 'test' } })
 
-  it('shows loading indicator when datasets are loading', () => {
-    const state = {
-      openSearchJobs: { isLoading: false },
-      openSearchDatasets: { isLoading: true },
-    }
-    const { container } = renderSearch(false, state)
+    // Default uses BaseSearch
+    fireEvent.click(screen.getByTestId('trigger-loading'))
+
     expect(container.querySelector('.MuiCircularProgress-root')).toBeInTheDocument()
   })
 

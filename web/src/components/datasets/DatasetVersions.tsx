@@ -1,7 +1,6 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import { ArrowBackIosRounded } from '@mui/icons-material'
 import {
   Box,
   Chip,
@@ -13,13 +12,12 @@ import {
   TableRow,
 } from '@mui/material'
 import { Dataset, DatasetVersion } from '../../types/api'
-import { IState } from '../../store/reducers'
 import { alpha, createTheme } from '@mui/material/styles'
-import { fetchDatasetVersions } from '../../store/actionCreators'
-import { useDispatch, useSelector } from 'react-redux'
 import { formatUpdatedAt } from '../../helpers'
+import { useDatasetVersions } from '../../queries/datasets'
 import { useTheme } from '@emotion/react'
 import { useTranslation } from 'react-i18next'
+import ArrowBackIosRounded from '@mui/icons-material/ArrowBackIosRounded'
 import DatasetInfo from './DatasetInfo'
 import IconButton from '@mui/material/IconButton'
 import MQTooltip from '../core/tooltip/MQTooltip'
@@ -40,14 +38,20 @@ const PAGE_SIZE = 10
 
 const DatasetVersions = (props: DatasetVersionsProps) => {
   const { dataset } = props
-  const versions = useSelector((state: IState) => state.datasetVersions.result.versions)
-  const isLoading = useSelector((state: IState) => state.datasetVersions.isLoading)
-  const totalCount = useSelector((state: IState) => state.datasetVersions.result.totalCount)
-  const dispatch = useDispatch()
 
   const [state, setState] = React.useState<VersionsState>({
     page: 0,
   })
+
+  const { data: versionsData, isLoading } = useDatasetVersions(
+    dataset.namespace,
+    dataset.name,
+    PAGE_SIZE,
+    state.page * PAGE_SIZE
+  )
+
+  const versions = versionsData?.versions || []
+  const totalCount = versionsData?.totalCount || 0
 
   const [infoView, setInfoView] = React.useState<DatasetVersion | null>(null)
 
@@ -64,20 +68,16 @@ const DatasetVersions = (props: DatasetVersionsProps) => {
   const { t } = useTranslation()
   const theme = createTheme(useTheme())
 
-  React.useEffect(() => {
-    dispatch(fetchDatasetVersions(dataset.namespace, dataset.name, PAGE_SIZE, state.page * PAGE_SIZE))
-  }, [state.page, dispatch, dataset.namespace, dataset.name])
-
-  if (!versions || versions.length === 0) {
-    return null
-  }
-
   if (isLoading) {
     return (
       <Box display={'flex'} justifyContent={'center'} mt={2}>
         <CircularProgress color='primary' />
       </Box>
     )
+  }
+
+  if (!versions || versions.length === 0) {
+    return null
   }
 
   if (infoView) {

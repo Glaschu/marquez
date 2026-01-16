@@ -16,15 +16,17 @@ import { Dataset } from '../../types/api'
 import { HEADER_HEIGHT } from '../../helpers/theme'
 import { IState } from '../../store/reducers'
 import { MqScreenLoad } from '../../components/core/screen-load/MqScreenLoad'
-import { Refresh } from '@mui/icons-material'
 import {
   datasetFacetsQualityAssertions,
   datasetFacetsStatus,
   encodeNode,
 } from '../../helpers/nodes'
-import { fetchDatasets, resetDatasets } from '../../store/actionCreators'
+import Refresh from '@mui/icons-material/Refresh'
+
 import { formatUpdatedAt } from '../../helpers'
 import { truncateText } from '../../helpers/text'
+import { useDatasets } from '../../queries/datasets'
+import { useSelector } from 'react-redux'
 import { useTheme } from '@emotion/react'
 import { useTranslation } from 'react-i18next'
 import Assertions from '../../components/datasets/Assertions'
@@ -38,7 +40,6 @@ import MqStatus from '../../components/core/status/MqStatus'
 import MqText from '../../components/core/text/MqText'
 import NamespaceSelect from '../../components/namespace-select/NamespaceSelect'
 import React from 'react'
-import { useDispatch, useSelector } from 'react-redux'
 
 interface DatasetsState {
   page: number
@@ -48,36 +49,31 @@ const PAGE_SIZE = 20
 const DATASET_HEADER_HEIGHT = 64
 
 const Datasets: React.FC = () => {
-  const dispatch = useDispatch()
-  const datasets = useSelector((state: IState) => state.datasets.result)
-  const totalCount = useSelector((state: IState) => state.datasets.totalCount)
-  const isDatasetsLoading = useSelector((state: IState) => state.datasets.isLoading)
-  const isDatasetsInit = useSelector((state: IState) => state.datasets.init)
   const selectedNamespace = useSelector((state: IState) => state.namespaces.selectedNamespace)
-  const defaultState = {
-    page: 0,
-  }
-  const [state, setState] = React.useState<DatasetsState>(defaultState)
+  const [state, setState] = React.useState<DatasetsState>({ page: 0 })
+  const {
+    data: datasetsData,
+    isLoading: isDatasetsLoading,
+    refetch,
+  } = useDatasets(selectedNamespace || '', PAGE_SIZE, state.page * PAGE_SIZE)
+
+  const datasets = datasetsData?.datasets || []
+  const totalCount = datasetsData?.totalCount || 0
 
   const theme = createTheme(useTheme())
 
   React.useEffect(() => {
+    // If selectedNamespace changes, we reset page but data fetching is handled by the hook key
     if (selectedNamespace) {
-      dispatch(fetchDatasets(selectedNamespace, PAGE_SIZE, state.page * PAGE_SIZE))
+      if (state.page !== 0) {
+        setState({ ...state, page: 0 })
+      }
     }
-  }, [dispatch, selectedNamespace, state.page])
-
-  React.useEffect(() => {
-    return () => {
-      // on unmount
-      dispatch(resetDatasets())
-    }
-  }, [dispatch])
+  }, [selectedNamespace])
 
   const handleClickPage = (direction: 'prev' | 'next') => {
     const directionPage = direction === 'next' ? state.page + 1 : state.page - 1
 
-    dispatch(fetchDatasets(selectedNamespace || '', PAGE_SIZE, directionPage * PAGE_SIZE))
     // reset page scroll
     window.scrollTo(0, 0)
     setState({ ...state, page: directionPage })
@@ -108,9 +104,7 @@ const Datasets: React.FC = () => {
               color={'primary'}
               size={'small'}
               onClick={() => {
-                if (selectedNamespace) {
-                  dispatch(fetchDatasets(selectedNamespace, PAGE_SIZE, state.page * PAGE_SIZE))
-                }
+                refetch()
               }}
             >
               <Refresh fontSize={'small'} />
@@ -119,7 +113,7 @@ const Datasets: React.FC = () => {
         </Box>
       </Box>
       <MqScreenLoad
-        loading={isDatasetsLoading && !isDatasetsInit}
+        loading={isDatasetsLoading}
         customHeight={`calc(100vh - ${HEADER_HEIGHT}px - ${DATASET_HEADER_HEIGHT}px)`}
       >
         <>
@@ -132,9 +126,7 @@ const Datasets: React.FC = () => {
                     color={'primary'}
                     size={'small'}
                     onClick={() => {
-                      if (selectedNamespace) {
-                        dispatch(fetchDatasets(selectedNamespace, PAGE_SIZE, state.page * PAGE_SIZE))
-                      }
+                      refetch()
                     }}
                   >
                     Refresh

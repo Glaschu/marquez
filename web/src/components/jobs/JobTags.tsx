@@ -8,10 +8,9 @@ import {
   TextField,
 } from '@mui/material'
 import { Box, createTheme } from '@mui/material'
-import { IState } from '../../store/reducers'
 import { Tag } from '../../types/api'
-import { addJobTag, addTags, deleteJobTag } from '../../store/actionCreators'
-import { useDispatch, useSelector } from 'react-redux'
+import { useAddJobTag, useDeleteJobTag } from '../../queries/jobs'
+import { useAddTags, useTags } from '../../queries/tags'
 import { useTheme } from '@emotion/react'
 import Button from '@mui/material/Button'
 import CheckBoxIcon from '@mui/icons-material/CheckBox'
@@ -34,7 +33,9 @@ interface JobTagsProps {
 
 const JobTags = (props: JobTagsProps) => {
   const { namespace, jobName, jobTags } = props
-  const dispatch = useDispatch()
+  const addJobTagMutation = useAddJobTag()
+  const deleteJobTagMutation = useDeleteJobTag()
+  const addTagsMutation = useAddTags()
 
   const [listTag, setListTag] = useState('')
   const [openTagDesc, setOpenTagDesc] = useState(false)
@@ -55,7 +56,7 @@ const JobTags = (props: JobTagsProps) => {
   }
 
   const handleTagDescChange = (_event: ChangeEvent<HTMLInputElement>, value: string) => {
-    const selectedTagData = tagData.find((tag) => tag.name === value)
+    const selectedTagData = tagData.find((tag: Tag) => tag.name === value)
     setListTag(value)
     setTagDescription(selectedTagData ? selectedTagData.description : '')
   }
@@ -64,9 +65,8 @@ const JobTags = (props: JobTagsProps) => {
     setTagDescription(event.target.value)
   }
 
-  const tagData = useSelector((state: IState) =>
-    state.tags.tags.sort((a, b) => a.name.localeCompare(b.name))
-  )
+  const { data: tags = [] } = useTags()
+  const tagData = tags.sort((a: Tag, b: Tag) => a.name.localeCompare(b.name))
 
   const handleTagChange = (
     _event: React.SyntheticEvent,
@@ -78,12 +78,12 @@ const JobTags = (props: JobTagsProps) => {
       const newTag = details.option
       const newSelectedTags = selectedTags.filter((tag) => newTag !== tag)
       setSelectedTags(newSelectedTags)
-      dispatch(deleteJobTag(namespace, jobName, newTag))
+      deleteJobTagMutation.mutate({ namespace, jobName, tag: newTag })
     } else if (details && !selectedTags.includes(details.option)) {
       const newTag = details.option
       const newSelectedTags = [...selectedTags, newTag]
       setSelectedTags(newSelectedTags)
-      dispatch(addJobTag(namespace, jobName, newTag))
+      addJobTagMutation.mutate({ namespace, jobName, tag: newTag })
     }
   }
 
@@ -92,11 +92,11 @@ const JobTags = (props: JobTagsProps) => {
 
     setSelectedTags(newSelectedTags)
 
-    dispatch(deleteJobTag(namespace, jobName, deletedTag))
+    deleteJobTagMutation.mutate({ namespace, jobName, tag: deletedTag })
   }
 
   const addTag = () => {
-    dispatch(addTags(listTag, tagDescription))
+    addTagsMutation.mutate({ tag: listTag, description: tagDescription })
     setSnackbarOpen(true)
     setOpenTagDesc(false)
     setListTag('')
@@ -105,7 +105,7 @@ const JobTags = (props: JobTagsProps) => {
 
   const formatTags = (tags: string[], tag_desc: Tag[]) => {
     return tags.map((tag, index) => {
-      const tagDescription = tag_desc.find((tagItem) => tagItem.name === tag)
+      const tagDescription = tag_desc.find((tagItem: Tag) => tagItem.name === tag)
       const tooltipTitle = tagDescription?.description || 'No Tag Description'
       return (
         <MQTooltip title={tooltipTitle} key={tag}>
@@ -157,11 +157,11 @@ const JobTags = (props: JobTagsProps) => {
           autoHighlight
           disableClearable
           disablePortal
-          options={tagData.map((option) => option.name)}
+          options={tagData.map((option: Tag) => option.name)}
           value={selectedTags}
           onChange={handleTagChange}
           renderTags={(value: string[]) => formatTags(value, tagData)}
-          renderOption={(props, option, { selected }) => (
+          renderOption={(props, option: string, { selected }) => (
             <li {...props}>
               <Checkbox
                 icon={<CheckBoxOutlineBlankIcon fontSize='small' />}
@@ -172,7 +172,7 @@ const JobTags = (props: JobTagsProps) => {
               <div>
                 <MQText bold>{option}</MQText>
                 <MQText subdued overflowHidden>
-                  {tagData.find((tagItem) => tagItem.name === option)?.description || ''}
+                  {tagData.find((tagItem: Tag) => tagItem.name === option)?.description || ''}
                 </MQText>
               </div>
             </li>
@@ -214,7 +214,7 @@ const JobTags = (props: JobTagsProps) => {
             Tag
           </MQText>
           <Autocomplete
-            options={tagData.map((option) => option.name)}
+            options={tagData.map((option: Tag) => option.name)}
             autoSelect
             freeSolo
             fullWidth

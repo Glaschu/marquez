@@ -1,21 +1,17 @@
 import { Box, Stack } from '@mui/system'
 import { Button, ButtonGroup, Container, Divider, Drawer, Grid, Skeleton } from '@mui/material'
-import { ChevronRight } from '@mui/icons-material'
 import { HEADER_HEIGHT, theme } from '../../helpers/theme'
 import { IState } from '../../store/reducers'
-import { RunState } from '../../types/api'
 import { MiniGraphContainer } from './MiniGraphContainer'
 import { Nullable } from '../../types/util/Nullable'
-import { useDispatch, useSelector } from 'react-redux'
-import {
-  fetchDatasetMetrics,
-  fetchJobMetrics,
-  fetchJobs,
-  fetchLineageMetrics,
-  fetchSourceMetrics,
-} from '../../store/actionCreators'
+import { RunState } from '../../types/api'
+
+import { useDispatch } from 'react-redux'
 import { useEffect, useState } from 'react'
+import { useIntervalMetrics, useLineageMetrics } from '../../queries/metrics'
+import { useJobs } from '../../queries/jobs'
 import { useSearchParams } from 'react-router-dom'
+import ChevronRight from '@mui/icons-material/ChevronRight'
 import CircularProgress from '@mui/material/CircularProgress/CircularProgress'
 import JobRunItem from './JobRunItem'
 import JobsDrawer from './JobsDrawer'
@@ -24,7 +20,6 @@ import MqEmpty from '../../components/core/empty/MqEmpty'
 import MqText from '../../components/core/text/MqText'
 import SplitButton from '../../components/dashboard/SplitButton'
 import StackedLineageEvents from './StackedLineageEvents'
-
 const TIMEFRAMES = ['24 Hours', '7 Days']
 type RefreshInterval = '30s' | '5m' | '10m' | 'Never'
 const REFRESH_INTERVALS: RefreshInterval[] = ['30s', '5m', '10m', 'Never']
@@ -46,16 +41,6 @@ const states: { label: RunState; color: string; bgColor: string }[] = [
 ]
 
 const Dashboard = () => {
-  const lineageMetrics = useSelector((state: IState) => state.lineageMetrics.data) ?? []
-  const isLineageMetricsLoading = useSelector((state: IState) => state.lineageMetrics.isLoading)
-  const jobs = useSelector((state: IState) => state.jobs.result) ?? []
-  const isJobsLoading = useSelector((state: IState) => state.jobs.isLoading)
-  const jobMetrics = useSelector((state: IState) => state.jobMetrics.data) ?? []
-  const isJobMetricsLoading = useSelector((state: IState) => state.jobMetrics.isLoading)
-  const datasetMetrics = useSelector((state: IState) => state.datasetMetrics.data) ?? []
-  const isDatasetMetricsLoading = useSelector((state: IState) => state.datasetMetrics.isLoading)
-  const sourceMetrics = useSelector((state: IState) => state.sourceMetrics.data) ?? []
-  const isSourceMetricsLoading = useSelector((state: IState) => state.sourceMetrics.isLoading)
   const dispatch = useDispatch()
   const [searchParams, setSearchParams] = useSearchParams()
   const [timeframe, setTimeframe] = useState(
@@ -65,6 +50,36 @@ const Dashboard = () => {
   const [selectedState, setSelectedState] = useState<Nullable<RunState>>(null)
   const [jobsDrawerOpen, setJobsDrawerOpen] = useState(false)
   const [timelineOpen, setTimelineOpen] = useState(false)
+
+  // React Query hooks for metrics
+  const unit = timeframe === '7 Days' ? 'week' : 'day'
+  const {
+    data: lineageMetrics = [],
+    isLoading: isLineageMetricsLoading,
+    refetch: refetchLineage,
+  } = useLineageMetrics(unit)
+  const {
+    data: jobMetrics = [],
+    isLoading: isJobMetricsLoading,
+    refetch: refetchJobs,
+  } = useIntervalMetrics('jobs', unit)
+  const {
+    data: datasetMetrics = [],
+    isLoading: isDatasetMetricsLoading,
+    refetch: refetchDatasets,
+  } = useIntervalMetrics('datasets', unit)
+  const {
+    data: sourceMetrics = [],
+    isLoading: isSourceMetricsLoading,
+    refetch: refetchSources,
+  } = useIntervalMetrics('sources', unit)
+
+  const {
+    data: jobsResult,
+    isLoading: isJobsLoading,
+    refetch: refetchJobsList,
+  } = useJobs(null, JOB_RUN_LIMIT, 0, selectedState ? selectedState : undefined)
+  const jobs = jobsResult?.jobs || []
 
   useEffect(() => {
     const currentSearchParams = searchParams.get('timeframe')
@@ -76,42 +91,23 @@ const Dashboard = () => {
   }, [searchParams])
 
   useEffect(() => {
-    if (timeframe === '24 Hours') {
-      dispatch(fetchLineageMetrics('day'))
-      dispatch(fetchJobMetrics('day'))
-      dispatch(fetchDatasetMetrics('day'))
-      dispatch(fetchSourceMetrics('day'))
-    } else if (timeframe === '7 Days') {
-      dispatch(fetchLineageMetrics('week'))
-      dispatch(fetchJobMetrics('week'))
-      dispatch(fetchDatasetMetrics('week'))
-      dispatch(fetchSourceMetrics('week'))
-    }
-  }, [dispatch, timeframe])
-
-  useEffect(() => {
-    dispatch(fetchJobs(null, JOB_RUN_LIMIT, 0, selectedState ? selectedState : undefined))
-  }, [dispatch, selectedState])
-
-  useEffect(() => {
     const intervalTime = INTERVAL_TO_MS_MAP[intervalKey]
 
     if (intervalTime > 0) {
       const intervalId = setInterval(() => {
-        const currentSearchParams = searchParams.get('timeframe')
-        const range = currentSearchParams === 'week' ? 'week' : 'day'
-        dispatch(fetchLineageMetrics(range))
-        dispatch(fetchJobMetrics(range))
-        dispatch(fetchDatasetMetrics(range))
-        dispatch(fetchSourceMetrics(range))
+        refetchLineage()
+        refetchJobs()
+        refetchDatasets()
+        refetchSources()
+        refetchJobsList()
       }, intervalTime)
       return () => clearInterval(intervalId)
     }
     return () => clearInterval(0)
-  }, [dispatch, intervalKey, searchParams])
+  }, [intervalKey, refetchLineage, refetchJobs, refetchDatasets, refetchSources, refetchJobsList])
 
   const metrics = lineageMetrics.reduce(
-    (acc, item) => {
+    (acc: any, item: any) => {
       acc.failed += item.fail
       acc.started += item.start
       acc.completed += item.complete
@@ -122,13 +118,11 @@ const Dashboard = () => {
   )
 
   const refresh = () => {
-    const currentSearchParams = searchParams.get('timeframe')
-    const range = currentSearchParams === 'week' ? 'week' : 'day'
-    dispatch(fetchJobs(null, JOB_RUN_LIMIT, 0))
-    dispatch(fetchLineageMetrics(range))
-    dispatch(fetchJobMetrics(range))
-    dispatch(fetchDatasetMetrics(range))
-    dispatch(fetchSourceMetrics(range))
+    refetchJobsList()
+    refetchLineage()
+    refetchJobs()
+    refetchDatasets()
+    refetchSources()
   }
 
   const { failed, started, completed, aborted } = metrics
@@ -140,7 +134,7 @@ const Dashboard = () => {
         open={jobsDrawerOpen}
         onClose={() => {
           setJobsDrawerOpen(false)
-          dispatch(fetchJobs(null, JOB_RUN_LIMIT, 0))
+          refetchJobsList()
         }}
         PaperProps={{
           sx: {

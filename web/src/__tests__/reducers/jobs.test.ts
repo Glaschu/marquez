@@ -2,25 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect } from 'vitest'
-import * as actionTypes from '../../store/actionCreators/actionTypes'
-import jobsReducer, {IJobsAction, initialState} from '../../store/reducers/jobs'
 import { stopWatchDuration } from "../../helpers/time";
-import { Job } from "../../types/api";
-import jobs from '../../../docker/db/data/jobs.json'
-
-describe('jobs reducer', () => {
-
-  it('should handle FETCH_JOBS_SUCCESS', () => {
-    const action = {
-      type: actionTypes.FETCH_JOBS_SUCCESS,
-      payload: {
-        totalCount: 13,
-        jobs: jobs as Job[]
-      }
-    } as IJobsAction
-    expect(jobsReducer(initialState, action)).toStrictEqual({ isLoading: false, result: jobs, totalCount: 13, init: true, deletedJobName: '', jobTags:[] })
-  })
-})
 
 describe('stopWatchDuration', () => {
   const oneMinute = 60 * 1000;

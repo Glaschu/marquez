@@ -1,9 +1,8 @@
 import { Box } from '@mui/system'
 import { IState } from '../../store/reducers'
 import { Job } from '../../types/api'
-import { fetchJobs } from '../../store/actionCreators'
 import { theme } from '../../helpers/theme'
-import { useDispatch, useSelector } from 'react-redux'
+import { useJobs } from '../../queries/jobs'
 import CircularProgress from '@mui/material/CircularProgress/CircularProgress'
 import JobRunItem from './JobRunItem'
 import MqPaging from '../../components/paging/MqPaging'
@@ -13,19 +12,12 @@ const WIDTH = 800
 const PAGE_SIZE = 10
 
 const JobsDrawer = () => {
-  const jobs = useSelector((state: IState) => state.jobs.result)
-  const isJobsLoading = useSelector((state: IState) => state.jobs.isLoading)
-  const jobCount = useSelector((state: IState) => state.jobs.totalCount)
-  const dispatch = useDispatch()
   const [page, setPage] = React.useState<number>(0)
-
-  useEffect(() => {
-    dispatch(fetchJobs(null, PAGE_SIZE, page * PAGE_SIZE))
-  }, [page, dispatch])
-
+  const { data: jobsResult, isLoading: isJobsLoading } = useJobs(null, PAGE_SIZE, page * PAGE_SIZE)
+  const jobs = jobsResult?.jobs || []
+  const jobCount = jobsResult?.totalCount || 0
   const handleClickPage = (direction: 'prev' | 'next') => {
     const directionPage = direction === 'next' ? page + 1 : page - 1
-    dispatch(fetchJobs(null, PAGE_SIZE, directionPage * PAGE_SIZE))
     setPage(directionPage)
   }
 

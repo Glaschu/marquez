@@ -89,16 +89,22 @@ const createMockNode = (
   ...overrides,
 })
 
-const createMockStore = (dataset: Dataset | null = null) => {
-  return createStore(() => ({
-    lineage: {
-      lineage: { graph: [] },
-    },
-    dataset: {
-      result: dataset,
-      isLoading: false,
-    },
-  }))
+vi.mock('../../../queries/datasets', () => ({
+  useDataset: vi.fn(),
+}))
+
+import { useDataset } from '../../../queries/datasets'
+import { renderWithProviders } from '../../../helpers/testUtils'
+
+const renderNode = (node: any, storeState: any = {}) => {
+  return renderWithProviders(
+    <svg>
+      <TableLineageDatasetNode node={node} />
+    </svg>,
+    {
+      initialState: storeState,
+    }
+  )
 }
 
 describe('TableLineageDatasetNode', () => {
@@ -108,17 +114,13 @@ describe('TableLineageDatasetNode', () => {
 
   it('renders dataset node with basic information', () => {
     const node = createMockNode()
-    const store = createMockStore(null)
+    vi.mocked(useDataset).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any)
 
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <svg>
-            <TableLineageDatasetNode node={node} />
-          </svg>
-        </MemoryRouter>
-      </Provider>
-    )
+    renderNode(node)
 
     expect(screen.getByText('DATASET')).toBeInTheDocument()
     expect(screen.getByText('test-dataset')).toBeInTheDocument()
@@ -126,17 +128,13 @@ describe('TableLineageDatasetNode', () => {
 
   it('renders dataset fields in non-compact mode', () => {
     const node = createMockNode({ height: 100 })
-    const store = createMockStore(null)
+    vi.mocked(useDataset).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any)
 
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <svg>
-            <TableLineageDatasetNode node={node} />
-          </svg>
-        </MemoryRouter>
-      </Provider>
-    )
+    renderNode(node)
 
     // Fields should be rendered
     expect(screen.getByText(/- id/)).toBeInTheDocument()
@@ -146,17 +144,13 @@ describe('TableLineageDatasetNode', () => {
 
   it('does not render fields in compact mode', () => {
     const node = createMockNode({ height: 24 })
-    const store = createMockStore(null)
+    vi.mocked(useDataset).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any)
 
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <svg>
-            <TableLineageDatasetNode node={node} />
-          </svg>
-        </MemoryRouter>
-      </Provider>
-    )
+    renderNode(node)
 
     // Fields should not be rendered in compact mode
     expect(screen.queryByText(/- id/)).not.toBeInTheDocument()
@@ -165,17 +159,13 @@ describe('TableLineageDatasetNode', () => {
 
   it('navigates to dataset lineage page on click', () => {
     const node = createMockNode()
-    const store = createMockStore(null)
+    vi.mocked(useDataset).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any)
 
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <svg>
-            <TableLineageDatasetNode node={node} />
-          </svg>
-        </MemoryRouter>
-      </Provider>
-    )
+    renderNode(node)
 
     const datasetLabel = screen.getByText('test-dataset')
     fireEvent.click(datasetLabel)
@@ -188,17 +178,22 @@ describe('TableLineageDatasetNode', () => {
   it('renders with dataset description', () => {
     const dataset = createMockDataset({ description: 'Custom dataset description' })
     const node = createMockNode({ data: { dataset } })
-    const store = createMockStore(null)
 
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <svg>
-            <TableLineageDatasetNode node={node} />
-          </svg>
-        </MemoryRouter>
-      </Provider>
-    )
+    // The component likely uses useDataset to fetch extra details, OR uses the data from the node props.
+    // Based on original code `createMockDataset` was passed to node.data.dataset.
+    // The original test mocked Redux state with `createMockStore(null)` so useDataset probably fetched nothing or wasn't used?
+    // Wait, the component uses `useDataset`! 
+    // If the node data overrides the hook data or vice-versa needs to be checked.
+    // The original test `renders with dataset description` set `dataset` in `node.data`.
+    // Let's assume the component uses the prop data if available or falls back to hook?
+    // Mocking hook to return null for now as per original test implications.
+    vi.mocked(useDataset).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any)
+
+    renderNode(node)
 
     expect(screen.getByText('test-dataset')).toBeInTheDocument()
   })
@@ -212,17 +207,14 @@ describe('TableLineageDatasetNode', () => {
     }))
     const dataset = createMockDataset({ fields: manyFields })
     const node = createMockNode({ data: { dataset }, height: 200 })
-    const store = createMockStore(null)
 
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <svg>
-            <TableLineageDatasetNode node={node} />
-          </svg>
-        </MemoryRouter>
-      </Provider>
-    )
+    vi.mocked(useDataset).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any)
+
+    renderNode(node)
 
     // All fields should be rendered
     expect(screen.getAllByText(/- field_/)).toHaveLength(10)
@@ -231,17 +223,14 @@ describe('TableLineageDatasetNode', () => {
   it('handles dataset with no description', () => {
     const dataset = createMockDataset({ description: undefined })
     const node = createMockNode({ data: { dataset } })
-    const store = createMockStore(null)
 
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <svg>
-            <TableLineageDatasetNode node={node} />
-          </svg>
-        </MemoryRouter>
-      </Provider>
-    )
+    vi.mocked(useDataset).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any)
+
+    renderNode(node)
 
     expect(screen.getByText('test-dataset')).toBeInTheDocument()
   })
@@ -281,17 +270,16 @@ describe('TableLineageDatasetNode', () => {
     }
 
     const node = createMockNode()
-    const store = createMockStore(datasetWithFacets)
+    // Original test put datasetWithFacets in the STORE `dataset.result`.
+    // This implies the component uses `useDataset` (formerly selector) to get this data.
+    // So we MUST mock useDataset to return this data.
+    vi.mocked(useDataset).mockReturnValue({
+      data: datasetWithFacets,
+      isLoading: false,
+      isError: false,
+    } as any)
 
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <svg>
-            <TableLineageDatasetNode node={node} />
-          </svg>
-        </MemoryRouter>
-      </Provider>
-    )
+    renderNode(node)
 
     expect(screen.getByText('test-dataset')).toBeInTheDocument()
   })
@@ -300,17 +288,14 @@ describe('TableLineageDatasetNode', () => {
     const longName = 'very_long_dataset_name_that_should_be_truncated_for_display'
     const dataset = createMockDataset({ name: longName })
     const node = createMockNode({ data: { dataset } })
-    const store = createMockStore(null)
 
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <svg>
-            <TableLineageDatasetNode node={node} />
-          </svg>
-        </MemoryRouter>
-      </Provider>
-    )
+    vi.mocked(useDataset).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any)
+
+    renderNode(node)
 
     // Truncated version should be rendered (15 chars max)
     expect(screen.queryByText(longName)).not.toBeInTheDocument()

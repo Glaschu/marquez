@@ -1,11 +1,11 @@
 import React from 'react'
 
-import { act, render, screen, waitFor } from '@testing-library/react'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 
-import { ZoomPanSvg, clamp, getNodeExtent } from '../ZoomPanSvg/ZoomPanSvg'
 import { MiniMapPlacement } from '../ZoomPanSvg/MiniMap'
+import { ZoomPanSvg, clamp, getNodeExtent } from '../ZoomPanSvg/ZoomPanSvg'
 import type { PositionedNode } from '../types'
 
 const hoistedMocks = vi.hoisted(() => ({
@@ -258,7 +258,9 @@ describe('ZoomPanSvg component', () => {
     const controls = controlsSpy.mock.calls.at(-1)?.[0]
     expect(controls).toBeDefined()
 
-    await waitFor(() => expect(zoomSelection.attr).toHaveBeenCalledWith('transform', expect.any(String)))
+    await waitFor(() =>
+      expect(zoomSelection.attr).toHaveBeenCalledWith('transform', expect.any(String))
+    )
 
     const initialTransitions = zoomSelection.transitionChains.length
 
@@ -284,12 +286,10 @@ describe('ZoomPanSvg component', () => {
     expect(zoomSelection.transitionChains.length).toBe(afterScale)
 
     await act(async () => {
-      controls.fitExtent(
-        [
-          [0, 0],
-          [10, 10],
-        ]
-      )
+      controls.fitExtent([
+        [0, 0],
+        [10, 10],
+      ])
     })
 
     const afterFitExtent = zoomSelection.transitionChains.length
@@ -317,8 +317,8 @@ describe('ZoomPanSvg component', () => {
       )
     })
 
-  const afterCenterExtent = zoomSelection.transitionChains.length
-  expect(afterCenterExtent).toBeGreaterThan(afterFitExtent)
+    const afterCenterExtent = zoomSelection.transitionChains.length
+    expect(afterCenterExtent).toBeGreaterThan(afterFitExtent)
 
     await act(async () => {
       controls.centerOnPositionedNode('node-1', 0.9)

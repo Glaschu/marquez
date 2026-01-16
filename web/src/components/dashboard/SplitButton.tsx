@@ -1,5 +1,4 @@
 import { MouseEvent, useRef, useState } from 'react'
-import { Refresh } from '@mui/icons-material'
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
 import Button from '@mui/material/Button'
 import ButtonGroup from '@mui/material/ButtonGroup'
@@ -10,6 +9,7 @@ import MenuItem from '@mui/material/MenuItem'
 import MenuList from '@mui/material/MenuList'
 import Paper from '@mui/material/Paper'
 import Popper from '@mui/material/Popper'
+import Refresh from '@mui/icons-material/Refresh'
 
 interface Props {
   options: string[]

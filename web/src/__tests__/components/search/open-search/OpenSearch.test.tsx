@@ -3,10 +3,9 @@
 
 import React from 'react'
 import { MemoryRouter } from 'react-router-dom'
-import { Provider } from 'react-redux'
 import { act } from 'react'
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { legacy_createStore as createStore } from 'redux'
 
 import OpenSearch from '../../../../components/search/open-search/OpenSearch'
@@ -14,7 +13,6 @@ import OpenSearch from '../../../../components/search/open-search/OpenSearch'
 type HighlightMap = Record<string, string[]>
 
 const pendingDebounces = vi.hoisted(() => [] as Array<() => void>)
-const mockDispatch = vi.hoisted(() => vi.fn())
 const mockNavigate = vi.hoisted(() => vi.fn())
 const encodeNodeMock = vi.hoisted(() =>
   vi.fn((type: string, namespace: string, name: string) => `${type}:${namespace}:${name}`)
@@ -35,14 +33,6 @@ vi.mock('lodash', async () => {
       wrapped.flush = vi.fn(() => fn(...lastArgs))
       return wrapped
     },
-  }
-})
-
-vi.mock('react-redux', async () => {
-  const actual = await vi.importActual<typeof import('react-redux')>('react-redux')
-  return {
-    ...actual,
-    useDispatch: () => mockDispatch,
   }
 })
 
@@ -178,6 +168,9 @@ vi.mock('../../../../components/search/open-search/spark-logo.svg', () => ({
   default: 'spark.svg',
 }))
 
+import { renderWithProviders } from '../../../../helpers/testUtils'
+import * as useSearchHook from '../../../../queries/search'
+
 const flushPendingDebounces = async () => {
   const callbacks = pendingDebounces.splice(0)
   await act(async () => {
@@ -198,35 +191,36 @@ const renderOpenSearch = ({
   datasetHighlights?: HighlightMap[]
   search?: string
 } = {}) => {
-  const store = createStore(() => ({
-    openSearchJobs: {
-      data: {
-        hits: jobs,
-        highlights: jobHighlights,
-      },
-      isLoading: false,
-    },
-    openSearchDatasets: {
-      data: {
-        hits: datasets,
-        highlights: datasetHighlights,
-      },
-      isLoading: false,
-    },
-  }))
+  const store = createStore(() => ({}))
 
-  return render(
-    <Provider store={store}>
-      <MemoryRouter>
-        <OpenSearch search={search} />
-      </MemoryRouter>
-    </Provider>
+  vi.spyOn(useSearchHook, 'useOpenSearchJobs').mockReturnValue({
+    data: { hits: jobs, highlights: jobHighlights },
+    isLoading: false,
+    isPending: false,
+    isError: false,
+    error: null,
+    refetch: vi.fn(),
+  } as any)
+
+  vi.spyOn(useSearchHook, 'useOpenSearchDatasets').mockReturnValue({
+    data: { hits: datasets, highlights: datasetHighlights },
+    isLoading: false,
+    isPending: false,
+    isError: false,
+    error: null,
+    refetch: vi.fn(),
+  } as any)
+
+  return renderWithProviders(
+    <MemoryRouter>
+      <OpenSearch search={search} />
+    </MemoryRouter>,
+    { store }
   )
 }
 
 describe('OpenSearch Component', () => {
   beforeEach(() => {
-    mockDispatch.mockClear()
     mockNavigate.mockClear()
     encodeNodeMock.mockClear()
     eventTypeColorMock.mockClear()
@@ -237,23 +231,13 @@ describe('OpenSearch Component', () => {
     pendingDebounces.length = 0
   })
 
-  it('debounces fetches and only shows the empty state after requests fire', async () => {
+  it('shows empty state when no hits are found', async () => {
     renderOpenSearch()
-
-    expect(screen.queryByTestId('mq-empty')).toBeNull()
-    expect(mockDispatch).not.toHaveBeenCalled()
 
     await flushPendingDebounces()
 
-    expect(mockDispatch).toHaveBeenCalledTimes(2)
-    expect(mockDispatch).toHaveBeenNthCalledWith(1, {
-      type: 'FETCH_OPEN_SEARCH_JOBS',
-      payload: { q: 'Test Search' },
-    })
-    expect(mockDispatch).toHaveBeenNthCalledWith(2, {
-      type: 'FETCH_OPEN_SEARCH_DATASETS',
-      payload: { q: 'Test Search' },
-    })
+    // With React Query hooks initiating immediately, and our mock returning empty hits,
+    // we expect the empty state to be visible.
     expect(screen.getByTestId('mq-empty')).toHaveTextContent('No Hits')
   })
 
@@ -305,6 +289,8 @@ describe('OpenSearch Component', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/lineage/JOB:analytics:ExtremelyLongJobNameForTestingCoverage')
     expect(encodeNodeMock).toHaveBeenCalledWith('JOB', 'analytics', longJobName)
   })
+
+  // ... (Other navigation tests remain valid as they test rendering and interaction given presence of data)
 
   it('navigates to job results with keyboard input', async () => {
     renderOpenSearch({

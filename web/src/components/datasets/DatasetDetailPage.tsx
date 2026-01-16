@@ -21,9 +21,7 @@ import { MqInfo } from '../core/info/MqInfo'
 import { alpha } from '@mui/material/styles'
 import { datasetFacetsQualityAssertions, datasetFacetsStatus } from '../../helpers/nodes'
 import {
-  deleteDataset,
   dialogToggle,
-  fetchDataset,
   resetDataset,
   resetDatasetVersions,
   setTabIndex,
@@ -31,6 +29,8 @@ import {
 import { faDatabase } from '@fortawesome/free-solid-svg-icons'
 import { formatUpdatedAt } from '../../helpers'
 import { truncateText } from '../../helpers/text'
+import { useDataset, useDeleteDataset } from '../../queries/datasets'
+import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTheme } from '@emotion/react'
 import { useTranslation } from 'react-i18next'
@@ -46,7 +46,6 @@ import MQTooltip from '../core/tooltip/MQTooltip'
 import MqStatus from '../core/status/MqStatus'
 import MqText from '../core/text/MqText'
 import React, { ChangeEvent, useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
 import RuleIcon from '@mui/icons-material/Rule'
 import StorageIcon from '@mui/icons-material/Storage'
 
@@ -63,13 +62,14 @@ function a11yProps(index: number) {
 
 const DatasetDetailPage: React.FC<DatasetDetailPageProps> = ({ lineageDataset }) => {
   const dispatch = useDispatch()
-  const dataset = useSelector((state: IState) => state.dataset.result)
-  const isDatasetLoading = useSelector((state: IState) => state.dataset.isLoading)
+  const deleteDatasetMutation = useDeleteDataset()
+  const { data: dataset, isLoading: isDatasetLoading } = useDataset(
+    lineageDataset.namespace,
+    lineageDataset.name
+  )
   const dialogIsOpen = useSelector((state: IState) => state.display.dialogIsOpen)
   const tabIndex = useSelector((state: IState) => state.lineage.tabIndex)
-  const deletedDatasetName = useSelector(
-    (state: IState) => state.datasets.deletedDatasetName
-  )
+  const deletedDatasetName = useSelector((state: IState) => state.datasets.deletedDatasetName)
   const navigate = useNavigate()
   const { t } = useTranslation()
   const theme = createTheme(useTheme())
@@ -85,11 +85,6 @@ const DatasetDetailPage: React.FC<DatasetDetailPageProps> = ({ lineageDataset })
     [dispatch]
   )
 
-  // might need to map first version to its own state
-  useEffect(() => {
-    dispatch(fetchDataset(lineageDataset.namespace, lineageDataset.name))
-  }, [dispatch, lineageDataset.namespace, lineageDataset.name])
-
   // if the dataset is deleted then redirect to datasets end point
   useEffect(() => {
     if (deletedDatasetName) {
@@ -101,7 +96,7 @@ const DatasetDetailPage: React.FC<DatasetDetailPageProps> = ({ lineageDataset })
     dispatch(setTabIndex(newValue))
   }
 
-  if (!dataset || isDatasetLoading) {
+  if (isDatasetLoading || !dataset) {
     return (
       <Box display={'flex'} justifyContent={'center'} mt={2}>
         <CircularProgress color='primary' />
@@ -177,7 +172,10 @@ const DatasetDetailPage: React.FC<DatasetDetailPageProps> = ({ lineageDataset })
                 dialogToggle={(field) => dispatch(dialogToggle(field))}
                 title={t('jobs.dialog_confirmation_title')}
                 ignoreWarning={() => {
-                  dispatch(deleteDataset(lineageDataset.name, lineageDataset.namespace))
+                  deleteDatasetMutation.mutate({
+                    namespace: lineageDataset.namespace,
+                    datasetName: lineageDataset.name,
+                  })
                   dispatch(dialogToggle(''))
                 }}
               />

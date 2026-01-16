@@ -14,8 +14,9 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "coverage": "vitest run --coverage",
-    "eject": "react-scripts eject",
-    "eslint-fix": "eslint . --ext .ts,.tsx --ignore-pattern \"src/__tests__/*\" --fix"
+    "analyze": "ANALYZE=true vite build",
+    "lint:fix": "eslint . --ext .ts,.tsx --ignore-pattern \"src/__tests__/*\" --fix",
+    "format": "prettier --write ."
   },
   "engines": {
     "node": ">12.22.7"
@@ -63,6 +64,7 @@
   },
   "devDependencies": {
     "@redux-devtools/extension": "^3.2.5",
+    "@tanstack/react-query-devtools": "^5.91.2",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^14.0.0",
     "@types/d3-selection": "^3.0.5",
@@ -87,6 +89,7 @@
     "jsdom": "^27.0.1",
     "prettier": "^2.8.8",
     "redux-saga-test-plan": "^4.0.6",
+    "rollup-plugin-visualizer": "^6.0.5",
     "typescript": "^4.9.5",
     "vite": "^5.4.21",
     "vitest": "^2.1.9"

@@ -1,7 +1,6 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
-import { ArrowBackIosRounded } from '@mui/icons-material'
 import {
   Box,
   Chip,
@@ -13,16 +12,15 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material'
-import { IState } from '../../store/reducers'
 import { Run } from '../../types/api'
 import { alpha, createTheme } from '@mui/material/styles'
-import { fetchRuns } from '../../store/actionCreators'
-import { useDispatch, useSelector } from 'react-redux'
 import { formatUpdatedAt } from '../../helpers'
 import { runStateColor } from '../../helpers/nodes'
 import { stopWatchDuration } from '../../helpers/time'
+import { useJobRuns } from '../../queries/jobs'
 import { useTheme } from '@emotion/react'
 import { useTranslation } from 'react-i18next'
+import ArrowBackIosRounded from '@mui/icons-material/ArrowBackIosRounded'
 import MQTooltip from '../core/tooltip/MQTooltip'
 import MqCode from '../core/code/MqCode'
 import MqCopy from '../core/copy/MqCopy'
@@ -47,17 +45,25 @@ const PAGE_SIZE = 10
 
 const Runs = (props: RunsProps) => {
   const { jobName, jobNamespace, facets } = props
-  const runs = useSelector((state: IState) => state.runs.result)
-  const totalCount = useSelector((state: IState) => state.runs.totalCount)
-  const runsLoading = useSelector((state: IState) => state.runs.isLoading)
-  const dispatch = useDispatch()
-  const { t } = useTranslation()
 
   const [state, setState] = React.useState<RunsState>({
     page: 0,
   })
 
+  const { data: runsData, isLoading: runsLoading } = useJobRuns(
+    jobNamespace,
+    jobName,
+    PAGE_SIZE,
+    state.page * PAGE_SIZE
+  )
+
+  const runs = runsData?.runs || ([] as Run[])
+  const totalCount = runsData?.totalCount || 0
+
+  const { t } = useTranslation()
+
   const [infoView, setInfoView] = React.useState<Run | null>(null)
+
   const handleClick = (newValue: SetStateAction<Run | null>) => {
     setInfoView(newValue)
   }
@@ -68,15 +74,7 @@ const Runs = (props: RunsProps) => {
     setState({ ...state, page: directionPage })
   }
 
-  React.useEffect(() => {
-    dispatch(fetchRuns(jobName, jobNamespace, PAGE_SIZE, state.page * PAGE_SIZE))
-  }, [state.page, dispatch, jobName, jobNamespace])
-
   const theme = createTheme(useTheme())
-
-  if (!runs || runs.length === 0) {
-    return <MqEmpty title={t('jobs.empty_title')} body={t('jobs.empty_body')} />
-  }
 
   if (runsLoading) {
     return (
@@ -84,6 +82,10 @@ const Runs = (props: RunsProps) => {
         <CircularProgress color='primary' />
       </Box>
     )
+  }
+
+  if (!runs || runs.length === 0) {
+    return <MqEmpty title={t('jobs.empty_title')} body={t('jobs.empty_body')} />
   }
 
   if (infoView) {
@@ -138,7 +140,7 @@ const Runs = (props: RunsProps) => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {runs.map((run) => {
+          {runs.map((run: Run) => {
             return run.durationMs > 0 ? (
               <TableRow
                 key={run.id}

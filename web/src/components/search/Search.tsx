@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Box, Chip } from '@mui/material'
-import { Close, SearchOutlined } from '@mui/icons-material'
 import { DRAWER_WIDTH, HEADER_HEIGHT, theme } from '../../helpers/theme'
 import { IState } from '../../store/reducers'
 import { MqInputBase } from '../core/input-base/MqInputBase'
 import { REACT_APP_ADVANCED_SEARCH } from '../../globals'
 import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router'
-import { useSelector } from 'react-redux'
+import Close from '@mui/icons-material/Close'
+import SearchOutlined from '@mui/icons-material/SearchOutlined'
+
 import BaseSearch from './base-search/BaseSearch'
 import CircularProgress from '@mui/material/CircularProgress/CircularProgress'
 import ClickAwayListener from '@mui/material/ClickAwayListener'
@@ -52,11 +53,7 @@ const useEscapeShortcut = (callback: () => void) => {
 }
 
 const Search = () => {
-  // Redux hooks
-  const isLoading = useSelector(
-    (state: IState) => state.openSearchJobs.isLoading || state.openSearchDatasets.isLoading
-  )
-
+  const [isLoading, setIsLoading] = useState(false)
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(true)
 
@@ -190,9 +187,9 @@ const Search = () => {
                   maxHeight={`calc(100vh - ${HEADER_HEIGHT}px - 24px)`}
                 >
                   {REACT_APP_ADVANCED_SEARCH ? (
-                    <OpenSearch search={search} />
+                    <OpenSearch search={search} onIsLoading={setIsLoading} />
                   ) : (
-                    <BaseSearch search={search} />
+                    <BaseSearch search={search} onIsLoading={setIsLoading} />
                   )}
                 </Box>
               </Box>

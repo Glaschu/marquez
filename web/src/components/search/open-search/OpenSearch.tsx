@@ -3,17 +3,14 @@
 
 import { Chip, Divider } from '@mui/material'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { IState } from '../../../store/reducers'
 import { Nullable } from '../../../types/util/Nullable'
-import { useDispatch, useSelector } from 'react-redux'
-import { debounce } from 'lodash'
 import { encodeNode, eventTypeColor } from '../../../helpers/nodes'
 import { faCog } from '@fortawesome/free-solid-svg-icons/faCog'
 import { faDatabase } from '@fortawesome/free-solid-svg-icons'
-import { fetchOpenSearchDatasets, fetchOpenSearchJobs } from '../../../store/actionCreators'
 import { theme } from '../../../helpers/theme'
 import { truncateText } from '../../../helpers/text'
 import { useNavigate } from 'react-router-dom'
+import { useOpenSearchDatasets, useOpenSearchJobs } from '../../../queries/search'
 import Box from '@mui/system/Box'
 import MQTooltip from '../../core/tooltip/MQTooltip'
 import MqEmpty from '../../core/empty/MqEmpty'
@@ -26,6 +23,7 @@ import spark_logo from './spark-logo.svg'
 
 interface Props {
   search: string
+  onIsLoading?: (isLoading: boolean) => void
 }
 
 type TextSegment = {
@@ -79,13 +77,33 @@ const useArrowKeys = (callback: (key: 'up' | 'down' | 'enter') => void) => {
 const FIELDS_TO_PRINT = 5
 const DEBOUNCE_TIME_MS = 200
 
-const OpenSearch: React.FC<Props> = ({ search }) => {
-  const dispatch = useDispatch()
-  const openSearchJobs = useSelector((state: IState) => state.openSearchJobs)
-  const openSearchDatasets = useSelector((state: IState) => state.openSearchDatasets)
+const OpenSearch: React.FC<Props> = ({ search, onIsLoading }) => {
+  const [debouncedSearch, setDebouncedSearch] = React.useState(search)
   const [selectedIndex, setSelectedIndex] = React.useState<Nullable<number>>(null)
-  const [isDebouncing, setIsDebouncing] = React.useState<boolean>(true)
   const navigate = useNavigate()
+
+  React.useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search)
+    }, DEBOUNCE_TIME_MS)
+
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [search])
+
+  const { data: jobsData, isLoading: isJobsLoading } = useOpenSearchJobs(debouncedSearch)
+  const { data: datasetsData, isLoading: isDatasetsLoading } =
+    useOpenSearchDatasets(debouncedSearch)
+
+  useEffect(() => {
+    if (onIsLoading) {
+      onIsLoading(isJobsLoading || isDatasetsLoading)
+    }
+  }, [isJobsLoading, isDatasetsLoading, onIsLoading])
+
+  const jobsHits = jobsData?.hits || []
+  const datasetsHits = datasetsData?.hits || []
 
   useArrowKeys((key) => {
     if (key === 'up') {
@@ -94,54 +112,24 @@ const OpenSearch: React.FC<Props> = ({ search }) => {
       setSelectedIndex(
         selectedIndex === null
           ? 0
-          : Math.min(
-              selectedIndex + 1,
-              openSearchJobs.data.hits.length + openSearchDatasets.data.hits.length - 1
-            )
+          : Math.min(selectedIndex + 1, jobsHits.length + datasetsHits.length - 1)
       )
     } else if (selectedIndex !== null) {
-      if (selectedIndex < openSearchJobs.data.hits.length) {
-        const jobHit = openSearchJobs.data.hits[selectedIndex]
+      if (selectedIndex < jobsHits.length) {
+        const jobHit = jobsHits[selectedIndex]
         navigate(`/lineage/${encodeNode('JOB', jobHit.namespace, jobHit.name)}`)
       } else {
-        const datasetHit =
-          openSearchDatasets.data.hits[selectedIndex - openSearchJobs.data.hits.length]
+        const datasetHit = datasetsHits[selectedIndex - jobsHits.length]
         navigate(`/lineage/${encodeNode('DATASET', datasetHit.namespace, datasetHit.name)}`)
       }
     }
   })
 
-  const debouncedFetchJobs = useCallback(
-    debounce(async (searchTerm) => {
-      dispatch(fetchOpenSearchJobs(searchTerm))
-      setIsDebouncing(false) // Set loading to false after the fetch completes
-    }, DEBOUNCE_TIME_MS),
-    [dispatch]
-  )
-
-  const debouncedFetchDatasets = useCallback(
-    debounce(async (searchTerm) => {
-      dispatch(fetchOpenSearchDatasets(searchTerm))
-      setIsDebouncing(false) // Set loading to false after the fetch completes
-    }, DEBOUNCE_TIME_MS),
-    [dispatch]
-  )
-
-  useEffect(() => {
-    setIsDebouncing(true)
-    debouncedFetchJobs(search)
-    debouncedFetchDatasets(search)
-  }, [search, debouncedFetchJobs, debouncedFetchDatasets])
-
   useEffect(() => {
     setSelectedIndex(null)
-  }, [openSearchJobs.data.hits, openSearchDatasets.data.hits])
+  }, [jobsHits, datasetsHits])
 
-  if (
-    openSearchJobs.data.hits.length === 0 &&
-    openSearchDatasets.data.hits.length === 0 &&
-    !isDebouncing
-  ) {
+  if (jobsHits.length === 0 && datasetsHits.length === 0 && debouncedSearch === search) {
     return (
       <Box my={4}>
         <MqEmpty title={'No Hits'} body={'Keep typing or try a more precise search.'} />
@@ -151,7 +139,7 @@ const OpenSearch: React.FC<Props> = ({ search }) => {
 
   return (
     <Box>
-      {openSearchJobs.data.hits.map((hit, index) => {
+      {jobsHits.map((hit: any, index: number) => {
         return (
           <Box
             key={`job-${hit.run_id}`}
@@ -225,8 +213,8 @@ const OpenSearch: React.FC<Props> = ({ search }) => {
                   Match
                 </MqText>
                 <Box>
-                  {Object.entries(openSearchJobs.data.highlights[index]).map(([key, value]) => {
-                    return value.map((highlightedString: any, idx: number) => {
+                  {Object.entries(jobsData.highlights[index]).map(([key, value]) => {
+                    return (value as any[]).map((highlightedString: any, idx: number) => {
                       return (
                         <Box
                           key={`${key}-${value}-${idx}`}
@@ -278,7 +266,7 @@ const OpenSearch: React.FC<Props> = ({ search }) => {
           </Box>
         )
       })}
-      {openSearchDatasets.data.hits.map((hit, index) => {
+      {datasetsHits.map((hit: any, index: number) => {
         return (
           <Box
             key={`dataset-${index}-${hit.run_id}`}
@@ -294,9 +282,7 @@ const OpenSearch: React.FC<Props> = ({ search }) => {
                 backgroundColor: theme.palette.action.hover,
               },
               backgroundColor:
-                selectedIndex === index + openSearchJobs.data.hits.length
-                  ? theme.palette.action.hover
-                  : undefined,
+                selectedIndex === index + jobsHits.length ? theme.palette.action.hover : undefined,
             }}
           >
             <Box display={'flex'}>
@@ -325,8 +311,8 @@ const OpenSearch: React.FC<Props> = ({ search }) => {
                   Match
                 </MqText>
                 <Box>
-                  {Object.entries(openSearchDatasets.data.highlights[index]).map(([key, value]) => {
-                    return value.map((highlightedString: any, idx: number) => {
+                  {Object.entries(datasetsData.highlights[index]).map(([key, value]) => {
+                    return (value as any[]).map((highlightedString: any, idx: number) => {
                       return (
                         <Box
                           key={`${key}-${value}-${idx}`}

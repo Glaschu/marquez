@@ -6,21 +6,18 @@ import { HEADER_HEIGHT, theme } from '../../helpers/theme'
 import { IState } from '../../store/reducers'
 import { ZoomControls } from './ZoomControls'
 import { createElkNodes } from './layout'
-import { fetchColumnLineage } from '../../store/actionCreators'
 import { useCallbackRef } from '../../helpers/hooks'
+import { useColumnLineage } from '../../queries/columnlineage'
 import { useParams, useSearchParams } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import ColumnLevelDrawer from './ColumnLevelDrawer'
 import ParentSize from '@visx/responsive/lib/components/ParentSize'
 import React, { useEffect, useRef, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
 
 const zoomInFactor = 1.5
 const zoomOutFactor = 1 / zoomInFactor
 
 const ColumnLevel: React.FC = () => {
-  const dispatch = useDispatch()
-  const columnLineage = useSelector((state: IState) => state.columnLineage.columnLineage)
   const { namespace, name } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -28,18 +25,12 @@ const ColumnLevel: React.FC = () => {
 
   const graphControls = useRef<ZoomPanControls>()
 
-  const fetchColumnLineageAction: typeof fetchColumnLineage = React.useCallback(
-    (nodeType, targetNamespace, targetName, targetDepth) => {
-      return dispatch(fetchColumnLineage(nodeType, targetNamespace, targetName, targetDepth))
-    },
-    [dispatch]
+  const { data: columnLineage, refetch } = useColumnLineage(
+    'DATASET',
+    namespace || '',
+    name || '',
+    depth
   )
-
-  useEffect(() => {
-    if (name && namespace) {
-      fetchColumnLineageAction('DATASET', namespace, name, depth)
-    }
-  }, [fetchColumnLineageAction, name, namespace, depth])
 
   // const column = searchParams.get('column')
   // useEffect(() => {
@@ -76,7 +67,7 @@ const ColumnLevel: React.FC = () => {
 
   return (
     <>
-  <ActionBar fetchColumnLineage={fetchColumnLineageAction} depth={depth} setDepth={setDepth} />
+      <ActionBar refresh={refetch} depth={depth} setDepth={setDepth} />
       <Box height={`calc(100vh - ${HEADER_HEIGHT}px - 64px)`}>
         <Drawer
           anchor={'right'}

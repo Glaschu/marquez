@@ -13,15 +13,17 @@ import {
 } from '@mui/material'
 import { HEADER_HEIGHT } from '../../helpers/theme'
 import { IState } from '../../store/reducers'
+import { Job } from '../../types/api'
 import { MqScreenLoad } from '../../components/core/screen-load/MqScreenLoad'
-import { Refresh } from '@mui/icons-material'
-import { useDispatch, useSelector } from 'react-redux'
 import { encodeNode, runStateColor } from '../../helpers/nodes'
-import { fetchJobs, resetJobs } from '../../store/actionCreators'
+import Refresh from '@mui/icons-material/Refresh'
+
 import { formatUpdatedAt } from '../../helpers'
 import { stopWatchDuration } from '../../helpers/time'
 import { truncateText } from '../../helpers/text'
 import { useEffect, useState } from 'react'
+import { useJobs } from '../../queries/jobs'
+import { useSelector } from 'react-redux'
 import { useTranslation } from 'react-i18next'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress/CircularProgress'
@@ -41,37 +43,39 @@ const PAGE_SIZE = 20
 const JOB_HEADER_HEIGHT = 64
 
 const Jobs = () => {
-  const jobs = useSelector((state: IState) => state.jobs.result) ?? []
-  const totalCount = useSelector((state: IState) => state.jobs.totalCount)
-  const isJobsLoading = useSelector((state: IState) => state.jobs.isLoading)
-  const isJobsInit = useSelector((state: IState) => state.jobs.init)
-  const selectedNamespace = useSelector((state: IState) => state.namespaces.selectedNamespace)
-  const dispatch = useDispatch()
   const defaultState = {
     page: 0,
   }
+  const selectedNamespace = useSelector((state: IState) => state.namespaces.selectedNamespace)
   const [state, setState] = useState<JobsState>(defaultState)
+
+  const {
+    data: jobsData,
+    isLoading: isJobsLoading,
+    refetch,
+  } = useJobs(selectedNamespace, PAGE_SIZE, state.page * PAGE_SIZE)
+
+  const jobs: Job[] = jobsData?.jobs || []
+  const totalCount = jobsData?.totalCount || 0
+  // useJobs handles initial loading state internally, so we can treat loading as init for now or simplify.
+  // For compatibility with existing UI logic:
+  const isJobsInit = true
 
   useEffect(() => {
     if (selectedNamespace) {
-      dispatch(fetchJobs(selectedNamespace, PAGE_SIZE, state.page * PAGE_SIZE))
+      // Reset page when namespace changes
+      if (state.page !== 0) {
+        setState((prev) => ({ ...prev, page: 0 }))
+      }
     }
-  }, [dispatch, selectedNamespace, state.page])
-
-  useEffect(() => {
-    return () => {
-      // on unmount
-      dispatch(resetJobs())
-    }
-  }, [dispatch])
+  }, [selectedNamespace])
 
   const handleClickPage = (direction: 'prev' | 'next') => {
     const directionPage = direction === 'next' ? state.page + 1 : state.page - 1
 
-  dispatch(fetchJobs(selectedNamespace || '', PAGE_SIZE, directionPage * PAGE_SIZE))
     // reset page scroll
     window.scrollTo(0, 0)
-  setState((prev) => ({ ...prev, page: directionPage }))
+    setState((prev) => ({ ...prev, page: directionPage }))
   }
 
   const { t } = useTranslation()
@@ -99,9 +103,7 @@ const Jobs = () => {
               color={'primary'}
               size={'small'}
               onClick={() => {
-                if (selectedNamespace) {
-                  dispatch(fetchJobs(selectedNamespace, PAGE_SIZE, state.page * PAGE_SIZE))
-                }
+                refetch()
               }}
             >
               <Refresh fontSize={'small'} />
@@ -110,7 +112,7 @@ const Jobs = () => {
         </Box>
       </Box>
       <MqScreenLoad
-        loading={isJobsLoading && !isJobsInit}
+        loading={isJobsLoading}
         customHeight={`calc(100vh - ${HEADER_HEIGHT}px - ${JOB_HEADER_HEIGHT}px)`}
       >
         <>
@@ -123,9 +125,7 @@ const Jobs = () => {
                     color={'primary'}
                     size={'small'}
                     onClick={() => {
-                      if (selectedNamespace) {
-                        dispatch(fetchJobs(selectedNamespace, PAGE_SIZE, state.page * PAGE_SIZE))
-                      }
+                      refetch()
                     }}
                   >
                     Refresh

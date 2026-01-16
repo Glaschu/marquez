@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Box } from '@mui/material'
-import { ChevronLeftRounded, ChevronRightRounded } from '@mui/icons-material'
 import { theme } from '../../helpers/theme'
 import { useTranslation } from 'react-i18next'
+import ChevronLeftRounded from '@mui/icons-material/ChevronLeftRounded'
+import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded'
 import IconButton from '@mui/material/IconButton'
 import MQTooltip from '../core/tooltip/MQTooltip'
 import MqText from '../core/text/MqText'

@@ -1,6 +1,7 @@
 // Copyright 2018-2023 contributors to the Marquez project
 // SPDX-License-Identifier: Apache-2.0
 
+import { useDeleteJob, useJob } from '../../queries/jobs'
 import { useTranslation } from 'react-i18next'
 import React, { ChangeEvent, useEffect } from 'react'
 
@@ -17,24 +18,17 @@ import {
 } from '@mui/icons-material'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { IState } from '../../store/reducers'
-import { Run } from '../../types/api'
 import { LineageJob } from '../../types/lineage'
 import { MqInfo } from '../core/info/MqInfo'
+import { Run } from '../../types/api'
 import { alpha, createTheme } from '@mui/material/styles'
-import {
-  deleteJob,
-  dialogToggle,
-  fetchJob,
-  fetchLatestRuns,
-  resetJobs,
-  resetRuns,
-  setTabIndex,
-} from '../../store/actionCreators'
+import { dialogToggle, resetJobs, resetRuns, setTabIndex } from '../../store/actionCreators'
 import { faCog } from '@fortawesome/free-solid-svg-icons/faCog'
 import { formatUpdatedAt } from '../../helpers'
 import { runStateColor } from '../../helpers/nodes'
 import { stopWatchDuration } from '../../helpers/time'
 import { truncateText } from '../../helpers/text'
+import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTheme } from '@emotion/react'
 import CloseIcon from '@mui/icons-material/Close'
@@ -47,7 +41,6 @@ import MqStatus from '../core/status/MqStatus'
 import MqText from '../core/text/MqText'
 import RunInfo from './RunInfo'
 import Runs from './Runs'
-import { useDispatch, useSelector } from 'react-redux'
 
 interface JobDetailPageProps {
   lineageJob: LineageJob
@@ -55,9 +48,8 @@ interface JobDetailPageProps {
 
 const JobDetailPage: React.FC<JobDetailPageProps> = ({ lineageJob }) => {
   const dispatch = useDispatch()
-  const job = useSelector((state: IState) => state.job.result)
-  const isJobLoading = useSelector((state: IState) => state.job.isLoading)
-  const isLatestRunsLoading = useSelector((state: IState) => state.runs.isLatestRunsLoading)
+  const deleteJobMutation = useDeleteJob()
+  const { data: job, isLoading: isJobLoading } = useJob(lineageJob.namespace, lineageJob.name)
   const dialogIsOpen = useSelector((state: IState) => state.display.dialogIsOpen)
   const deletedJobName = useSelector((state: IState) => state.jobs.deletedJobName)
   const tabIndex = useSelector((state: IState) => state.lineage.tabIndex)
@@ -70,11 +62,6 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ lineageJob }) => {
   }
 
   const { t } = useTranslation()
-
-  useEffect(() => {
-    dispatch(fetchJob(lineageJob.namespace, lineageJob.name))
-    dispatch(fetchLatestRuns(lineageJob.name, lineageJob.namespace))
-  }, [dispatch, lineageJob.namespace, lineageJob.name])
 
   useEffect(() => {
     if (deletedJobName) {
@@ -91,7 +78,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ lineageJob }) => {
     }
   }, [dispatch])
 
-  if (!job || isJobLoading || isLatestRunsLoading) {
+  if (isJobLoading || !job) {
     return (
       <Box display={'flex'} justifyContent={'center'} mt={2}>
         <CircularProgress color='primary' />
@@ -175,7 +162,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ lineageJob }) => {
                 dialogToggle={(field) => dispatch(dialogToggle(field))}
                 title={t('jobs.dialog_confirmation_title')}
                 ignoreWarning={() => {
-                  dispatch(deleteJob(job.name, job.namespace))
+                  deleteJobMutation.mutate({ jobName: job.name, namespace: job.namespace })
                   dispatch(dialogToggle(''))
                 }}
               />

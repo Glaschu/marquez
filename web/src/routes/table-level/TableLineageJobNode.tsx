@@ -6,12 +6,12 @@ import { LineageJob } from '../../types/lineage'
 import { PositionedNode } from '../../components/graph'
 import { TableLineageJobNodeData } from './nodes'
 import { faCog } from '@fortawesome/free-solid-svg-icons/faCog'
-import { useSelector } from 'react-redux'
 import { formatUpdatedAt } from '../../helpers'
 import { runStateColor } from '../../helpers/nodes'
 import { theme } from '../../helpers/theme'
 import { truncateText, truncateTextFront } from '../../helpers/text'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import Box from '@mui/system/Box'
 import MQTooltip from '../../components/core/tooltip/MQTooltip'
 import MqStatus from '../../components/core/status/MqStatus'
@@ -61,7 +61,9 @@ const TableLineageJobNode = ({ node }: TableLineageJobNodeProps) => {
             <MqText block bold sx={{ mr: 6 }}>
               Description:
             </MqText>
-            <MqText block font={'mono'}>{job.description}</MqText>
+            <MqText block font={'mono'}>
+              {job.description}
+            </MqText>
           </Box>
         )}
         <Box display={'flex'} justifyContent={'space-between'}>
@@ -80,7 +82,9 @@ const TableLineageJobNode = ({ node }: TableLineageJobNodeProps) => {
           <MqStatus
             label={job.latestRun?.state || 'N/A'}
             color={
-              job.latestRun?.state ? runStateColor(job.latestRun?.state) : theme.palette.secondary.main
+              job.latestRun?.state
+                ? runStateColor(job.latestRun?.state)
+                : theme.palette.secondary.main
             }
           />
         </Box>

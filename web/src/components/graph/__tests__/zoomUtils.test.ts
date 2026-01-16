@@ -68,7 +68,12 @@ describe('zoom utilities', () => {
       [-1, -3],
       [11, 23],
     ])
-    expect(maxExtent(extent, [[-5, -5], [5, 5]])).toEqual([
+    expect(
+      maxExtent(extent, [
+        [-5, -5],
+        [5, 5],
+      ])
+    ).toEqual([
       [-5, -5],
       [10, 20],
     ])
