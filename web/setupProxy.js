@@ -6,15 +6,26 @@ const router = express.Router()
 const environmentVariable = (variableName) => {
   const value = process.env[variableName]
   if (!value) {
-      console.error(`Error: ${variableName} environment variable is not defined.`)
-      console.error(`Please set ${variableName} and restart the application.`)
-      process.exit(1)
+    console.error(`Error: ${variableName} environment variable is not defined.`)
+    console.error(`Please set ${variableName} and restart the application.`)
+    process.exit(1)
   }
   return value
 }
 
 const apiOptions = {
-  target: `http://${(environmentVariable("MARQUEZ_HOST"))}:${environmentVariable("MARQUEZ_PORT")}/`
+  target: `http://${(environmentVariable("MARQUEZ_HOST"))}:${environmentVariable("MARQUEZ_PORT")}/`,
+  router: (req) => {
+    const cookies = req.headers.cookie;
+    if (cookies && cookies.includes('api-target=newapi')) {
+      const host = process.env.NEWAPI_HOST;
+      const port = process.env.NEWAPI_PORT;
+      if (host && port) {
+        return `http://${host}:${port}/`;
+      }
+    }
+    return `http://${(environmentVariable("MARQUEZ_HOST"))}:${environmentVariable("MARQUEZ_PORT")}/`;
+  }
 }
 const app = express()
 const path = __dirname + '/dist'
@@ -36,6 +47,6 @@ router.get('/healthcheck', function (req, res) {
 
 app.use(router)
 
-app.listen(port, function() {
+app.listen(port, function () {
   console.log(`App listening on port ${port}!`)
 })

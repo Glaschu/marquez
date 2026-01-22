@@ -32,6 +32,17 @@ const webpackDev = {
         logLevel: 'debug',
         headers: {
           'X-Bifrost-Authentication': 'developer'
+        },
+        router: (req) => {
+          const cookies = req.headers.cookie;
+          if (cookies && cookies.includes('api-target=newapi')) {
+            const host = process.env.NEWAPI_HOST;
+            const port = process.env.NEWAPI_PORT;
+            if (host && port) {
+              return `http://${host}:${port}/`;
+            }
+          }
+          return `http://${process.env.MARQUEZ_HOST || 'localhost'}:${process.env.MARQUEZ_PORT || 5000}/`;
         }
       }
     }
@@ -49,11 +60,11 @@ const webpackDev = {
       __FEEDBACK_FORM_URL__: JSON.stringify('https://forms.gle/f3tTSrZ8wPj3sHTA7'),
       __API_DOCS_URL__: JSON.stringify('https://marquezproject.github.io/marquez/openapi.html')
     }),
-      new CopyPlugin({
-        patterns: [
-          { from: path.join(elkjsRoot, 'lib/elk-worker.min.js'), to: 'elk-worker.min.js' },
-        ],
-      }),
+    new CopyPlugin({
+      patterns: [
+        { from: path.join(elkjsRoot, 'lib/elk-worker.min.js'), to: 'elk-worker.min.js' },
+      ],
+    }),
   ]
 }
 
