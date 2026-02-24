@@ -18,7 +18,9 @@ const zoomInFactor = 1.5
 const zoomOutFactor = 1 / zoomInFactor
 
 const ColumnLevel: React.FC = () => {
-  const { namespace, name } = useParams()
+  const { namespace: encodedNamespace, name: encodedName } = useParams()
+  const namespace = decodeURIComponent(encodedNamespace || '')
+  const name = decodeURIComponent(encodedName || '')
   const [searchParams, setSearchParams] = useSearchParams()
 
   const [depth, setDepth] = useState(Number(searchParams.get('depth')) || 2)

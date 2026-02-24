@@ -13,7 +13,9 @@ interface ColumnLineageDatasetNodeProps {
 }
 export const ColumnLineageDatasetNode = ({ node }: ColumnLineageDatasetNodeProps) => {
   const [searchParams, setSearchParams] = useSearchParams()
-  const { namespace, name } = useParams()
+  const { namespace: encodedNamespace, name: encodedName } = useParams()
+  const namespace = decodeURIComponent(encodedNamespace || '')
+  const name = decodeURIComponent(encodedName || '')
   const shine = name === node.data.dataset && namespace === node.data.namespace
   return (
     <>
@@ -50,13 +52,11 @@ export const ColumnLineageDatasetNode = ({ node }: ColumnLineageDatasetNodeProps
         fontSize={14}
         stroke={'white'}
         cursor={'pointer'}
-        onClick={() =>
-          setSearchParams({
-            ...searchParams,
-            dataset: node.data.dataset,
-            namespace: node.data.namespace,
-          })
-        }
+        onClick={() => {
+          searchParams.set('dataset', node.data.dataset)
+          searchParams.set('namespace', node.data.namespace)
+          setSearchParams(searchParams)
+        }}
       >
         {`${truncateText(node.data.dataset, 25)}`}
       </text>

@@ -27,7 +27,9 @@ const ICON_SIZE = 12
 const TableLineageJobNode = ({ node }: TableLineageJobNodeProps) => {
   const lineage = useSelector((state: RootState) => state.lineage.lineage)
   const navigate = useNavigate()
-  const { name, namespace } = useParams()
+  const { name: encodedName, namespace: encodedNamespace } = useParams()
+  const namespace = decodeURIComponent(encodedNamespace || '')
+  const name = decodeURIComponent(encodedName || '')
   const isSelected = name === node.data.job.name && namespace === node.data.job.namespace
   const handleClick = () => {
     navigate(

@@ -32,7 +32,9 @@ export const ActionBar = ({
   isFull,
   setIsFull,
 }: ActionBarProps) => {
-  const { namespace, name } = useParams()
+  const { namespace: encodedNamespace, name: encodedName } = useParams()
+  const namespace = decodeURIComponent(encodedNamespace || '')
+  const name = decodeURIComponent(encodedName || '')
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   return (

@@ -30,7 +30,9 @@ const COMPACT_HEIGHT = 24
 const TableLineageDatasetNode = ({ node }: TableLineageDatasetNodeProps) => {
   const isCompact = node.height === COMPACT_HEIGHT
   const navigate = useNavigate()
-  const { name, namespace } = useParams()
+  const { name: encodedName, namespace: encodedNamespace } = useParams()
+  const namespace = decodeURIComponent(encodedNamespace || '')
+  const name = decodeURIComponent(encodedName || '')
   const isSelected = name === node.data.dataset.name && namespace === node.data.dataset.namespace
   const [searchParams, setSearchParams] = useSearchParams()
   const isCollapsed = searchParams.get('collapsedNodes')?.split(',').includes(node.id)
